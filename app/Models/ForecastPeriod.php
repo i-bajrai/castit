@@ -12,6 +12,7 @@ class ForecastPeriod extends Model
         'project_id',
         'period_date',
         'is_current',
+        'locked_at',
     ];
 
     /**
@@ -22,7 +23,13 @@ class ForecastPeriod extends Model
         return [
             'period_date' => 'date',
             'is_current' => 'boolean',
+            'locked_at' => 'datetime',
         ];
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_at !== null;
     }
 
     /**
@@ -47,5 +54,13 @@ class ForecastPeriod extends Model
     public function controlAccountForecasts(): HasMany
     {
         return $this->hasMany(ControlAccountForecast::class);
+    }
+
+    /**
+     * @return HasMany<BudgetAdjustment, $this>
+     */
+    public function budgetAdjustments(): HasMany
+    {
+        return $this->hasMany(BudgetAdjustment::class);
     }
 }
