@@ -3,6 +3,7 @@
 namespace Domain\Forecasting\Actions;
 
 use App\Models\ForecastPeriod;
+use App\Models\LineItem;
 use App\Models\LineItemForecast;
 use Domain\Forecasting\DataTransferObjects\LineItemForecastData;
 
@@ -14,7 +15,18 @@ class SaveLineItemForecasts
     public function execute(ForecastPeriod $period, array $forecasts): void
     {
         foreach ($forecasts as $data) {
-            $fcacAmount = $data->ctdAmount + $data->ctcAmount;
+            $lineItem = LineItem::findOrFail($data->lineItemId);
+
+            $ctdRate = (float) $lineItem->original_rate;
+            $ctdAmount = $data->ctdQty * $ctdRate;
+
+            $ctcQty = max(0, (float) $lineItem->original_qty - $data->ctdQty);
+            $ctcRate = $ctdRate;
+            $ctcAmount = $ctcQty * $ctcRate;
+
+            $fcacAmount = $ctdAmount + $ctcAmount;
+            $totalQty = $data->ctdQty + $ctcQty;
+            $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
 
             $existing = LineItemForecast::where('line_item_id', $data->lineItemId)
                 ->where('forecast_period_id', $period->id)
@@ -23,18 +35,15 @@ class SaveLineItemForecasts
             $previousAmount = $existing->previous_amount ?? 0;
             $variance = (float) $previousAmount - $fcacAmount;
 
-            $totalQty = $data->ctdQty + $data->ctcQty;
-            $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
             LineItemForecast::updateOrCreate(
                 ['line_item_id' => $data->lineItemId, 'forecast_period_id' => $period->id],
                 [
                     'ctd_qty' => $data->ctdQty,
-                    'ctd_rate' => $data->ctdRate,
-                    'ctd_amount' => $data->ctdAmount,
-                    'ctc_qty' => $data->ctcQty,
-                    'ctc_rate' => $data->ctcRate,
-                    'ctc_amount' => $data->ctcAmount,
+                    'ctd_rate' => $ctdRate,
+                    'ctd_amount' => $ctdAmount,
+                    'ctc_qty' => $ctcQty,
+                    'ctc_rate' => $ctcRate,
+                    'ctc_amount' => $ctcAmount,
                     'fcac_rate' => $fcacRate,
                     'fcac_amount' => $fcacAmount,
                     'variance' => $variance,

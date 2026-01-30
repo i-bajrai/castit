@@ -1,3 +1,4 @@
+@php $packages = $accounts->flatMap->costPackages; @endphp
 <x-app-layout>
     <x-slot name="header">
         <x-project-header :project="$project" active="cost-detail" :subtitle="$period ? 'Forecast Period: ' . $period->period_date->format('F Y') : null">

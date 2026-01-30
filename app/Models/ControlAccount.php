@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class ControlAccount extends Model
 {
@@ -25,6 +26,22 @@ class ControlAccount extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * @return HasMany<CostPackage, $this>
+     */
+    public function costPackages(): HasMany
+    {
+        return $this->hasMany(CostPackage::class);
+    }
+
+    /**
+     * @return HasManyThrough<LineItem, CostPackage, $this>
+     */
+    public function lineItems(): HasManyThrough
+    {
+        return $this->hasManyThrough(LineItem::class, CostPackage::class);
     }
 
     /**

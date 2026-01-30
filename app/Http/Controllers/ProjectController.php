@@ -6,7 +6,6 @@ use App\Models\Company;
 use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
-use Domain\Forecasting\Actions\GetControlAccountSummary;
 use Domain\Forecasting\Actions\GetProjectForecastSummary;
 use Domain\Forecasting\Actions\SyncForecastPeriods;
 use Domain\Forecasting\DataTransferObjects\ProjectData;
@@ -23,7 +22,7 @@ class ProjectController extends Controller
         $companyIds = $companies->pluck('id');
 
         $projects = Project::whereIn('company_id', $companyIds)
-            ->withCount('costPackages')
+            ->withCount('controlAccounts')
             ->latest()
             ->get();
 
@@ -79,7 +78,6 @@ class ProjectController extends Controller
         Request $request,
         Project $project,
         GetProjectForecastSummary $forecastSummary,
-        GetControlAccountSummary $controlAccountSummary,
     ): View {
         Gate::authorize('view', $project);
 
@@ -91,7 +89,6 @@ class ProjectController extends Controller
         }
 
         $summary = $forecastSummary->execute($project, $period);
-        $caSummary = $controlAccountSummary->execute($project, $summary['period']);
 
         $allPeriods = $project->forecastPeriods()
             ->orderByDesc('period_date')
@@ -102,9 +99,8 @@ class ProjectController extends Controller
         return view('projects.show', [
             'project' => $summary['project'],
             'period' => $summary['period'],
-            'packages' => $summary['packages'],
+            'accounts' => $summary['accounts'],
             'totals' => $summary['totals'],
-            'accounts' => $caSummary['accounts'],
             'allPeriods' => $allPeriods,
             'isEditable' => $isEditable,
         ]);
@@ -112,15 +108,16 @@ class ProjectController extends Controller
 
     public function executiveSummary(
         Project $project,
-        GetControlAccountSummary $controlAccountSummary,
+        GetProjectForecastSummary $forecastSummary,
     ): View {
         Gate::authorize('view', $project);
 
-        $summary = $controlAccountSummary->execute($project);
+        $summary = $forecastSummary->execute($project);
 
         return view('projects.executive-summary', [
             'project' => $project,
             'accounts' => $summary['accounts'],
+            'totals' => $summary['totals'],
             'period' => $summary['period'],
         ]);
     }

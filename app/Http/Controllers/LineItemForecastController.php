@@ -25,22 +25,12 @@ class LineItemForecastController extends Controller
             'forecasts' => 'required|array',
             'forecasts.*.line_item_id' => 'required|exists:line_items,id',
             'forecasts.*.ctd_qty' => 'required|numeric',
-            'forecasts.*.ctd_rate' => 'required|numeric',
-            'forecasts.*.ctd_amount' => 'required|numeric',
-            'forecasts.*.ctc_qty' => 'required|numeric',
-            'forecasts.*.ctc_rate' => 'required|numeric',
-            'forecasts.*.ctc_amount' => 'required|numeric',
             'forecasts.*.comments' => 'nullable|string|max:2000',
         ]);
 
         $dtos = array_map(fn (array $f) => new LineItemForecastData(
             lineItemId: (int) $f['line_item_id'],
             ctdQty: (float) $f['ctd_qty'],
-            ctdRate: (float) $f['ctd_rate'],
-            ctdAmount: (float) $f['ctd_amount'],
-            ctcQty: (float) $f['ctc_qty'],
-            ctcRate: (float) $f['ctc_rate'],
-            ctcAmount: (float) $f['ctc_amount'],
             comments: $f['comments'] ?? null,
         ), $validated['forecasts']);
 

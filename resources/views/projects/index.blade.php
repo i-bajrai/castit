@@ -60,8 +60,8 @@
                                         <span class="font-semibold text-gray-900">${{ number_format($project->original_budget, 2) }}</span>
                                     </div>
                                     <div class="flex justify-between text-sm mt-1">
-                                        <span class="text-gray-500">Cost Packages</span>
-                                        <span class="font-medium text-gray-700">{{ $project->cost_packages_count }}</span>
+                                        <span class="text-gray-500">Control Accounts</span>
+                                        <span class="font-medium text-gray-700">{{ $project->control_accounts_count }}</span>
                                     </div>
                                 </div>
                             </div>

@@ -8,5 +8,6 @@ readonly class CostPackageData
         public string $name,
         public ?string $itemNo = null,
         public int $sortOrder = 0,
+        public ?int $controlAccountId = null,
     ) {}
 }

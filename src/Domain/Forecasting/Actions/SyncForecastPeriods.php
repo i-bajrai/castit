@@ -2,7 +2,6 @@
 
 namespace Domain\Forecasting\Actions;
 
-use App\Models\ControlAccountForecast;
 use App\Models\ForecastPeriod;
 use App\Models\LineItemForecast;
 use App\Models\Project;
@@ -35,14 +34,9 @@ class SyncForecastPeriods
 
             if ($period->wasRecentlyCreated && $previousPeriod) {
                 $this->carryForwardLineItemForecasts($previousPeriod, $period);
-                $this->carryForwardControlAccountForecasts($previousPeriod, $period, $project);
             }
 
-            if (! $period->wasRecentlyCreated) {
-                $previousPeriod = $period;
-            } else {
-                $previousPeriod = $period;
-            }
+            $previousPeriod = $period;
 
             $current->addMonth();
         }
@@ -68,31 +62,6 @@ class SyncForecastPeriods
                 'fcac_rate' => 0,
                 'fcac_amount' => 0,
                 'variance' => 0,
-            ]);
-        }
-    }
-
-    private function carryForwardControlAccountForecasts(
-        ForecastPeriod $oldPeriod,
-        ForecastPeriod $newPeriod,
-        Project $project,
-    ): void {
-        $oldForecasts = ControlAccountForecast::where('forecast_period_id', $oldPeriod->id)->get();
-
-        foreach ($oldForecasts as $oldForecast) {
-            $controlAccount = $project->controlAccounts()->find($oldForecast->control_account_id);
-
-            ControlAccountForecast::create([
-                'control_account_id' => $oldForecast->control_account_id,
-                'forecast_period_id' => $newPeriod->id,
-                'last_month_approved_budget' => $controlAccount->approved_budget ?? 0,
-                'budget_movement' => 0,
-                'monthly_cost' => 0,
-                'cost_to_date' => 0,
-                'estimate_to_complete' => 0,
-                'estimated_final_cost' => 0,
-                'last_month_efc' => $oldForecast->estimated_final_cost,
-                'efc_movement' => 0,
             ]);
         }
     }

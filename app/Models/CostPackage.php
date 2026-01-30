@@ -10,6 +10,7 @@ class CostPackage extends Model
 {
     protected $fillable = [
         'project_id',
+        'control_account_id',
         'item_no',
         'name',
         'sort_order',
@@ -21,6 +22,14 @@ class CostPackage extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * @return BelongsTo<ControlAccount, $this>
+     */
+    public function controlAccount(): BelongsTo
+    {
+        return $this->belongsTo(ControlAccount::class);
     }
 
     /**

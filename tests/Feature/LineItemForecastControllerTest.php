@@ -54,22 +54,18 @@ class LineItemForecastControllerTest extends TestCase
                     [
                         'line_item_id' => $item->id,
                         'ctd_qty' => 50,
-                        'ctd_rate' => 260,
-                        'ctd_amount' => 13000,
-                        'ctc_qty' => 50,
-                        'ctc_rate' => 240,
-                        'ctc_amount' => 12000,
                         'comments' => 'On track',
                     ],
                 ],
             ])
             ->assertRedirect(route('projects.show', $project));
 
+        // ctdAmount = 50 * 250 = 12500, ctcAmount = 50 * 250 = 12500, fcac = 25000
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_amount' => 13000,
-            'ctc_amount' => 12000,
+            'ctd_amount' => 12500,
+            'ctc_amount' => 12500,
             'fcac_amount' => 25000,
         ]);
     }
@@ -93,11 +89,6 @@ class LineItemForecastControllerTest extends TestCase
                     [
                         'line_item_id' => $item->id,
                         'ctd_qty' => 50,
-                        'ctd_rate' => 260,
-                        'ctd_amount' => 13000,
-                        'ctc_qty' => 50,
-                        'ctc_rate' => 240,
-                        'ctc_amount' => 12000,
                     ],
                 ],
             ])

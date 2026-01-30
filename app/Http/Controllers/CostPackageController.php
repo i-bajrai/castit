@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateCostPackage;
@@ -19,18 +20,24 @@ class CostPackageController extends Controller
         Gate::authorize('update', $project);
 
         $validated = $request->validate([
+            'control_account_id' => 'required|exists:control_accounts,id',
             'item_no' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'sort_order' => 'required|integer|min:0',
         ]);
 
+        $controlAccount = ControlAccount::where('id', $validated['control_account_id'])
+            ->where('project_id', $project->id)
+            ->firstOrFail();
+
         $data = new CostPackageData(
             name: $validated['name'],
             itemNo: $validated['item_no'] ?? null,
             sortOrder: (int) $validated['sort_order'],
+            controlAccountId: $controlAccount->id,
         );
 
-        $action->execute($project, $data);
+        $action->execute($controlAccount, $data);
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Cost package created.');

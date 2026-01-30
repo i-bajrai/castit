@@ -110,8 +110,20 @@ class ProjectControllerTest extends TestCase
             'is_current' => true,
         ]);
 
+        $account = ControlAccount::create([
+            'project_id' => $project->id,
+            'phase' => 'Construction',
+            'code' => '001',
+            'description' => 'Test Account',
+            'category' => 'Civil',
+            'baseline_budget' => 50000,
+            'approved_budget' => 50000,
+            'sort_order' => 1,
+        ]);
+
         $package = CostPackage::create([
             'project_id' => $project->id,
+            'control_account_id' => $account->id,
             'item_no' => '001',
             'name' => 'Foundation Works',
             'sort_order' => 1,
