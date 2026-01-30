@@ -223,4 +223,99 @@ class ProjectControllerTest extends TestCase
             ->assertSee('Project Alpha')
             ->assertSee('Project Beta');
     }
+
+    public function test_owner_can_create_project(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+
+        $this->actingAs($user)
+            ->post('/projects', [
+                'company_id' => $company->id,
+                'name' => 'New Highway Project',
+                'project_number' => 'HWY-001',
+                'description' => 'A new highway construction project',
+                'original_budget' => 500000,
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('projects', [
+            'company_id' => $company->id,
+            'name' => 'New Highway Project',
+            'project_number' => 'HWY-001',
+        ]);
+    }
+
+    public function test_non_owner_cannot_create_project_for_other_company(): void
+    {
+        [$owner, $company] = $this->createUserWithProject();
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($otherUser)
+            ->post('/projects', [
+                'company_id' => $company->id,
+                'name' => 'Unauthorized Project',
+                'original_budget' => 100000,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_create_project_requires_name(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+
+        $this->actingAs($user)
+            ->post('/projects', [
+                'company_id' => $company->id,
+                'original_budget' => 100000,
+            ])
+            ->assertSessionHasErrors('name');
+    }
+
+    public function test_create_project_requires_original_budget(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+
+        $this->actingAs($user)
+            ->post('/projects', [
+                'company_id' => $company->id,
+                'name' => 'Test Project',
+            ])
+            ->assertSessionHasErrors('original_budget');
+    }
+
+    public function test_create_project_requires_valid_company(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post('/projects', [
+                'company_id' => 9999,
+                'name' => 'Test Project',
+                'original_budget' => 100000,
+            ])
+            ->assertSessionHasErrors('company_id');
+    }
+
+    public function test_guest_cannot_create_project(): void
+    {
+        $this->post('/projects', [
+            'company_id' => 1,
+            'name' => 'Test',
+            'original_budget' => 100000,
+        ])->assertRedirect('/login');
+    }
+
+    public function test_dashboard_shows_new_project_button(): void
+    {
+        $user = User::factory()->create();
+        Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('New Project');
+    }
 }
