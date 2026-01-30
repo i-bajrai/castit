@@ -2,15 +2,15 @@
 
 namespace Domain\Forecasting\Actions;
 
+use App\Models\Company;
 use App\Models\Project;
-use App\Models\User;
 use Domain\Forecasting\DataTransferObjects\ProjectData;
 
 class CreateProject
 {
-    public function execute(User $user, ProjectData $data): Project
+    public function execute(Company $company, ProjectData $data): Project
     {
-        return $user->projects()->create([
+        return $company->projects()->create([
             'name' => $data->name,
             'description' => $data->description,
             'project_number' => $data->projectNumber,

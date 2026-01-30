@@ -13,7 +13,9 @@ class ProjectController extends Controller
 {
     public function index(Request $request): View
     {
-        $projects = $request->user()->projects()
+        $companyIds = $request->user()->companies()->pluck('id');
+
+        $projects = Project::whereIn('company_id', $companyIds)
             ->withCount('costPackages')
             ->latest()
             ->get();

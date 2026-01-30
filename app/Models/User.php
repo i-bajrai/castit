@@ -48,10 +48,10 @@ class User extends Authenticatable
     }
 
     /**
-     * @return HasMany<Project, $this>
+     * @return HasMany<Company, $this>
      */
-    public function projects(): HasMany
+    public function companies(): HasMany
     {
-        return $this->hasMany(Project::class);
+        return $this->hasMany(Company::class);
     }
 }

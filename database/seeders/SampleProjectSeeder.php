@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\ControlAccountForecast;
 use App\Models\CostPackage;
@@ -19,16 +20,22 @@ class SampleProjectSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Create test user
+        // 1. Create user
         $user = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@castit.com',
+            'name' => 'Imran',
+            'email' => 'imran@castit.com',
             'password' => 'password',
         ]);
 
-        // 2. Create project
-        $project = Project::create([
+        // 2. Create company
+        $company = Company::create([
             'user_id' => $user->id,
+            'name' => 'CastIt Construction',
+        ]);
+
+        // 3. Create project
+        $project = Project::create([
+            'company_id' => $company->id,
             'name' => 'PRISM Highway Extension',
             'original_budget' => 248117066,
         ]);
