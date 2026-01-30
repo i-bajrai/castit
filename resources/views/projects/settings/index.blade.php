@@ -31,6 +31,9 @@
                     <button @click="tab = 'periods'" :class="tab === 'periods' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition">
                         Forecast Periods
                     </button>
+                    <button @click="tab = 'packages'" :class="tab === 'packages' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition">
+                        Cost Packages
+                    </button>
                 </nav>
             </div>
 
@@ -249,6 +252,94 @@
                 </div>
             </div>
 
+            {{-- ==================== COST PACKAGES TAB ==================== --}}
+            <div x-show="tab === 'packages'" x-transition>
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Cost Packages</h3>
+                            <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'create-cost-package')" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition">
+                                Add Cost Package
+                            </button>
+                        </div>
+
+                        @if($costPackages->isEmpty())
+                            <p class="text-gray-500 text-sm py-4">No cost packages configured. Add your first one above.</p>
+                        @else
+                            <div class="space-y-4">
+                                @foreach($costPackages as $package)
+                                    <div class="border border-gray-200 rounded-lg" x-data="{ expanded: false }">
+                                        <div class="flex items-center justify-between p-4">
+                                            <div class="flex items-center gap-3">
+                                                <button @click="expanded = !expanded" class="text-gray-400 hover:text-gray-600">
+                                                    <svg class="w-5 h-5 transition-transform" :class="expanded && 'rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </button>
+                                                <div>
+                                                    <span class="text-sm font-medium text-gray-900">
+                                                        @if($package->item_no)
+                                                            <span class="text-gray-500">{{ $package->item_no }} -</span>
+                                                        @endif
+                                                        {{ $package->name }}
+                                                    </span>
+                                                    <span class="ml-2 text-xs text-gray-500">({{ $package->line_items_count }} items)</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-sm text-green-600 hover:text-green-800 font-medium">Add Item</button>
+                                                <button x-on:click.prevent="$dispatch('open-modal', 'edit-cost-package-{{ $package->id }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
+                                                <button x-on:click.prevent="$dispatch('open-modal', 'delete-cost-package-{{ $package->id }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                            </div>
+                                        </div>
+
+                                        <div x-show="expanded" x-transition class="border-t border-gray-200">
+                                            @if($package->lineItems->isEmpty())
+                                                <p class="text-gray-500 text-sm p-4">No line items. Add one using the button above.</p>
+                                            @else
+                                                <table class="min-w-full divide-y divide-gray-200">
+                                                    <thead>
+                                                        <tr class="bg-gray-50">
+                                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item No</th>
+                                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">UoM</th>
+                                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Rate</th>
+                                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-100">
+                                                        @foreach($package->lineItems as $item)
+                                                            <tr class="hover:bg-gray-50">
+                                                                <td class="px-4 py-2 text-sm text-gray-600">{{ $item->sort_order }}</td>
+                                                                <td class="px-4 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
+                                                                <td class="px-4 py-2 text-sm text-gray-900">{{ $item->description }}</td>
+                                                                <td class="px-4 py-2 text-sm text-gray-600">{{ $item->unit_of_measure }}</td>
+                                                                <td class="px-4 py-2 text-sm text-gray-900 text-right">{{ number_format($item->original_qty, 2) }}</td>
+                                                                <td class="px-4 py-2 text-sm text-gray-900 text-right">${{ number_format($item->original_rate, 2) }}</td>
+                                                                <td class="px-4 py-2 text-sm text-gray-900 text-right">${{ number_format($item->original_amount, 2) }}</td>
+                                                                <td class="px-4 py-2 text-sm text-right">
+                                                                    <div class="flex justify-end gap-2">
+                                                                        <button x-on:click.prevent="$dispatch('open-modal', 'edit-line-item-{{ $item->id }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
+                                                                        <button x-on:click.prevent="$dispatch('open-modal', 'delete-line-item-{{ $item->id }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             {{-- ==================== MODALS ==================== --}}
 
             {{-- Create Control Account Modal --}}
@@ -294,6 +385,188 @@
                     </div>
                 </form>
             </x-modal>
+
+            {{-- Create Cost Package Modal --}}
+            <x-modal name="create-cost-package" :show="false" maxWidth="lg">
+                <form method="POST" action="{{ route('projects.cost-packages.store', $project) }}" class="p-6">
+                    @csrf
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Add Cost Package</h2>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <x-input-label for="create_pkg_item_no" value="Item No" />
+                            <x-text-input id="create_pkg_item_no" name="item_no" type="text" class="mt-1 block w-full" />
+                        </div>
+                        <div>
+                            <x-input-label for="create_pkg_sort_order" value="Sort Order" />
+                            <x-text-input id="create_pkg_sort_order" name="sort_order" type="number" class="mt-1 block w-full" value="0" required />
+                        </div>
+                        <div class="col-span-2">
+                            <x-input-label for="create_pkg_name" value="Name" />
+                            <x-text-input id="create_pkg_name" name="name" type="text" class="mt-1 block w-full" required />
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                        <x-primary-button>Create</x-primary-button>
+                    </div>
+                </form>
+            </x-modal>
+
+            {{-- Edit / Delete Cost Package Modals --}}
+            @foreach($costPackages as $package)
+                <x-modal name="edit-cost-package-{{ $package->id }}" :show="false" maxWidth="lg">
+                    <form method="POST" action="{{ route('projects.cost-packages.update', [$project, $package]) }}" class="p-6">
+                        @csrf
+                        @method('PUT')
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Cost Package - {{ $package->name }}</h2>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="edit_pkg_item_no_{{ $package->id }}" value="Item No" />
+                                <x-text-input id="edit_pkg_item_no_{{ $package->id }}" name="item_no" type="text" class="mt-1 block w-full" :value="$package->item_no" />
+                            </div>
+                            <div>
+                                <x-input-label for="edit_pkg_sort_order_{{ $package->id }}" value="Sort Order" />
+                                <x-text-input id="edit_pkg_sort_order_{{ $package->id }}" name="sort_order" type="number" class="mt-1 block w-full" :value="$package->sort_order" required />
+                            </div>
+                            <div class="col-span-2">
+                                <x-input-label for="edit_pkg_name_{{ $package->id }}" value="Name" />
+                                <x-text-input id="edit_pkg_name_{{ $package->id }}" name="name" type="text" class="mt-1 block w-full" :value="$package->name" required />
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                            <x-primary-button>Save Changes</x-primary-button>
+                        </div>
+                    </form>
+                </x-modal>
+
+                <x-modal name="delete-cost-package-{{ $package->id }}" :show="false">
+                    <form method="POST" action="{{ route('projects.cost-packages.destroy', [$project, $package]) }}" class="p-6">
+                        @csrf
+                        @method('DELETE')
+                        <h2 class="text-lg font-medium text-gray-900">Delete Cost Package</h2>
+                        <p class="mt-2 text-sm text-gray-600">
+                            Are you sure you want to delete <strong>{{ $package->name }}</strong>?
+                            This will also delete all line items and their forecasts. This cannot be undone.
+                        </p>
+                        <div class="mt-6 flex justify-end gap-3">
+                            <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                            <x-danger-button>Delete</x-danger-button>
+                        </div>
+                    </form>
+                </x-modal>
+
+                {{-- Add Line Item Modal --}}
+                <x-modal name="add-line-item-{{ $package->id }}" :show="false" maxWidth="lg">
+                    <form method="POST" action="{{ route('projects.line-items.store', [$project, $package]) }}" class="p-6">
+                        @csrf
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Add Line Item to {{ $package->name }}</h2>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="create_li_item_no_{{ $package->id }}" value="Item No" />
+                                <x-text-input id="create_li_item_no_{{ $package->id }}" name="item_no" type="text" class="mt-1 block w-full" />
+                            </div>
+                            <div>
+                                <x-input-label for="create_li_sort_order_{{ $package->id }}" value="Sort Order" />
+                                <x-text-input id="create_li_sort_order_{{ $package->id }}" name="sort_order" type="number" class="mt-1 block w-full" value="0" required />
+                            </div>
+                            <div class="col-span-2">
+                                <x-input-label for="create_li_description_{{ $package->id }}" value="Description" />
+                                <x-text-input id="create_li_description_{{ $package->id }}" name="description" type="text" class="mt-1 block w-full" required />
+                            </div>
+                            <div>
+                                <x-input-label for="create_li_uom_{{ $package->id }}" value="Unit of Measure" />
+                                <x-text-input id="create_li_uom_{{ $package->id }}" name="unit_of_measure" type="text" class="mt-1 block w-full" />
+                            </div>
+                            <div>
+                                <x-input-label for="create_li_qty_{{ $package->id }}" value="Original Qty" />
+                                <x-text-input id="create_li_qty_{{ $package->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                            </div>
+                            <div>
+                                <x-input-label for="create_li_rate_{{ $package->id }}" value="Original Rate" />
+                                <x-text-input id="create_li_rate_{{ $package->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                            </div>
+                            <div>
+                                <x-input-label for="create_li_amount_{{ $package->id }}" value="Original Amount" />
+                                <x-text-input id="create_li_amount_{{ $package->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                            <x-primary-button>Create</x-primary-button>
+                        </div>
+                    </form>
+                </x-modal>
+
+                {{-- Edit / Delete Line Item Modals --}}
+                @foreach($package->lineItems as $item)
+                    <x-modal name="edit-line-item-{{ $item->id }}" :show="false" maxWidth="lg">
+                        <form method="POST" action="{{ route('projects.line-items.update', [$project, $package, $item]) }}" class="p-6">
+                            @csrf
+                            @method('PUT')
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Line Item - {{ $item->description }}</h2>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <x-input-label for="edit_li_item_no_{{ $item->id }}" value="Item No" />
+                                    <x-text-input id="edit_li_item_no_{{ $item->id }}" name="item_no" type="text" class="mt-1 block w-full" :value="$item->item_no" />
+                                </div>
+                                <div>
+                                    <x-input-label for="edit_li_sort_order_{{ $item->id }}" value="Sort Order" />
+                                    <x-text-input id="edit_li_sort_order_{{ $item->id }}" name="sort_order" type="number" class="mt-1 block w-full" :value="$item->sort_order" required />
+                                </div>
+                                <div class="col-span-2">
+                                    <x-input-label for="edit_li_description_{{ $item->id }}" value="Description" />
+                                    <x-text-input id="edit_li_description_{{ $item->id }}" name="description" type="text" class="mt-1 block w-full" :value="$item->description" required />
+                                </div>
+                                <div>
+                                    <x-input-label for="edit_li_uom_{{ $item->id }}" value="Unit of Measure" />
+                                    <x-text-input id="edit_li_uom_{{ $item->id }}" name="unit_of_measure" type="text" class="mt-1 block w-full" :value="$item->unit_of_measure" />
+                                </div>
+                                <div>
+                                    <x-input-label for="edit_li_qty_{{ $item->id }}" value="Original Qty" />
+                                    <x-text-input id="edit_li_qty_{{ $item->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_qty" required />
+                                </div>
+                                <div>
+                                    <x-input-label for="edit_li_rate_{{ $item->id }}" value="Original Rate" />
+                                    <x-text-input id="edit_li_rate_{{ $item->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_rate" required />
+                                </div>
+                                <div>
+                                    <x-input-label for="edit_li_amount_{{ $item->id }}" value="Original Amount" />
+                                    <x-text-input id="edit_li_amount_{{ $item->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_amount" required />
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex justify-end gap-3">
+                                <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                                <x-primary-button>Save Changes</x-primary-button>
+                            </div>
+                        </form>
+                    </x-modal>
+
+                    <x-modal name="delete-line-item-{{ $item->id }}" :show="false">
+                        <form method="POST" action="{{ route('projects.line-items.destroy', [$project, $package, $item]) }}" class="p-6">
+                            @csrf
+                            @method('DELETE')
+                            <h2 class="text-lg font-medium text-gray-900">Delete Line Item</h2>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Are you sure you want to delete <strong>{{ $item->description }}</strong>?
+                                This will also delete all associated forecasts. This cannot be undone.
+                            </p>
+                            <div class="mt-6 flex justify-end gap-3">
+                                <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                                <x-danger-button>Delete</x-danger-button>
+                            </div>
+                        </form>
+                    </x-modal>
+                @endforeach
+            @endforeach
 
             {{-- Edit / Delete Modals per account --}}
             @foreach($controlAccounts as $account)

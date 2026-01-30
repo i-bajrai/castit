@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\BudgetAdjustmentController;
 use App\Http\Controllers\ControlAccountController;
+use App\Http\Controllers\ControlAccountForecastController;
+use App\Http\Controllers\CostPackageController;
 use App\Http\Controllers\ForecastPeriodController;
+use App\Http\Controllers\LineItemController;
+use App\Http\Controllers\LineItemForecastController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectSettingsController;
@@ -28,6 +32,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/projects/{project}/periods/{period}/lock', [ForecastPeriodController::class, 'lock'])->name('projects.periods.lock');
 
     Route::post('/projects/{project}/budget-adjustments', [BudgetAdjustmentController::class, 'store'])->name('projects.budget-adjustments.store');
+
+    Route::post('/projects/{project}/cost-packages', [CostPackageController::class, 'store'])->name('projects.cost-packages.store');
+    Route::put('/projects/{project}/cost-packages/{costPackage}', [CostPackageController::class, 'update'])->name('projects.cost-packages.update');
+    Route::delete('/projects/{project}/cost-packages/{costPackage}', [CostPackageController::class, 'destroy'])->name('projects.cost-packages.destroy');
+
+    Route::post('/projects/{project}/cost-packages/{costPackage}/line-items', [LineItemController::class, 'store'])->name('projects.line-items.store');
+    Route::put('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'update'])->name('projects.line-items.update');
+    Route::delete('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'destroy'])->name('projects.line-items.destroy');
+
+    Route::get('/projects/{project}/data-entry', [LineItemForecastController::class, 'index'])->name('projects.data-entry.line-items');
+    Route::post('/projects/{project}/data-entry/line-items', [LineItemForecastController::class, 'store'])->name('projects.data-entry.line-items.store');
+
+    Route::get('/projects/{project}/data-entry/control-accounts', [ControlAccountForecastController::class, 'index'])->name('projects.data-entry.control-accounts');
+    Route::post('/projects/{project}/data-entry/control-accounts', [ControlAccountForecastController::class, 'store'])->name('projects.data-entry.control-accounts.store');
 });
 
 Route::middleware('auth')->group(function () {

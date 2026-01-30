@@ -20,11 +20,18 @@ class ProjectSettingsController extends Controller
 
         $lockedPeriods = $periods->filter(fn ($p) => $p->isLocked());
 
+        $costPackages = $project->costPackages()
+            ->withCount('lineItems')
+            ->with(['lineItems' => fn ($q) => $q->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->get();
+
         return view('projects.settings.index', [
             'project' => $project,
             'controlAccounts' => $controlAccounts,
             'periods' => $periods,
             'lockedPeriods' => $lockedPeriods,
+            'costPackages' => $costPackages,
         ]);
     }
 }
