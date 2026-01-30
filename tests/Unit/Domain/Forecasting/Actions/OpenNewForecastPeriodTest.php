@@ -71,8 +71,18 @@ class OpenNewForecastPeriodTest extends TestCase
             'is_current' => true,
         ]);
 
+        $controlAccount = ControlAccount::create([
+            'project_id' => $project->id,
+            'code' => 'CA-001',
+            'description' => 'Test Control Account',
+            'phase' => 'Phase 1',
+            'category' => 'Labor',
+            'sort_order' => 1,
+        ]);
+
         $package = CostPackage::create([
             'project_id' => $project->id,
+            'control_account_id' => $controlAccount->id,
             'item_no' => '001',
             'name' => 'Package A',
             'sort_order' => 1,

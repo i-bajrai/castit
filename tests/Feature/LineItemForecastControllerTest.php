@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Company;
+use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
@@ -26,8 +27,18 @@ class LineItemForecastControllerTest extends TestCase
             'period_date' => now()->startOfMonth()->toDateString(),
         ]);
 
+        $controlAccount = ControlAccount::create([
+            'project_id' => $project->id,
+            'code' => 'CA-001',
+            'description' => 'Test Control Account',
+            'phase' => 'Phase 1',
+            'category' => 'Labor',
+            'sort_order' => 1,
+        ]);
+
         $package = CostPackage::create([
             'project_id' => $project->id,
+            'control_account_id' => $controlAccount->id,
             'name' => 'Foundation',
             'sort_order' => 1,
         ]);

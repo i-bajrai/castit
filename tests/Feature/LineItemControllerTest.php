@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Company;
+use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\LineItem;
 use App\Models\Project;
@@ -19,7 +20,15 @@ class LineItemControllerTest extends TestCase
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'Test', 'original_budget' => 100000]);
-        $package = CostPackage::create(['project_id' => $project->id, 'name' => 'Foundation', 'sort_order' => 1]);
+        $controlAccount = ControlAccount::create([
+            'project_id' => $project->id,
+            'code' => 'CA-001',
+            'description' => 'Test Control Account',
+            'phase' => 'Phase 1',
+            'category' => 'Labor',
+            'sort_order' => 1,
+        ]);
+        $package = CostPackage::create(['project_id' => $project->id, 'control_account_id' => $controlAccount->id, 'name' => 'Foundation', 'sort_order' => 1]);
 
         return [$user, $project, $package];
     }

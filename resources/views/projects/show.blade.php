@@ -1,4 +1,3 @@
-@php $packages = $accounts->flatMap->costPackages; @endphp
 <x-app-layout>
     <x-slot name="header">
         <x-project-header :project="$project" active="cost-detail" :subtitle="$period ? 'Forecast Period: ' . $period->period_date->format('F Y') : null">
@@ -84,491 +83,361 @@
                 </div>
             </div>
 
-            {{-- ==================== COST PACKAGES & LINE ITEMS ==================== --}}
-            @if($isEditable)
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Cost Packages</h3>
-                    <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'create-cost-package')" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition">
-                        Add Cost Package
-                    </button>
-                </div>
-            @endif
+            {{-- ==================== CONTROL ACCOUNTS & COST PACKAGES ==================== --}}
+            @foreach($accounts as $account)
+                @php
+                    // Compute CA-level totals from line items across all packages
+                    $caOriginal = 0;
+                    $caPrevious = 0;
+                    $caCtd = 0;
+                    $caCtc = 0;
+                    $caFcac = 0;
+                    $caVariance = 0;
+                    $caItemCount = 0;
+                    foreach ($account->costPackages as $pkg) {
+                        foreach ($pkg->lineItems as $li) {
+                            $caOriginal += $li->original_amount;
+                            $caItemCount++;
+                            $f = $li->forecasts->first();
+                            if ($f) {
+                                $caPrevious += $f->previous_amount ?? 0;
+                                $caCtd += $f->ctd_amount ?? 0;
+                                $caCtc += $f->ctc_amount ?? 0;
+                                $caFcac += $f->fcac_amount ?? 0;
+                                $caVariance += $f->variance ?? 0;
+                            }
+                        }
+                    }
+                @endphp
 
-            @foreach($packages as $package)
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" x-data="{ open: true }">
+                    {{-- CA Summary Row --}}
                     <div class="border-b border-gray-200">
-                        <div class="w-full px-6 py-4 flex items-center justify-between">
-                            <button @click="open = !open" class="flex items-center gap-3 hover:text-gray-600 transition">
-                                <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                                <div class="text-left">
-                                    <span class="font-semibold text-gray-900">{{ $package->name }}</span>
-                                    @if($package->item_no)
-                                        <span class="ml-2 text-sm text-gray-500">({{ $package->item_no }})</span>
+                        <div class="w-full px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <button @click="open = !open" class="flex items-center gap-3 hover:text-gray-600 transition">
+                                    <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                    <div class="text-left">
+                                        <span class="font-semibold text-gray-900">{{ $account->code }}</span>
+                                        <span class="ml-2 text-sm text-gray-600">{{ $account->description }}</span>
+                                    </div>
+                                </button>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm text-gray-500">{{ $caItemCount }} items</span>
+                                    @if($isEditable)
+                                        <button x-on:click.prevent="$dispatch('open-modal', 'create-cost-package-{{ $account->id }}')" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-lg text-xs font-medium text-white hover:bg-indigo-700 transition">
+                                            Add Cost Package
+                                        </button>
                                     @endif
                                 </div>
-                            </button>
-                            <div class="flex items-center gap-3">
-                                <span class="text-sm text-gray-500">{{ $package->lineItems->count() }} items</span>
-                                @if($isEditable)
-                                    <button x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-sm text-green-600 hover:text-green-800 font-medium">Add Item</button>
-                                    <button x-on:click.prevent="$dispatch('open-modal', 'edit-cost-package-{{ $package->id }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
-                                    <button x-on:click.prevent="$dispatch('open-modal', 'delete-cost-package-{{ $package->id }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
-                                @endif
+                            </div>
+                            {{-- CA Aggregated Totals --}}
+                            <div class="mt-3 grid grid-cols-3 md:grid-cols-6 gap-3 text-xs">
+                                <div class="bg-gray-50 rounded px-3 py-2">
+                                    <span class="text-gray-500 uppercase font-medium">Orig Budget</span>
+                                    <p class="font-bold text-gray-900">${{ number_format($caOriginal, 2) }}</p>
+                                </div>
+                                <div class="bg-blue-50 rounded px-3 py-2">
+                                    <span class="text-blue-600 uppercase font-medium">Prev FCAC</span>
+                                    <p class="font-bold text-gray-900">${{ number_format($caPrevious, 2) }}</p>
+                                </div>
+                                <div class="bg-green-50 rounded px-3 py-2">
+                                    <span class="text-green-600 uppercase font-medium">CTD</span>
+                                    <p class="font-bold text-gray-900">${{ number_format($caCtd, 2) }}</p>
+                                </div>
+                                <div class="bg-amber-50 rounded px-3 py-2">
+                                    <span class="text-amber-600 uppercase font-medium">CTC</span>
+                                    <p class="font-bold text-gray-900">${{ number_format($caCtc, 2) }}</p>
+                                </div>
+                                <div class="bg-indigo-50 rounded px-3 py-2">
+                                    <span class="text-indigo-600 uppercase font-medium">FCAC</span>
+                                    <p class="font-bold text-gray-900">${{ number_format($caFcac, 2) }}</p>
+                                </div>
+                                <div class="rounded px-3 py-2 {{ $caVariance < 0 ? 'bg-red-50' : 'bg-green-50' }}">
+                                    <span class="{{ $caVariance < 0 ? 'text-red-600' : 'text-green-600' }} uppercase font-medium">Variance</span>
+                                    <p class="font-bold {{ $caVariance < 0 ? 'text-red-700' : 'text-green-700' }}">${{ number_format($caVariance, 2) }}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    {{-- Expanded Content: Cost Packages & Line Items --}}
                     <div x-show="open" x-transition>
-                        @if($package->lineItems->isEmpty())
-                            <div class="p-6 text-center text-gray-500 text-sm">No line items in this package.
+                        @if($account->costPackages->isEmpty())
+                            <div class="p-6 text-center text-gray-500 text-sm">
+                                No cost packages in this control account.
                                 @if($isEditable)
-                                    <button x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-indigo-600 hover:underline">Add one</button>.
+                                    <button x-on:click.prevent="$dispatch('open-modal', 'create-cost-package-{{ $account->id }}')" class="text-indigo-600 hover:underline">Add one</button>.
                                 @endif
                             </div>
                         @else
                             @if($isEditable)
-                                {{-- EDITABLE MODE: Inline form with inputs --}}
+                                {{-- EDITABLE MODE: Single form per CA wrapping all packages --}}
                                 <form method="POST" action="{{ route('projects.data-entry.line-items.store', $project) }}">
                                     @csrf
-                                    <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-200">
-                                            <thead class="bg-gray-50">
-                                                <tr>
-                                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Item</th>
-                                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                                                    <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase w-14">UoM</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24 bg-gray-100">Original</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-24 bg-blue-50">Prev FCAC</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Qty</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Rate</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-28 bg-green-50">CTD Amount</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-24 bg-amber-50">CTC Qty</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-24 bg-amber-50">CTC Rate</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-28 bg-amber-50">CTC Amount</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-28 bg-indigo-50">FCAC</th>
-                                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">Variance</th>
-                                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-40">Comments</th>
-                                                    <th class="px-3 py-3 w-16"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-gray-100">
-                                                @foreach($package->lineItems as $index => $item)
-                                                    @php
-                                                        $forecast = $item->forecasts->first();
-                                                        $prefix = "forecasts[{$index}]";
-                                                    @endphp
-                                                    <tr class="hover:bg-gray-50"
-                                                        x-data="{
-                                                            ctdQty: {{ $forecast->ctd_qty ?? 0 }},
-                                                            ctdRate: {{ $forecast->ctd_rate ?? 0 }},
-                                                            ctdAmount: {{ $forecast->ctd_amount ?? 0 }},
-                                                            ctcQty: {{ $forecast->ctc_qty ?? 0 }},
-                                                            ctcRate: {{ $forecast->ctc_rate ?? 0 }},
-                                                            ctcAmount: {{ $forecast->ctc_amount ?? 0 }},
-                                                            previousAmount: {{ $forecast->previous_amount ?? 0 }},
-                                                            get fcac() { return this.ctdAmount + this.ctcAmount },
-                                                            get variance() { return this.previousAmount - this.fcac },
-                                                            calcCtd() { this.ctdAmount = Math.round(this.ctdQty * this.ctdRate * 100) / 100 },
-                                                            calcCtc() { this.ctcAmount = Math.round(this.ctcQty * this.ctcRate * 100) / 100 },
-                                                        }">
-                                                        <input type="hidden" name="{{ $prefix }}[line_item_id]" value="{{ $item->id }}">
-                                                        <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
-                                                        <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
-                                                        <td class="px-3 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
-                                                        <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
-                                                        <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount ?? 0, 2) }}</td>
+                                    @php $caFormIndex = 0; @endphp
 
-                                                        <td class="px-1 py-1 bg-green-50/30">
-                                                            <input type="number" step="0.01" name="{{ $prefix }}[ctd_qty]"
-                                                                x-model.number="ctdQty" @input="calcCtd()"
-                                                                class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
-                                                        </td>
-                                                        <td class="px-1 py-1 bg-green-50/30">
-                                                            <input type="number" step="0.01" name="{{ $prefix }}[ctd_rate]"
-                                                                x-model.number="ctdRate" @input="calcCtd()"
-                                                                class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
-                                                        </td>
-                                                        <td class="px-1 py-1 bg-green-50/30">
-                                                            <input type="number" step="0.01" name="{{ $prefix }}[ctd_amount]"
-                                                                x-model.number="ctdAmount"
-                                                                class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
-                                                        </td>
+                                    @foreach($account->costPackages as $package)
+                                        {{-- Package Header --}}
+                                        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <span class="font-semibold text-gray-900">{{ $package->name }}</span>
+                                                @if($package->item_no)
+                                                    <span class="text-sm text-gray-500">({{ $package->item_no }})</span>
+                                                @endif
+                                                <span class="text-xs text-gray-400">{{ $package->lineItems->count() }} items</span>
+                                            </div>
+                                            <div class="flex items-center gap-3">
+                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-sm text-green-600 hover:text-green-800 font-medium">Add Item</button>
+                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'edit-cost-package-{{ $package->id }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
+                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'delete-cost-package-{{ $package->id }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                            </div>
+                                        </div>
 
-                                                        <td class="px-1 py-1 bg-amber-50/30">
-                                                            <input type="number" step="0.01" name="{{ $prefix }}[ctc_qty]"
-                                                                x-model.number="ctcQty" @input="calcCtc()"
-                                                                class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-amber-500 focus:ring-amber-500">
-                                                        </td>
-                                                        <td class="px-1 py-1 bg-amber-50/30">
-                                                            <input type="number" step="0.01" name="{{ $prefix }}[ctc_rate]"
-                                                                x-model.number="ctcRate" @input="calcCtc()"
-                                                                class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-amber-500 focus:ring-amber-500">
-                                                        </td>
-                                                        <td class="px-1 py-1 bg-amber-50/30">
-                                                            <input type="number" step="0.01" name="{{ $prefix }}[ctc_amount]"
-                                                                x-model.number="ctcAmount"
-                                                                class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-amber-500 focus:ring-amber-500">
-                                                        </td>
+                                        @if($package->lineItems->isEmpty())
+                                            <div class="px-6 py-4 text-center text-gray-500 text-sm border-b border-gray-100">
+                                                No line items in this package.
+                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-indigo-600 hover:underline">Add one</button>.
+                                            </div>
+                                        @else
+                                            <div class="overflow-x-auto">
+                                                <table class="min-w-full divide-y divide-gray-200">
+                                                    <thead class="bg-gray-50">
+                                                        <tr>
+                                                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Item</th>
+                                                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase w-14">UoM</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Qty</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Rate</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24 bg-gray-100">Orig Amount</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-24 bg-blue-50">Prev FCAC</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Qty</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-20 bg-green-50">CTD Rate</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Amount</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-20 bg-amber-50">CTC Qty</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-24 bg-amber-50">CTC Amount</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-24 bg-indigo-50">FCAC</th>
+                                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Variance</th>
+                                                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-40">Comments</th>
+                                                            <th class="px-3 py-3 w-16"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-100">
+                                                        @foreach($package->lineItems as $item)
+                                                            @php
+                                                                $forecast = $item->forecasts->first();
+                                                                $prefix = "forecasts[{$caFormIndex}]";
+                                                                $caFormIndex++;
+                                                            @endphp
+                                                            <tr class="hover:bg-gray-50"
+                                                                x-data="{
+                                                                    ctdQty: {{ $forecast->ctd_qty ?? 0 }},
+                                                                    origQty: {{ $item->original_qty }},
+                                                                    origRate: {{ $item->original_rate }},
+                                                                    origAmount: {{ $item->original_amount }},
+                                                                    prevAmount: {{ $forecast->previous_amount ?? 0 }},
+                                                                    get ctdRate() { return this.origRate },
+                                                                    get ctdAmount() { return +(this.ctdQty * this.origRate).toFixed(2) },
+                                                                    get ctcQty() { return Math.max(0, this.origQty - this.ctdQty) },
+                                                                    get ctcAmount() { return +(this.ctcQty * this.origRate).toFixed(2) },
+                                                                    get fcac() { return this.ctdAmount + this.ctcAmount },
+                                                                    get variance() { return +(this.prevAmount - this.fcac).toFixed(2) },
+                                                                }">
+                                                                <input type="hidden" name="{{ $prefix }}[line_item_id]" value="{{ $item->id }}">
+                                                                <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">{{ number_format($item->original_qty, 1) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount ?? 0, 2) }}</td>
 
-                                                        <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50" x-text="'$' + fcac.toFixed(2)"></td>
-                                                        <td class="px-3 py-2 text-sm text-right" :class="variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900'" x-text="variance !== 0 ? '$' + variance.toFixed(2) : '-'"></td>
+                                                                {{-- CTD Qty (INPUT) --}}
+                                                                <td class="px-1 py-1 bg-green-50/30">
+                                                                    <input type="number" step="0.01" name="{{ $prefix }}[ctd_qty]"
+                                                                        x-model.number="ctdQty"
+                                                                        class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
+                                                                </td>
+                                                                {{-- CTD Rate (computed) --}}
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdRate.toFixed(2)"></td>
+                                                                {{-- CTD Amount (computed) --}}
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdAmount.toFixed(2)"></td>
+                                                                {{-- CTC Qty (computed) --}}
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="ctcQty.toFixed(1)"></td>
+                                                                {{-- CTC Amount (computed) --}}
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="'$' + ctcAmount.toFixed(2)"></td>
+                                                                {{-- FCAC (computed) --}}
+                                                                <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50" x-text="'$' + fcac.toFixed(2)"></td>
+                                                                {{-- Variance (computed) --}}
+                                                                <td class="px-3 py-2 text-sm text-right" :class="variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900'" x-text="variance !== 0 ? '$' + variance.toFixed(2) : '-'"></td>
 
-                                                        <td class="px-1 py-1">
-                                                            <input type="text" name="{{ $prefix }}[comments]"
-                                                                value="{{ $forecast->comments ?? '' }}"
-                                                                class="w-full text-sm border-gray-300 rounded px-2 py-1 focus:border-indigo-500 focus:ring-indigo-500"
-                                                                placeholder="Notes...">
-                                                        </td>
-                                                        <td class="px-2 py-2">
-                                                            <div class="flex gap-1">
-                                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'edit-line-item-{{ $item->id }}')" class="text-indigo-500 hover:text-indigo-700" title="Edit">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                                </button>
-                                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'delete-line-item-{{ $item->id }}')" class="text-red-500 hover:text-red-700" title="Delete">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                                {{-- Comments (INPUT) --}}
+                                                                <td class="px-1 py-1">
+                                                                    <input type="text" name="{{ $prefix }}[comments]"
+                                                                        value="{{ $forecast->comments ?? '' }}"
+                                                                        class="w-full text-sm border-gray-300 rounded px-2 py-1 focus:border-indigo-500 focus:ring-indigo-500"
+                                                                        placeholder="Notes...">
+                                                                </td>
+                                                                <td class="px-2 py-2">
+                                                                    <div class="flex gap-1">
+                                                                        <button type="button" x-on:click.prevent="$dispatch('open-modal', 'edit-line-item-{{ $item->id }}')" class="text-indigo-500 hover:text-indigo-700" title="Edit">
+                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                                        </button>
+                                                                        <button type="button" x-on:click.prevent="$dispatch('open-modal', 'delete-line-item-{{ $item->id }}')" class="text-red-500 hover:text-red-700" title="Delete">
+                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        @endif
+                                    @endforeach
+
                                     <div class="p-4 bg-gray-50 border-t flex justify-end">
-                                        <x-primary-button>Save {{ $package->name }}</x-primary-button>
+                                        <x-primary-button>Save {{ $account->code }} Forecasts</x-primary-button>
                                     </div>
                                 </form>
                             @else
                                 {{-- READ-ONLY MODE --}}
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Item</th>
-                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase w-16">UoM</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20">Qty</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Rate</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28 bg-gray-100">Original Budget</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-blue-600 uppercase w-28 bg-blue-50">Prev FCAC</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-green-600 uppercase w-28 bg-green-50">CTD</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-amber-600 uppercase w-28 bg-amber-50">CTC</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-28 bg-indigo-50">FCAC</th>
-                                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">Variance</th>
-                                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100">
-                                            @php
-                                                $pkgOriginal = 0;
-                                                $pkgPrevious = 0;
-                                                $pkgCtd = 0;
-                                                $pkgCtc = 0;
-                                                $pkgFcac = 0;
-                                                $pkgVariance = 0;
-                                            @endphp
-                                            @foreach($package->lineItems as $item)
-                                                @php
-                                                    $forecast = $item->forecasts->first();
-                                                    $pkgOriginal += $item->original_amount;
-                                                    if ($forecast) {
-                                                        $pkgPrevious += $forecast->previous_amount;
-                                                        $pkgCtd += $forecast->ctd_amount;
-                                                        $pkgCtc += $forecast->ctc_amount;
-                                                        $pkgFcac += $forecast->fcac_amount;
-                                                        $pkgVariance += $forecast->variance;
-                                                    }
-                                                @endphp
-                                                <tr class="hover:bg-gray-50">
-                                                    <td class="px-4 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
-                                                    <td class="px-4 py-2 text-sm text-gray-900">{{ $item->description }}</td>
-                                                    <td class="px-4 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
-                                                    <td class="px-4 py-2 text-sm text-gray-900 text-right">{{ number_format($item->original_qty, 1) }}</td>
-                                                    <td class="px-4 py-2 text-sm text-gray-900 text-right">${{ number_format($item->original_rate, 2) }}</td>
-                                                    <td class="px-4 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
-                                                    @if($forecast)
-                                                        <td class="px-4 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount, 2) }}</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($forecast->ctd_amount, 2) }}</td>
-                                                        <td class="px-4 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->ctc_amount, 2) }}</td>
-                                                        <td class="px-4 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->fcac_amount, 2) }}</td>
-                                                        <td class="px-4 py-2 text-sm text-right {{ $forecast->variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900' }}">
-                                                            @if($forecast->variance != 0)
-                                                                ${{ number_format($forecast->variance, 2) }}
+                                @foreach($account->costPackages as $package)
+                                    {{-- Package Header --}}
+                                    <div class="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <span class="font-semibold text-gray-900">{{ $package->name }}</span>
+                                            @if($package->item_no)
+                                                <span class="text-sm text-gray-500">({{ $package->item_no }})</span>
+                                            @endif
+                                            <span class="text-xs text-gray-400">{{ $package->lineItems->count() }} items</span>
+                                        </div>
+                                    </div>
+
+                                    @if($package->lineItems->isEmpty())
+                                        <div class="px-6 py-4 text-center text-gray-500 text-sm border-b border-gray-100">
+                                            No line items in this package.
+                                        </div>
+                                    @else
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-gray-200">
+                                                <thead class="bg-gray-50">
+                                                    <tr>
+                                                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-16">Item</th>
+                                                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase w-14">UoM</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Qty</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Rate</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24 bg-gray-100">Orig Amount</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-24 bg-blue-50">Prev FCAC</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Qty</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-20 bg-green-50">CTD Rate</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Amount</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-20 bg-amber-50">CTC Qty</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-24 bg-amber-50">CTC Amount</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-24 bg-indigo-50">FCAC</th>
+                                                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Variance</th>
+                                                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100">
+                                                    @php
+                                                        $pkgOriginal = 0;
+                                                        $pkgPrevious = 0;
+                                                        $pkgCtd = 0;
+                                                        $pkgCtc = 0;
+                                                        $pkgFcac = 0;
+                                                        $pkgVariance = 0;
+                                                    @endphp
+                                                    @foreach($package->lineItems as $item)
+                                                        @php
+                                                            $forecast = $item->forecasts->first();
+                                                            $pkgOriginal += $item->original_amount;
+                                                            if ($forecast) {
+                                                                $pkgPrevious += $forecast->previous_amount ?? 0;
+                                                                $pkgCtd += $forecast->ctd_amount ?? 0;
+                                                                $pkgCtc += $forecast->ctc_amount ?? 0;
+                                                                $pkgFcac += $forecast->fcac_amount ?? 0;
+                                                                $pkgVariance += $forecast->variance ?? 0;
+                                                            }
+                                                        @endphp
+                                                        <tr class="hover:bg-gray-50">
+                                                            <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
+                                                            <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
+                                                            <td class="px-3 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
+                                                            <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">{{ number_format($item->original_qty, 1) }}</td>
+                                                            <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
+                                                            <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
+                                                            @if($forecast)
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">{{ number_format($forecast->ctd_qty ?? 0, 1) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($item->original_rate, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($forecast->ctd_amount, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">{{ number_format(max(0, $item->original_qty - ($forecast->ctd_qty ?? 0)), 1) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->ctc_amount, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->fcac_amount, 2) }}</td>
+                                                                <td class="px-3 py-2 text-sm text-right {{ ($forecast->variance ?? 0) < 0 ? 'text-red-600 font-medium' : 'text-gray-900' }}">
+                                                                    @if(($forecast->variance ?? 0) != 0)
+                                                                        ${{ number_format($forecast->variance, 2) }}
+                                                                    @else
+                                                                        -
+                                                                    @endif
+                                                                </td>
+                                                                <td class="px-3 py-2 text-sm text-gray-500 max-w-xs truncate">{{ $forecast->comments }}</td>
                                                             @else
-                                                                -
+                                                                <td colspan="9" class="px-3 py-2 text-sm text-gray-400 text-center">No forecast data</td>
                                                             @endif
-                                                        </td>
-                                                        <td class="px-4 py-2 text-sm text-gray-500 max-w-xs truncate">{{ $forecast->comments }}</td>
-                                                    @else
-                                                        <td colspan="6" class="px-4 py-2 text-sm text-gray-400 text-center">No forecast data</td>
-                                                    @endif
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                        <tfoot class="bg-gray-100">
-                                            <tr class="font-semibold">
-                                                <td colspan="5" class="px-4 py-3 text-sm text-gray-700 text-right">Package Total</td>
-                                                <td class="px-4 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgOriginal, 2) }}</td>
-                                                <td class="px-4 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgPrevious, 2) }}</td>
-                                                <td class="px-4 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgCtd, 2) }}</td>
-                                                <td class="px-4 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgCtc, 2) }}</td>
-                                                <td class="px-4 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgFcac, 2) }}</td>
-                                                <td class="px-4 py-3 text-sm text-right {{ $pkgVariance < 0 ? 'text-red-600' : 'text-gray-900' }}">${{ number_format($pkgVariance, 2) }}</td>
-                                                <td></td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                                <tfoot class="bg-gray-100">
+                                                    <tr class="font-semibold">
+                                                        <td colspan="5" class="px-3 py-3 text-sm text-gray-700 text-right">Package Total</td>
+                                                        <td class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgOriginal, 2) }}</td>
+                                                        <td class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgPrevious, 2) }}</td>
+                                                        <td colspan="2"></td>
+                                                        <td class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgCtd, 2) }}</td>
+                                                        <td></td>
+                                                        <td class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgCtc, 2) }}</td>
+                                                        <td class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgFcac, 2) }}</td>
+                                                        <td class="px-3 py-3 text-sm text-right {{ $pkgVariance < 0 ? 'text-red-600' : 'text-gray-900' }}">${{ number_format($pkgVariance, 2) }}</td>
+                                                        <td></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    @endif
+                                @endforeach
                             @endif
                         @endif
+                        </div>
                     </div>
                 </div>
             @endforeach
 
-            {{-- ==================== CONTROL ACCOUNTS SECTION ==================== --}}
-            @if($accounts->isNotEmpty())
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" x-data="{ open: true }">
-                    <div class="border-b border-gray-200">
-                        <button @click="open = !open" class="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-90': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                                <span class="font-semibold text-gray-900">Control Accounts</span>
-                            </div>
-                            <span class="text-sm text-gray-500">{{ $accounts->count() }} accounts</span>
-                        </button>
-                    </div>
-
-                    <div x-show="open" x-transition>
-                        @if($isEditable)
-                            <form method="POST" action="{{ route('projects.data-entry.control-accounts.store', $project) }}">
-                                @csrf
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28 bg-gray-100">Approved Budget</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-28 bg-blue-50">Last Month EFC</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-28 bg-green-50">Monthly Cost</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-28 bg-green-50">Cost to Date</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-28 bg-amber-50">Est. to Complete</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-28 bg-indigo-50">EFC</th>
-                                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">EFC Movement</th>
-                                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-48">Comments</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-100">
-                                            @foreach($accounts as $index => $account)
-                                                @php
-                                                    $forecast = $account->forecasts->first();
-                                                    $prefix = "forecasts[{$index}]";
-                                                @endphp
-                                                <tr class="hover:bg-gray-50"
-                                                    x-data="{
-                                                        monthlyCost: {{ $forecast->monthly_cost ?? 0 }},
-                                                        costToDate: {{ $forecast->cost_to_date ?? 0 }},
-                                                        estimateToComplete: {{ $forecast->estimate_to_complete ?? 0 }},
-                                                        lastMonthEfc: {{ $forecast->last_month_efc ?? 0 }},
-                                                        get efc() { return this.costToDate + this.estimateToComplete },
-                                                        get efcMovement() { return this.efc - this.lastMonthEfc },
-                                                    }">
-                                                    <input type="hidden" name="{{ $prefix }}[control_account_id]" value="{{ $account->id }}">
-
-                                                    <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ $account->code }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $account->description }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($account->approved_budget, 0) }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->last_month_efc ?? 0, 0) }}</td>
-
-                                                    <td class="px-1 py-1 bg-green-50/30">
-                                                        <input type="number" step="0.01" name="{{ $prefix }}[monthly_cost]"
-                                                            x-model.number="monthlyCost"
-                                                            class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
-                                                    </td>
-                                                    <td class="px-1 py-1 bg-green-50/30">
-                                                        <input type="number" step="0.01" name="{{ $prefix }}[cost_to_date]"
-                                                            x-model.number="costToDate"
-                                                            class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
-                                                    </td>
-                                                    <td class="px-1 py-1 bg-amber-50/30">
-                                                        <input type="number" step="0.01" name="{{ $prefix }}[estimate_to_complete]"
-                                                            x-model.number="estimateToComplete"
-                                                            class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-amber-500 focus:ring-amber-500">
-                                                    </td>
-
-                                                    <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50" x-text="'$' + efc.toFixed(0)"></td>
-                                                    <td class="px-3 py-2 text-sm text-right"
-                                                        :class="efcMovement > 0 ? 'text-red-600 font-medium' : efcMovement < 0 ? 'text-green-600 font-medium' : 'text-gray-900'"
-                                                        x-text="efcMovement !== 0 ? '$' + efcMovement.toFixed(0) : '-'"></td>
-
-                                                    <td class="px-1 py-1">
-                                                        <input type="text" name="{{ $prefix }}[monthly_comments]"
-                                                            value="{{ $forecast->monthly_comments ?? '' }}"
-                                                            class="w-full text-sm border-gray-300 rounded px-2 py-1 focus:border-indigo-500 focus:ring-indigo-500"
-                                                            placeholder="Notes...">
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="p-4 bg-gray-50 border-t flex justify-end">
-                                    <x-primary-button>Save Control Account Forecasts</x-primary-button>
-                                </div>
-                            </form>
-                        @else
-                            {{-- READ-ONLY CA view --}}
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28 bg-gray-100">Approved Budget</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-28 bg-blue-50">Last Month EFC</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-28 bg-green-50">Monthly Cost</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-28 bg-green-50">Cost to Date</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-28 bg-amber-50">Est. to Complete</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-28 bg-indigo-50">EFC</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-28">EFC Movement</th>
-                                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-100">
-                                        @foreach($accounts as $account)
-                                            @php $forecast = $account->forecasts->first(); @endphp
-                                            <tr class="hover:bg-gray-50">
-                                                <td class="px-3 py-2 text-sm font-medium text-gray-900">{{ $account->code }}</td>
-                                                <td class="px-3 py-2 text-sm text-gray-900">{{ $account->description }}</td>
-                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($account->approved_budget, 0) }}</td>
-                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->last_month_efc ?? 0, 0) }}</td>
-                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($forecast->monthly_cost ?? 0, 0) }}</td>
-                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($forecast->cost_to_date ?? 0, 0) }}</td>
-                                                <td class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->estimate_to_complete ?? 0, 0) }}</td>
-                                                <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->estimated_final_cost ?? 0, 0) }}</td>
-                                                <td class="px-3 py-2 text-sm text-right {{ ($forecast->efc_movement ?? 0) > 0 ? 'text-red-600 font-medium' : (($forecast->efc_movement ?? 0) < 0 ? 'text-green-600 font-medium' : 'text-gray-900') }}">
-                                                    @if(($forecast->efc_movement ?? 0) != 0)
-                                                        ${{ number_format($forecast->efc_movement, 0) }}
-                                                    @else
-                                                        -
-                                                    @endif
-                                                </td>
-                                                <td class="px-3 py-2 text-sm text-gray-500">{{ $forecast->monthly_comments ?? '' }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            @endif
-
             {{-- ==================== MODALS (only when editable) ==================== --}}
             @if($isEditable)
-                {{-- Create Cost Package Modal --}}
-                <x-modal name="create-cost-package" :show="false" maxWidth="lg">
-                    <form method="POST" action="{{ route('projects.cost-packages.store', $project) }}" class="p-6">
-                        @csrf
-                        <h2 class="text-lg font-medium text-gray-900 mb-4">Add Cost Package</h2>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <x-input-label for="create_pkg_item_no" value="Item No" />
-                                <x-text-input id="create_pkg_item_no" name="item_no" type="text" class="mt-1 block w-full" />
-                            </div>
-                            <div>
-                                <x-input-label for="create_pkg_sort_order" value="Sort Order" />
-                                <x-text-input id="create_pkg_sort_order" name="sort_order" type="number" class="mt-1 block w-full" value="0" required />
-                            </div>
-                            <div class="col-span-2">
-                                <x-input-label for="create_pkg_name" value="Name" />
-                                <x-text-input id="create_pkg_name" name="name" type="text" class="mt-1 block w-full" required />
-                            </div>
-                        </div>
-                        <div class="mt-6 flex justify-end gap-3">
-                            <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                            <x-primary-button>Create</x-primary-button>
-                        </div>
-                    </form>
-                </x-modal>
-
-                {{-- Edit / Delete Cost Package + Line Item Modals --}}
-                @foreach($packages as $package)
-                    <x-modal name="edit-cost-package-{{ $package->id }}" :show="false" maxWidth="lg">
-                        <form method="POST" action="{{ route('projects.cost-packages.update', [$project, $package]) }}" class="p-6">
+                {{-- Create Cost Package Modals (one per CA) --}}
+                @foreach($accounts as $account)
+                    <x-modal name="create-cost-package-{{ $account->id }}" :show="false" maxWidth="lg">
+                        <form method="POST" action="{{ route('projects.cost-packages.store', $project) }}" class="p-6">
                             @csrf
-                            @method('PUT')
-                            <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Cost Package - {{ $package->name }}</h2>
+                            <input type="hidden" name="control_account_id" value="{{ $account->id }}">
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Add Cost Package to {{ $account->code }}</h2>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <x-input-label for="edit_pkg_item_no_{{ $package->id }}" value="Item No" />
-                                    <x-text-input id="edit_pkg_item_no_{{ $package->id }}" name="item_no" type="text" class="mt-1 block w-full" :value="$package->item_no" />
+                                    <x-input-label for="create_pkg_item_no_{{ $account->id }}" value="Item No" />
+                                    <x-text-input id="create_pkg_item_no_{{ $account->id }}" name="item_no" type="text" class="mt-1 block w-full" />
                                 </div>
                                 <div>
-                                    <x-input-label for="edit_pkg_sort_order_{{ $package->id }}" value="Sort Order" />
-                                    <x-text-input id="edit_pkg_sort_order_{{ $package->id }}" name="sort_order" type="number" class="mt-1 block w-full" :value="$package->sort_order" required />
+                                    <x-input-label for="create_pkg_sort_order_{{ $account->id }}" value="Sort Order" />
+                                    <x-text-input id="create_pkg_sort_order_{{ $account->id }}" name="sort_order" type="number" class="mt-1 block w-full" value="0" required />
                                 </div>
                                 <div class="col-span-2">
-                                    <x-input-label for="edit_pkg_name_{{ $package->id }}" value="Name" />
-                                    <x-text-input id="edit_pkg_name_{{ $package->id }}" name="name" type="text" class="mt-1 block w-full" :value="$package->name" required />
-                                </div>
-                            </div>
-                            <div class="mt-6 flex justify-end gap-3">
-                                <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                                <x-primary-button>Save Changes</x-primary-button>
-                            </div>
-                        </form>
-                    </x-modal>
-
-                    <x-modal name="delete-cost-package-{{ $package->id }}" :show="false">
-                        <form method="POST" action="{{ route('projects.cost-packages.destroy', [$project, $package]) }}" class="p-6">
-                            @csrf
-                            @method('DELETE')
-                            <h2 class="text-lg font-medium text-gray-900">Delete Cost Package</h2>
-                            <p class="mt-2 text-sm text-gray-600">Are you sure you want to delete <strong>{{ $package->name }}</strong>? This will also delete all line items and their forecasts.</p>
-                            <div class="mt-6 flex justify-end gap-3">
-                                <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                                <x-danger-button>Delete</x-danger-button>
-                            </div>
-                        </form>
-                    </x-modal>
-
-                    <x-modal name="add-line-item-{{ $package->id }}" :show="false" maxWidth="lg">
-                        <form method="POST" action="{{ route('projects.line-items.store', [$project, $package]) }}" class="p-6">
-                            @csrf
-                            <h2 class="text-lg font-medium text-gray-900 mb-4">Add Line Item to {{ $package->name }}</h2>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <x-input-label for="create_li_item_no_{{ $package->id }}" value="Item No" />
-                                    <x-text-input id="create_li_item_no_{{ $package->id }}" name="item_no" type="text" class="mt-1 block w-full" />
-                                </div>
-                                <div>
-                                    <x-input-label for="create_li_sort_order_{{ $package->id }}" value="Sort Order" />
-                                    <x-text-input id="create_li_sort_order_{{ $package->id }}" name="sort_order" type="number" class="mt-1 block w-full" value="0" required />
-                                </div>
-                                <div class="col-span-2">
-                                    <x-input-label for="create_li_description_{{ $package->id }}" value="Description" />
-                                    <x-text-input id="create_li_description_{{ $package->id }}" name="description" type="text" class="mt-1 block w-full" required />
-                                </div>
-                                <div>
-                                    <x-input-label for="create_li_uom_{{ $package->id }}" value="Unit of Measure" />
-                                    <x-text-input id="create_li_uom_{{ $package->id }}" name="unit_of_measure" type="text" class="mt-1 block w-full" />
-                                </div>
-                                <div>
-                                    <x-input-label for="create_li_qty_{{ $package->id }}" value="Original Qty" />
-                                    <x-text-input id="create_li_qty_{{ $package->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
-                                </div>
-                                <div>
-                                    <x-input-label for="create_li_rate_{{ $package->id }}" value="Original Rate" />
-                                    <x-text-input id="create_li_rate_{{ $package->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
-                                </div>
-                                <div>
-                                    <x-input-label for="create_li_amount_{{ $package->id }}" value="Original Amount" />
-                                    <x-text-input id="create_li_amount_{{ $package->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                                    <x-input-label for="create_pkg_name_{{ $account->id }}" value="Name" />
+                                    <x-text-input id="create_pkg_name_{{ $account->id }}" name="name" type="text" class="mt-1 block w-full" required />
                                 </div>
                             </div>
                             <div class="mt-6 flex justify-end gap-3">
@@ -578,40 +447,25 @@
                         </form>
                     </x-modal>
 
-                    @foreach($package->lineItems as $item)
-                        <x-modal name="edit-line-item-{{ $item->id }}" :show="false" maxWidth="lg">
-                            <form method="POST" action="{{ route('projects.line-items.update', [$project, $package, $item]) }}" class="p-6">
+                    {{-- Edit / Delete Cost Package + Line Item Modals --}}
+                    @foreach($account->costPackages as $package)
+                        <x-modal name="edit-cost-package-{{ $package->id }}" :show="false" maxWidth="lg">
+                            <form method="POST" action="{{ route('projects.cost-packages.update', [$project, $package]) }}" class="p-6">
                                 @csrf
                                 @method('PUT')
-                                <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Line Item - {{ $item->description }}</h2>
+                                <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Cost Package - {{ $package->name }}</h2>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <x-input-label for="edit_li_item_no_{{ $item->id }}" value="Item No" />
-                                        <x-text-input id="edit_li_item_no_{{ $item->id }}" name="item_no" type="text" class="mt-1 block w-full" :value="$item->item_no" />
+                                        <x-input-label for="edit_pkg_item_no_{{ $package->id }}" value="Item No" />
+                                        <x-text-input id="edit_pkg_item_no_{{ $package->id }}" name="item_no" type="text" class="mt-1 block w-full" :value="$package->item_no" />
                                     </div>
                                     <div>
-                                        <x-input-label for="edit_li_sort_order_{{ $item->id }}" value="Sort Order" />
-                                        <x-text-input id="edit_li_sort_order_{{ $item->id }}" name="sort_order" type="number" class="mt-1 block w-full" :value="$item->sort_order" required />
+                                        <x-input-label for="edit_pkg_sort_order_{{ $package->id }}" value="Sort Order" />
+                                        <x-text-input id="edit_pkg_sort_order_{{ $package->id }}" name="sort_order" type="number" class="mt-1 block w-full" :value="$package->sort_order" required />
                                     </div>
                                     <div class="col-span-2">
-                                        <x-input-label for="edit_li_description_{{ $item->id }}" value="Description" />
-                                        <x-text-input id="edit_li_description_{{ $item->id }}" name="description" type="text" class="mt-1 block w-full" :value="$item->description" required />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="edit_li_uom_{{ $item->id }}" value="Unit of Measure" />
-                                        <x-text-input id="edit_li_uom_{{ $item->id }}" name="unit_of_measure" type="text" class="mt-1 block w-full" :value="$item->unit_of_measure" />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="edit_li_qty_{{ $item->id }}" value="Original Qty" />
-                                        <x-text-input id="edit_li_qty_{{ $item->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_qty" required />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="edit_li_rate_{{ $item->id }}" value="Original Rate" />
-                                        <x-text-input id="edit_li_rate_{{ $item->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_rate" required />
-                                    </div>
-                                    <div>
-                                        <x-input-label for="edit_li_amount_{{ $item->id }}" value="Original Amount" />
-                                        <x-text-input id="edit_li_amount_{{ $item->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_amount" required />
+                                        <x-input-label for="edit_pkg_name_{{ $package->id }}" value="Name" />
+                                        <x-text-input id="edit_pkg_name_{{ $package->id }}" name="name" type="text" class="mt-1 block w-full" :value="$package->name" required />
                                     </div>
                                 </div>
                                 <div class="mt-6 flex justify-end gap-3">
@@ -621,18 +475,116 @@
                             </form>
                         </x-modal>
 
-                        <x-modal name="delete-line-item-{{ $item->id }}" :show="false">
-                            <form method="POST" action="{{ route('projects.line-items.destroy', [$project, $package, $item]) }}" class="p-6">
+                        <x-modal name="delete-cost-package-{{ $package->id }}" :show="false">
+                            <form method="POST" action="{{ route('projects.cost-packages.destroy', [$project, $package]) }}" class="p-6">
                                 @csrf
                                 @method('DELETE')
-                                <h2 class="text-lg font-medium text-gray-900">Delete Line Item</h2>
-                                <p class="mt-2 text-sm text-gray-600">Are you sure you want to delete <strong>{{ $item->description }}</strong>? This will also delete all associated forecasts.</p>
+                                <h2 class="text-lg font-medium text-gray-900">Delete Cost Package</h2>
+                                <p class="mt-2 text-sm text-gray-600">Are you sure you want to delete <strong>{{ $package->name }}</strong>? This will also delete all line items and their forecasts.</p>
                                 <div class="mt-6 flex justify-end gap-3">
                                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
                                     <x-danger-button>Delete</x-danger-button>
                                 </div>
                             </form>
                         </x-modal>
+
+                        <x-modal name="add-line-item-{{ $package->id }}" :show="false" maxWidth="lg">
+                            <form method="POST" action="{{ route('projects.line-items.store', [$project, $package]) }}" class="p-6">
+                                @csrf
+                                <h2 class="text-lg font-medium text-gray-900 mb-4">Add Line Item to {{ $package->name }}</h2>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <x-input-label for="create_li_item_no_{{ $package->id }}" value="Item No" />
+                                        <x-text-input id="create_li_item_no_{{ $package->id }}" name="item_no" type="text" class="mt-1 block w-full" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="create_li_sort_order_{{ $package->id }}" value="Sort Order" />
+                                        <x-text-input id="create_li_sort_order_{{ $package->id }}" name="sort_order" type="number" class="mt-1 block w-full" value="0" required />
+                                    </div>
+                                    <div class="col-span-2">
+                                        <x-input-label for="create_li_description_{{ $package->id }}" value="Description" />
+                                        <x-text-input id="create_li_description_{{ $package->id }}" name="description" type="text" class="mt-1 block w-full" required />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="create_li_uom_{{ $package->id }}" value="Unit of Measure" />
+                                        <x-text-input id="create_li_uom_{{ $package->id }}" name="unit_of_measure" type="text" class="mt-1 block w-full" />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="create_li_qty_{{ $package->id }}" value="Original Qty" />
+                                        <x-text-input id="create_li_qty_{{ $package->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="create_li_rate_{{ $package->id }}" value="Original Rate" />
+                                        <x-text-input id="create_li_rate_{{ $package->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                                    </div>
+                                    <div>
+                                        <x-input-label for="create_li_amount_{{ $package->id }}" value="Original Amount" />
+                                        <x-text-input id="create_li_amount_{{ $package->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex justify-end gap-3">
+                                    <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                                    <x-primary-button>Create</x-primary-button>
+                                </div>
+                            </form>
+                        </x-modal>
+
+                        @foreach($package->lineItems as $item)
+                            <x-modal name="edit-line-item-{{ $item->id }}" :show="false" maxWidth="lg">
+                                <form method="POST" action="{{ route('projects.line-items.update', [$project, $package, $item]) }}" class="p-6">
+                                    @csrf
+                                    @method('PUT')
+                                    <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Line Item - {{ $item->description }}</h2>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <x-input-label for="edit_li_item_no_{{ $item->id }}" value="Item No" />
+                                            <x-text-input id="edit_li_item_no_{{ $item->id }}" name="item_no" type="text" class="mt-1 block w-full" :value="$item->item_no" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="edit_li_sort_order_{{ $item->id }}" value="Sort Order" />
+                                            <x-text-input id="edit_li_sort_order_{{ $item->id }}" name="sort_order" type="number" class="mt-1 block w-full" :value="$item->sort_order" required />
+                                        </div>
+                                        <div class="col-span-2">
+                                            <x-input-label for="edit_li_description_{{ $item->id }}" value="Description" />
+                                            <x-text-input id="edit_li_description_{{ $item->id }}" name="description" type="text" class="mt-1 block w-full" :value="$item->description" required />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="edit_li_uom_{{ $item->id }}" value="Unit of Measure" />
+                                            <x-text-input id="edit_li_uom_{{ $item->id }}" name="unit_of_measure" type="text" class="mt-1 block w-full" :value="$item->unit_of_measure" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="edit_li_qty_{{ $item->id }}" value="Original Qty" />
+                                            <x-text-input id="edit_li_qty_{{ $item->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_qty" required />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="edit_li_rate_{{ $item->id }}" value="Original Rate" />
+                                            <x-text-input id="edit_li_rate_{{ $item->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_rate" required />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="edit_li_amount_{{ $item->id }}" value="Original Amount" />
+                                            <x-text-input id="edit_li_amount_{{ $item->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_amount" required />
+                                        </div>
+                                    </div>
+                                    <div class="mt-6 flex justify-end gap-3">
+                                        <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                                        <x-primary-button>Save Changes</x-primary-button>
+                                    </div>
+                                </form>
+                            </x-modal>
+
+                            <x-modal name="delete-line-item-{{ $item->id }}" :show="false">
+                                <form method="POST" action="{{ route('projects.line-items.destroy', [$project, $package, $item]) }}" class="p-6">
+                                    @csrf
+                                    @method('DELETE')
+                                    <h2 class="text-lg font-medium text-gray-900">Delete Line Item</h2>
+                                    <p class="mt-2 text-sm text-gray-600">Are you sure you want to delete <strong>{{ $item->description }}</strong>? This will also delete all associated forecasts.</p>
+                                    <div class="mt-6 flex justify-end gap-3">
+                                        <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                                        <x-danger-button>Delete</x-danger-button>
+                                    </div>
+                                </form>
+                            </x-modal>
+                        @endforeach
                     @endforeach
                 @endforeach
             @endif

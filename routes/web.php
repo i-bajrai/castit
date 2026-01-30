@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\BudgetAdjustmentController;
 use App\Http\Controllers\ControlAccountController;
-use App\Http\Controllers\ControlAccountForecastController;
 use App\Http\Controllers\CostPackageController;
 use App\Http\Controllers\LineItemController;
 use App\Http\Controllers\LineItemForecastController;
@@ -39,7 +38,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'destroy'])->name('projects.line-items.destroy');
 
     Route::post('/projects/{project}/data-entry/line-items', [LineItemForecastController::class, 'store'])->name('projects.data-entry.line-items.store');
-    Route::post('/projects/{project}/data-entry/control-accounts', [ControlAccountForecastController::class, 'store'])->name('projects.data-entry.control-accounts.store');
 });
 
 Route::middleware('auth')->group(function () {
