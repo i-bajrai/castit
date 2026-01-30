@@ -4,7 +4,6 @@ namespace Tests\Unit\Domain\Forecasting\Actions;
 
 use App\Models\Company;
 use App\Models\ControlAccount;
-use App\Models\ControlAccountForecast;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
@@ -128,52 +127,5 @@ class OpenNewForecastPeriodTest extends TestCase
         $this->assertEquals(0, (float) $newForecast->ctd_amount);
         $this->assertEquals(0, (float) $newForecast->ctc_amount);
         $this->assertEquals(0, (float) $newForecast->fcac_amount);
-    }
-
-    public function test_carries_forward_control_account_forecasts(): void
-    {
-        $project = $this->createProject();
-
-        $oldPeriod = ForecastPeriod::create([
-            'project_id' => $project->id,
-            'period_date' => '2024-01-01',
-            'is_current' => true,
-        ]);
-
-        $account = ControlAccount::create([
-            'project_id' => $project->id,
-            'phase' => '4',
-            'code' => '401AN00',
-            'description' => 'Test',
-            'category' => 'Civil',
-            'baseline_budget' => 339264,
-            'approved_budget' => 790194,
-            'sort_order' => 1,
-        ]);
-
-        ControlAccountForecast::create([
-            'control_account_id' => $account->id,
-            'forecast_period_id' => $oldPeriod->id,
-            'monthly_cost' => -61888,
-            'cost_to_date' => 466750,
-            'estimate_to_complete' => 525603,
-            'estimated_final_cost' => 992352,
-            'last_month_efc' => 948803,
-            'efc_movement' => 43549,
-        ]);
-
-        $action = new OpenNewForecastPeriod;
-        $newPeriod = $action->execute($project, Carbon::parse('2024-02-01'));
-
-        $newForecast = ControlAccountForecast::where('forecast_period_id', $newPeriod->id)
-            ->where('control_account_id', $account->id)
-            ->first();
-
-        $this->assertNotNull($newForecast);
-        $this->assertEquals(790194, (float) $newForecast->last_month_approved_budget);
-        $this->assertEquals(992352, (float) $newForecast->last_month_efc);
-        $this->assertEquals(0, (float) $newForecast->monthly_cost);
-        $this->assertEquals(0, (float) $newForecast->cost_to_date);
-        $this->assertEquals(0, (float) $newForecast->efc_movement);
     }
 }

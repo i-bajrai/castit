@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\ControlAccount;
-use App\Models\ControlAccountForecast;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
@@ -176,17 +175,6 @@ class ProjectControllerTest extends TestCase
             'baseline_budget' => 339264,
             'approved_budget' => 790194,
             'sort_order' => 1,
-        ]);
-
-        ControlAccountForecast::create([
-            'control_account_id' => $account->id,
-            'forecast_period_id' => $period->id,
-            'monthly_cost' => -61888,
-            'cost_to_date' => 466750,
-            'estimate_to_complete' => 525603,
-            'estimated_final_cost' => 992352,
-            'last_month_efc' => 948803,
-            'efc_movement' => 43549,
         ]);
 
         $this->actingAs($user)

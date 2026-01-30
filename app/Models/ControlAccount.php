@@ -45,14 +45,6 @@ class ControlAccount extends Model
     }
 
     /**
-     * @return HasMany<ControlAccountForecast, $this>
-     */
-    public function forecasts(): HasMany
-    {
-        return $this->hasMany(ControlAccountForecast::class);
-    }
-
-    /**
      * @return HasMany<BudgetAdjustment, $this>
      */
     public function budgetAdjustments(): HasMany
