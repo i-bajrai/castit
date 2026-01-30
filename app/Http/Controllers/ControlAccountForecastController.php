@@ -3,42 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use Domain\Forecasting\Actions\GetControlAccountSummary;
 use Domain\Forecasting\Actions\SaveControlAccountForecasts;
 use Domain\Forecasting\DataTransferObjects\ControlAccountForecastData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 
 class ControlAccountForecastController extends Controller
 {
-    public function index(Project $project, GetControlAccountSummary $summary): View|RedirectResponse
-    {
-        Gate::authorize('update', $project);
-
-        $period = $project->forecastPeriods()->where('is_current', true)->first();
-
-        if (! $period) {
-            return redirect()->route('projects.settings', $project)
-                ->with('error', 'No current forecast period. Create one in Settings first.');
-        }
-
-        $data = $summary->execute($project, $period);
-
-        return view('projects.data-entry.control-accounts', [
-            'project' => $project,
-            'period' => $period,
-            'accounts' => $data['accounts'],
-        ]);
-    }
-
     public function store(Request $request, Project $project, SaveControlAccountForecasts $action): RedirectResponse
     {
         Gate::authorize('update', $project);
 
-        $period = $project->forecastPeriods()->where('is_current', true)->firstOrFail();
-        abort_if($period->isLocked(), 403, 'Period is locked.');
+        $period = $project->forecastPeriods()
+            ->where('period_date', now()->startOfMonth()->toDateString())
+            ->firstOrFail();
+
+        abort_if(! $period->isEditable(), 403, 'Period is not editable.');
 
         $validated = $request->validate([
             'forecasts' => 'required|array',
@@ -59,7 +40,7 @@ class ControlAccountForecastController extends Controller
 
         $action->execute($period, $dtos);
 
-        return redirect()->route('projects.data-entry.control-accounts', $project)
+        return redirect()->route('projects.show', $project)
             ->with('success', 'Control account forecasts saved.');
     }
 }

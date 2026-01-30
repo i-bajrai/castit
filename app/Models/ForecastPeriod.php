@@ -32,6 +32,12 @@ class ForecastPeriod extends Model
         return $this->locked_at !== null;
     }
 
+    public function isEditable(): bool
+    {
+        return ! $this->isLocked()
+            && $this->period_date->startOfMonth()->equalTo(now()->startOfMonth());
+    }
+
     /**
      * @return BelongsTo<Project, $this>
      */

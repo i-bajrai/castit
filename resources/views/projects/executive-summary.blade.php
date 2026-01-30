@@ -10,9 +10,6 @@
                 @endif
             </div>
             <div class="flex gap-3">
-                <a href="{{ route('projects.data-entry.control-accounts', $project) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition">
-                    Data Entry
-                </a>
                 <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                     Cost Detail
                 </a>

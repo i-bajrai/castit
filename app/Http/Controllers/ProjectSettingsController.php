@@ -13,25 +13,10 @@ class ProjectSettingsController extends Controller
         Gate::authorize('update', $project);
 
         $controlAccounts = $project->controlAccounts()->orderBy('sort_order')->get();
-        $periods = $project->forecastPeriods()
-            ->withCount('budgetAdjustments')
-            ->orderByDesc('period_date')
-            ->get();
-
-        $lockedPeriods = $periods->filter(fn ($p) => $p->isLocked());
-
-        $costPackages = $project->costPackages()
-            ->withCount('lineItems')
-            ->with(['lineItems' => fn ($q) => $q->orderBy('sort_order')])
-            ->orderBy('sort_order')
-            ->get();
 
         return view('projects.settings.index', [
             'project' => $project,
             'controlAccounts' => $controlAccounts,
-            'periods' => $periods,
-            'lockedPeriods' => $lockedPeriods,
-            'costPackages' => $costPackages,
         ]);
     }
 }

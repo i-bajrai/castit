@@ -17,7 +17,10 @@ class GetControlAccountSummary
     public function execute(Project $project, ?ForecastPeriod $period = null): array
     {
         if ($period === null) {
-            $period = $project->forecastPeriods()->where('is_current', true)->first();
+            $period = $project->forecastPeriods()
+                ->where('period_date', now()->startOfMonth()->toDateString())
+                ->first()
+                ?? $project->forecastPeriods()->orderByDesc('period_date')->first();
         }
 
         $accounts = $project->controlAccounts()

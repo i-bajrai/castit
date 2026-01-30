@@ -32,7 +32,7 @@ class CostPackageController extends Controller
 
         $action->execute($project, $data);
 
-        return redirect()->route('projects.settings', $project)
+        return redirect()->route('projects.show', $project)
             ->with('success', 'Cost package created.');
     }
 
@@ -58,7 +58,7 @@ class CostPackageController extends Controller
 
         $action->execute($costPackage, $data);
 
-        return redirect()->route('projects.settings', $project)
+        return redirect()->route('projects.show', $project)
             ->with('success', 'Cost package updated.');
     }
 
@@ -71,7 +71,7 @@ class CostPackageController extends Controller
 
         $action->execute($costPackage);
 
-        return redirect()->route('projects.settings', $project)
+        return redirect()->route('projects.show', $project)
             ->with('success', 'Cost package deleted.');
     }
 }

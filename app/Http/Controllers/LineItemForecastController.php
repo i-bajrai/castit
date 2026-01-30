@@ -3,42 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use Domain\Forecasting\Actions\GetProjectForecastSummary;
 use Domain\Forecasting\Actions\SaveLineItemForecasts;
 use Domain\Forecasting\DataTransferObjects\LineItemForecastData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 
 class LineItemForecastController extends Controller
 {
-    public function index(Project $project, GetProjectForecastSummary $summary): View|RedirectResponse
-    {
-        Gate::authorize('update', $project);
-
-        $period = $project->forecastPeriods()->where('is_current', true)->first();
-
-        if (! $period) {
-            return redirect()->route('projects.settings', $project)
-                ->with('error', 'No current forecast period. Create one in Settings first.');
-        }
-
-        $data = $summary->execute($project, $period);
-
-        return view('projects.data-entry.line-items', [
-            'project' => $project,
-            'period' => $period,
-            'packages' => $data['packages'],
-        ]);
-    }
-
     public function store(Request $request, Project $project, SaveLineItemForecasts $action): RedirectResponse
     {
         Gate::authorize('update', $project);
 
-        $period = $project->forecastPeriods()->where('is_current', true)->firstOrFail();
-        abort_if($period->isLocked(), 403, 'Period is locked.');
+        $period = $project->forecastPeriods()
+            ->where('period_date', now()->startOfMonth()->toDateString())
+            ->firstOrFail();
+
+        abort_if(! $period->isEditable(), 403, 'Period is not editable.');
 
         $validated = $request->validate([
             'forecasts' => 'required|array',
@@ -65,7 +46,7 @@ class LineItemForecastController extends Controller
 
         $action->execute($period, $dtos);
 
-        return redirect()->route('projects.data-entry.line-items', $project)
+        return redirect()->route('projects.show', $project)
             ->with('success', 'Line item forecasts saved.');
     }
 }

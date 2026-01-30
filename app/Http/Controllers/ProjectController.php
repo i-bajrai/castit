@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
 use Domain\Forecasting\Actions\GetControlAccountSummary;
 use Domain\Forecasting\Actions\GetProjectForecastSummary;
+use Domain\Forecasting\Actions\SyncForecastPeriods;
 use Domain\Forecasting\DataTransferObjects\ProjectData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,17 +55,58 @@ class ProjectController extends Controller
         return redirect()->route('projects.show', $project);
     }
 
-    public function show(Project $project, GetProjectForecastSummary $forecastSummary): View
+    public function update(Request $request, Project $project, SyncForecastPeriods $syncPeriods): RedirectResponse
     {
+        Gate::authorize('update', $project);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'project_number' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'original_budget' => ['required', 'numeric', 'min:0'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $project->update($validated);
+        $syncPeriods->execute($project);
+
+        return redirect()->route('projects.settings', $project)
+            ->with('success', 'Project details updated.');
+    }
+
+    public function show(
+        Request $request,
+        Project $project,
+        GetProjectForecastSummary $forecastSummary,
+        GetControlAccountSummary $controlAccountSummary,
+    ): View {
         Gate::authorize('view', $project);
 
-        $summary = $forecastSummary->execute($project);
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $summary = $forecastSummary->execute($project, $period);
+        $caSummary = $controlAccountSummary->execute($project, $summary['period']);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        $isEditable = $summary['period'] ? $summary['period']->isEditable() : false;
 
         return view('projects.show', [
             'project' => $summary['project'],
             'period' => $summary['period'],
             'packages' => $summary['packages'],
             'totals' => $summary['totals'],
+            'accounts' => $caSummary['accounts'],
+            'allPeriods' => $allPeriods,
+            'isEditable' => $isEditable,
         ]);
     }
 

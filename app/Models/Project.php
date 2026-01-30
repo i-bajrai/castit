@@ -14,8 +14,21 @@ class Project extends Model
         'description',
         'project_number',
         'original_budget',
+        'start_date',
+        'end_date',
         'status',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+        ];
+    }
 
     /**
      * @return BelongsTo<Company, $this>

@@ -9,5 +9,7 @@ readonly class ProjectData
         public ?string $description,
         public ?string $projectNumber,
         public float $originalBudget = 0,
+        public ?string $startDate = null,
+        public ?string $endDate = null,
     ) {}
 }

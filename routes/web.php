@@ -4,7 +4,6 @@ use App\Http\Controllers\BudgetAdjustmentController;
 use App\Http\Controllers\ControlAccountController;
 use App\Http\Controllers\ControlAccountForecastController;
 use App\Http\Controllers\CostPackageController;
-use App\Http\Controllers\ForecastPeriodController;
 use App\Http\Controllers\LineItemController;
 use App\Http\Controllers\LineItemForecastController;
 use App\Http\Controllers\ProfileController;
@@ -19,6 +18,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('/projects/{project}/executive-summary', [ProjectController::class, 'executiveSummary'])->name('projects.executive-summary');
 
@@ -27,9 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects/{project}/control-accounts', [ControlAccountController::class, 'store'])->name('projects.control-accounts.store');
     Route::put('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'update'])->name('projects.control-accounts.update');
     Route::delete('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'destroy'])->name('projects.control-accounts.destroy');
-
-    Route::post('/projects/{project}/periods', [ForecastPeriodController::class, 'store'])->name('projects.periods.store');
-    Route::patch('/projects/{project}/periods/{period}/lock', [ForecastPeriodController::class, 'lock'])->name('projects.periods.lock');
 
     Route::post('/projects/{project}/budget-adjustments', [BudgetAdjustmentController::class, 'store'])->name('projects.budget-adjustments.store');
 
@@ -41,10 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'update'])->name('projects.line-items.update');
     Route::delete('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'destroy'])->name('projects.line-items.destroy');
 
-    Route::get('/projects/{project}/data-entry', [LineItemForecastController::class, 'index'])->name('projects.data-entry.line-items');
     Route::post('/projects/{project}/data-entry/line-items', [LineItemForecastController::class, 'store'])->name('projects.data-entry.line-items.store');
-
-    Route::get('/projects/{project}/data-entry/control-accounts', [ControlAccountForecastController::class, 'index'])->name('projects.data-entry.control-accounts');
     Route::post('/projects/{project}/data-entry/control-accounts', [ControlAccountForecastController::class, 'store'])->name('projects.data-entry.control-accounts.store');
 });
 
