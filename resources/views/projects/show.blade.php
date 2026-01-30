@@ -1,29 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ $project->name }}
-                </h2>
-                @if($period)
-                    <p class="text-sm text-gray-500 mt-1">Forecast Period: {{ $period->period_date->format('F Y') }}</p>
-                @endif
-            </div>
-            <div class="flex gap-3">
-                <a href="{{ route('projects.show', $project) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-gray-800 rounded-lg text-sm font-medium text-white transition">
-                    Cost Detail
-                </a>
-                <a href="{{ route('projects.executive-summary', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Executive Summary
-                </a>
-                <a href="{{ route('projects.settings', $project) }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Settings
-                </a>
-                <a href="{{ route('dashboard') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                    Back to Projects
-                </a>
-            </div>
-        </div>
+        <x-project-header :project="$project" active="cost-detail" :subtitle="$period ? 'Forecast Period: ' . $period->period_date->format('F Y') : null">
+            {{ $project->name }}
+        </x-project-header>
     </x-slot>
 
     <div class="py-8">
