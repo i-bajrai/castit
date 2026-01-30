@@ -71,5 +71,4 @@ class ProjectSettingsControllerTest extends TestCase
             ->assertSee('401AN00')
             ->assertSee('Anti Graffiti');
     }
-
 }

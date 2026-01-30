@@ -6,7 +6,6 @@ use App\Models\ControlAccountForecast;
 use App\Models\ForecastPeriod;
 use App\Models\LineItemForecast;
 use App\Models\Project;
-use Illuminate\Support\Carbon;
 
 class SyncForecastPeriods
 {

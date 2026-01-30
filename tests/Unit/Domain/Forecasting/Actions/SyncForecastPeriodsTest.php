@@ -7,7 +7,6 @@ use App\Models\ForecastPeriod;
 use App\Models\Project;
 use App\Models\User;
 use Domain\Forecasting\Actions\SyncForecastPeriods;
-use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
