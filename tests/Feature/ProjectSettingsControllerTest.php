@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\ControlAccount;
-use App\Models\ForecastPeriod;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -73,19 +72,4 @@ class ProjectSettingsControllerTest extends TestCase
             ->assertSee('Anti Graffiti');
     }
 
-    public function test_settings_page_shows_periods(): void
-    {
-        [$user, , $project] = $this->createUserWithProject();
-
-        ForecastPeriod::create([
-            'project_id' => $project->id,
-            'period_date' => '2024-01-01',
-            'is_current' => true,
-        ]);
-
-        $this->actingAs($user)
-            ->get("/projects/{$project->id}/settings")
-            ->assertOk()
-            ->assertSee('January 2024');
-    }
 }

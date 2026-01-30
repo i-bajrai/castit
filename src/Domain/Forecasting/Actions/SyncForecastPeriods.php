@@ -27,7 +27,7 @@ class SyncForecastPeriods
             $period = ForecastPeriod::firstOrCreate(
                 [
                     'project_id' => $project->id,
-                    'period_date' => $current->copy()->toDateString(),
+                    'period_date' => $current->copy(),
                 ],
                 [
                     'is_current' => false,

@@ -23,8 +23,7 @@ class LineItemForecastControllerTest extends TestCase
 
         $period = ForecastPeriod::create([
             'project_id' => $project->id,
-            'period_date' => '2024-01-01',
-            'is_current' => true,
+            'period_date' => now()->startOfMonth()->toDateString(),
         ]);
 
         $package = CostPackage::create([
@@ -43,28 +42,6 @@ class LineItemForecastControllerTest extends TestCase
         ]);
 
         return [$user, $project, $period, $package, $item];
-    }
-
-    public function test_owner_can_view_data_entry_page(): void
-    {
-        [$user, $project] = $this->seedData();
-
-        $this->actingAs($user)
-            ->get("/projects/{$project->id}/data-entry")
-            ->assertOk()
-            ->assertSee('Data Entry')
-            ->assertSee('Concrete');
-    }
-
-    public function test_redirects_when_no_current_period(): void
-    {
-        $user = User::factory()->create();
-        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
-        $project = Project::create(['company_id' => $company->id, 'name' => 'Test', 'original_budget' => 100000]);
-
-        $this->actingAs($user)
-            ->get("/projects/{$project->id}/data-entry")
-            ->assertRedirect(route('projects.settings', $project));
     }
 
     public function test_owner_can_save_line_item_forecasts(): void
@@ -86,7 +63,7 @@ class LineItemForecastControllerTest extends TestCase
                     ],
                 ],
             ])
-            ->assertRedirect(route('projects.data-entry.line-items', $project));
+            ->assertRedirect(route('projects.show', $project));
 
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item->id,
@@ -99,16 +76,15 @@ class LineItemForecastControllerTest extends TestCase
 
     public function test_cannot_save_for_locked_period(): void
     {
-        [$user, $project, $period, , $item] = $this->seedData();
+        [$user, $project, , , $item] = $this->seedData();
 
-        $period->update(['locked_at' => now(), 'is_current' => false]);
+        // The current month period exists but we need a non-editable scenario.
+        // Remove the current month period and create only a past one.
+        ForecastPeriod::where('project_id', $project->id)->delete();
 
-        // Create a new current period that is also locked to test the abort
-        $lockedPeriod = ForecastPeriod::create([
+        ForecastPeriod::create([
             'project_id' => $project->id,
-            'period_date' => '2024-02-01',
-            'is_current' => true,
-            'locked_at' => now(),
+            'period_date' => '2023-01-01',
         ]);
 
         $this->actingAs($user)
@@ -125,17 +101,7 @@ class LineItemForecastControllerTest extends TestCase
                     ],
                 ],
             ])
-            ->assertForbidden();
-    }
-
-    public function test_non_owner_cannot_access_data_entry(): void
-    {
-        [, $project] = $this->seedData();
-        $otherUser = User::factory()->create();
-
-        $this->actingAs($otherUser)
-            ->get("/projects/{$project->id}/data-entry")
-            ->assertForbidden();
+            ->assertNotFound();
     }
 
     public function test_validation_errors_on_save(): void

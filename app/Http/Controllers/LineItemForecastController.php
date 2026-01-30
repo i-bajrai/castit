@@ -16,7 +16,7 @@ class LineItemForecastController extends Controller
         Gate::authorize('update', $project);
 
         $period = $project->forecastPeriods()
-            ->where('period_date', now()->startOfMonth()->toDateString())
+            ->where('period_date', now()->startOfMonth())
             ->firstOrFail();
 
         abort_if(! $period->isEditable(), 403, 'Period is not editable.');

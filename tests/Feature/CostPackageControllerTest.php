@@ -32,7 +32,7 @@ class CostPackageControllerTest extends TestCase
                 'name' => 'Foundation Works',
                 'sort_order' => 1,
             ])
-            ->assertRedirect(route('projects.settings', $project));
+            ->assertRedirect(route('projects.show', $project));
 
         $this->assertDatabaseHas('cost_packages', [
             'project_id' => $project->id,
@@ -58,7 +58,7 @@ class CostPackageControllerTest extends TestCase
                 'name' => 'Updated Name',
                 'sort_order' => 2,
             ])
-            ->assertRedirect(route('projects.settings', $project));
+            ->assertRedirect(route('projects.show', $project));
 
         $this->assertDatabaseHas('cost_packages', [
             'id' => $package->id,
@@ -79,7 +79,7 @@ class CostPackageControllerTest extends TestCase
 
         $this->actingAs($user)
             ->delete("/projects/{$project->id}/cost-packages/{$package->id}")
-            ->assertRedirect(route('projects.settings', $project));
+            ->assertRedirect(route('projects.show', $project));
 
         $this->assertDatabaseMissing('cost_packages', ['id' => $package->id]);
     }
@@ -106,7 +106,7 @@ class CostPackageControllerTest extends TestCase
             ->assertSessionHasErrors(['name', 'sort_order']);
     }
 
-    public function test_settings_page_shows_cost_packages(): void
+    public function test_show_page_shows_cost_packages(): void
     {
         [$user, , $project] = $this->createUserWithProject();
 
@@ -118,7 +118,7 @@ class CostPackageControllerTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get("/projects/{$project->id}/settings")
+            ->get("/projects/{$project->id}")
             ->assertOk()
             ->assertSee('Foundation Works');
     }
