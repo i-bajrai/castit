@@ -20,6 +20,8 @@ test.describe('Project Creation', () => {
         await form.locator('input[name="project_number"]').fill('HWY-001');
         await form.locator('textarea[name="description"]').fill('A test construction project');
         await form.locator('input[name="original_budget"]').fill('500000');
+        await page.getByTestId('start-date-input').fill('2026-03-01');
+        await page.getByTestId('end-date-input').fill('2027-06-30');
 
         // Submit the form
         await page.getByTestId('submit-create-project').click();
@@ -30,6 +32,30 @@ test.describe('Project Creation', () => {
 
         // Verify project details are visible on the show page
         await expect(page.getByText('Highway Bridge Project')).toBeVisible();
+    });
+
+    test('should create a project without dates', async ({ page }) => {
+        const user = await login(page);
+        await create(page, 'App\\Models\\Company', {
+            user_id: user.id,
+            name: 'Test Company',
+        });
+
+        await page.goto('/dashboard');
+        await page.getByTestId('new-project-button').click();
+
+        const form = page.getByTestId('create-project-form');
+        await form.locator('input[name="name"]').fill('No Dates Project');
+        await form.locator('input[name="original_budget"]').fill('100000');
+
+        // Leave start_date and end_date empty
+        await expect(page.getByTestId('start-date-input')).toHaveValue('');
+        await expect(page.getByTestId('end-date-input')).toHaveValue('');
+
+        await page.getByTestId('submit-create-project').click();
+
+        await page.waitForURL('**/projects/*');
+        await expect(page.getByText('No Dates Project')).toBeVisible();
     });
 
     test('should show the empty state when no projects exist', async ({ page }) => {

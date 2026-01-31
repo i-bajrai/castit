@@ -15,6 +15,8 @@ class CreateProject
             'description' => $data->description,
             'project_number' => $data->projectNumber,
             'original_budget' => $data->originalBudget,
+            'start_date' => $data->startDate,
+            'end_date' => $data->endDate,
         ]);
     }
 }

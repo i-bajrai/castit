@@ -37,6 +37,8 @@ class ProjectController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'project_number' => ['nullable', 'string', 'max:255'],
             'original_budget' => ['required', 'numeric', 'min:0'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
         ]);
 
         $company = Company::findOrFail($validated['company_id']);
@@ -47,6 +49,8 @@ class ProjectController extends Controller
             description: $validated['description'] ?? null,
             projectNumber: $validated['project_number'] ?? null,
             originalBudget: (float) $validated['original_budget'],
+            startDate: $validated['start_date'] ?? null,
+            endDate: $validated['end_date'] ?? null,
         );
 
         $project = $action->execute($company, $data);

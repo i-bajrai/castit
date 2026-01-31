@@ -38,6 +38,7 @@
                                 <x-text-input id="original_budget" name="original_budget" type="number" step="0.01" class="mt-1 block w-full" :value="old('original_budget', $project->original_budget)" required />
                                 <x-input-error :messages="$errors->get('original_budget')" class="mt-2" />
                             </div>
+                            <div></div>
                             <div>
                                 <x-input-label for="start_date" value="Start Date" />
                                 <x-text-input id="start_date" name="start_date" type="date" class="mt-1 block w-full" :value="old('start_date', $project->start_date?->format('Y-m-d'))" />
@@ -48,7 +49,6 @@
                                 <x-text-input id="end_date" name="end_date" type="date" class="mt-1 block w-full" :value="old('end_date', $project->end_date?->format('Y-m-d'))" />
                                 <x-input-error :messages="$errors->get('end_date')" class="mt-2" />
                             </div>
-                            <div></div>
                             <div class="md:col-span-2">
                                 <x-input-label for="description" value="Description" />
                                 <textarea id="description" name="description" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description', $project->description) }}</textarea>

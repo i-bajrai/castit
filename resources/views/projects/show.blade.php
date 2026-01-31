@@ -110,7 +110,7 @@
                     }
                 @endphp
 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" x-data="{ open: true }">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" x-data="{ open: false }">
                     {{-- CA Summary Row --}}
                     <div class="border-b border-gray-200">
                         <div class="w-full px-6 py-4">
@@ -167,10 +167,8 @@
                             </div>
                         @else
                             @if($isEditable)
-                                {{-- EDITABLE MODE: Single form per CA wrapping all packages --}}
-                                <form method="POST" action="{{ route('projects.data-entry.line-items.store', $project) }}">
-                                    @csrf
-                                    @php $caFormIndex = 0; @endphp
+                                {{-- EDITABLE MODE --}}
+                                <div>
 
                                     @foreach($account->costPackages as $package)
                                         {{-- Package Header --}}
@@ -215,8 +213,6 @@
                                                         @foreach($package->lineItems as $item)
                                                             @php
                                                                 $forecast = $item->forecasts->first();
-                                                                $prefix = "forecasts[{$caFormIndex}]";
-                                                                $caFormIndex++;
                                                             @endphp
                                                             <tr class="hover:bg-gray-50"
                                                                 x-data="{
@@ -232,7 +228,6 @@
                                                                     get fcac() { return this.ctdAmount + this.ctcAmount },
                                                                     get variance() { return +(this.prevAmount - this.fcac).toFixed(2) },
                                                                 }">
-                                                                <input type="hidden" name="{{ $prefix }}[line_item_id]" value="{{ $item->id }}">
                                                                 <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
                                                                 <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
                                                                 <td class="px-3 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
@@ -275,7 +270,6 @@
                                                                         }
                                                                     }"
                                                                     x-on:open-modal.window="if ($event.detail === 'ctd-qty-{{ $item->id }}') editQty = ctdQty">
-                                                                    <input type="hidden" name="{{ $prefix }}[ctd_qty]" :value="ctdQty">
                                                                     <button type="button"
                                                                         x-on:click.prevent="$dispatch('open-modal', 'ctd-qty-{{ $item->id }}')"
                                                                         class="w-full text-sm text-right px-2 py-1 rounded border border-gray-300 hover:border-green-400 hover:bg-green-50 transition"
@@ -341,7 +335,6 @@
                                                                             @endif
                                                                         }
                                                                     }">
-                                                                    <input type="hidden" name="{{ $prefix }}[comments]" :value="comment">
                                                                     <button type="button"
                                                                         x-on:click.prevent="$dispatch('open-modal', 'comment-{{ $item->id }}')"
                                                                         class="w-full text-sm text-left px-2 py-1 rounded border border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition truncate"
@@ -374,10 +367,7 @@
                                         @endif
                                     @endforeach
 
-                                    <div class="p-4 bg-gray-50 border-t flex justify-end">
-                                        <x-primary-button>Save {{ $account->code }} Forecasts</x-primary-button>
-                                    </div>
-                                </form>
+                                </div>
                             @else
                                 {{-- READ-ONLY MODE --}}
                                 @foreach($account->costPackages as $package)
