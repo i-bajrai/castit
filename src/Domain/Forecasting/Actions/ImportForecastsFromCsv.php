@@ -18,7 +18,11 @@ class ImportForecastsFromCsv
 
         $lineItems = LineItem::whereHas('costPackage', function ($q) use ($project) {
             $q->where('project_id', $project->id);
-        })->get()->keyBy('item_no');
+        })->get();
+
+        $lineItemsByDescription = $lineItems->keyBy(
+            fn (LineItem $li) => strtolower(trim($li->description))
+        );
 
         $periods = $project->forecastPeriods()->get()->keyBy(
             fn (ForecastPeriod $p) => $p->period_date->format('Y-m')
@@ -27,11 +31,11 @@ class ImportForecastsFromCsv
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2; // +2 for 1-indexed + header row
 
-            $itemNo = trim($row['item_no'] ?? '');
+            $description = trim($row['description'] ?? '');
             $periodKey = trim($row['period'] ?? '');
             $ctdQty = $row['ctd_qty'] ?? null;
 
-            if ($itemNo === '' || $periodKey === '' || $ctdQty === null || $ctdQty === '') {
+            if ($description === '' || $periodKey === '' || $ctdQty === null || $ctdQty === '') {
                 $errors[] = "Row {$rowNum}: missing required field(s).";
                 continue;
             }
@@ -41,9 +45,9 @@ class ImportForecastsFromCsv
                 continue;
             }
 
-            $lineItem = $lineItems->get($itemNo);
+            $lineItem = $lineItemsByDescription->get(strtolower($description));
             if (! $lineItem) {
-                $errors[] = "Row {$rowNum}: item_no '{$itemNo}' not found.";
+                $errors[] = "Row {$rowNum}: description '{$description}' not found.";
                 continue;
             }
 
@@ -63,7 +67,7 @@ class ImportForecastsFromCsv
                 ->first();
 
             if (! $forecast) {
-                $errors[] = "Row {$rowNum}: no forecast record found for item '{$itemNo}' in period '{$periodKey}'.";
+                $errors[] = "Row {$rowNum}: no forecast record found for '{$description}' in period '{$periodKey}'.";
                 continue;
             }
 
