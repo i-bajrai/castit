@@ -1,27 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { execSync } from 'child_process';
 
 const TEST_USER_EMAIL = 'playwright@test.com';
 const TEST_USER_PASSWORD = 'password';
 
 test.describe('Login Page', () => {
-    test.beforeAll(() => {
-        // Create a test user via artisan tinker (upsert to avoid duplicates)
-        // Note: password cast on User model handles hashing automatically
-        execSync(
-            `php artisan tinker --execute="\\App\\Models\\User::query()->where('email', '${TEST_USER_EMAIL}')->delete(); \\App\\Models\\User::factory()->create(['email' => '${TEST_USER_EMAIL}', 'password' => '${TEST_USER_PASSWORD}'])"`,
-            { cwd: process.cwd(), stdio: 'pipe' }
-        );
-    });
-
-    test.afterAll(() => {
-        // Clean up test user
-        execSync(
-            `php artisan tinker --execute="\\App\\Models\\User::where('email', '${TEST_USER_EMAIL}')->delete()"`,
-            { cwd: process.cwd(), stdio: 'pipe' }
-        );
-    });
-
     test('should display the login form', async ({ page }) => {
         await page.goto('/login');
 
@@ -38,11 +20,6 @@ test.describe('Login Page', () => {
         await page.locator('input#email').fill(TEST_USER_EMAIL);
         await page.locator('input#password').fill(TEST_USER_PASSWORD);
         await page.getByRole('button', { name: 'Log in' }).click();
-
-        // Debug: capture where we end up
-        await page.waitForLoadState('networkidle');
-        await page.screenshot({ path: 'test-results/debug-login.png' });
-        console.log('Current URL after login:', page.url());
 
         await page.waitForURL('**/dashboard');
         await expect(page).toHaveURL(/dashboard/);

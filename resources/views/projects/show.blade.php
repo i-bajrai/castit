@@ -274,7 +274,36 @@
                                                                 <td class="px-3 py-2 text-sm text-right" :class="variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900'" x-text="variance !== 0 ? '$' + variance.toFixed(2) : '-'"></td>
 
                                                                 {{-- Comments (MODAL) --}}
-                                                                <td class="px-1 py-1" x-data="{ comment: '{{ str_replace("'", "\\'", $forecast->comments ?? '') }}' }">
+                                                                <td class="px-1 py-1"
+                                                                    x-data="{
+                                                                        comment: '{{ str_replace("'", "\\'", $forecast->comments ?? '') }}',
+                                                                        saving: false,
+                                                                        error: false,
+                                                                        async saveComment() {
+                                                                            @if($forecast?->id)
+                                                                                this.saving = true;
+                                                                                this.error = false;
+                                                                                try {
+                                                                                    const res = await fetch('{{ route('projects.forecasts.update-comment', [$project, $forecast]) }}', {
+                                                                                        method: 'PATCH',
+                                                                                        headers: {
+                                                                                            'Content-Type': 'application/json',
+                                                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                                        },
+                                                                                        body: JSON.stringify({ comments: this.comment }),
+                                                                                    });
+                                                                                    if (!res.ok) throw new Error();
+                                                                                    this.$dispatch('close');
+                                                                                } catch {
+                                                                                    this.error = true;
+                                                                                } finally {
+                                                                                    this.saving = false;
+                                                                                }
+                                                                            @else
+                                                                                this.$dispatch('close');
+                                                                            @endif
+                                                                        }
+                                                                    }">
                                                                     <input type="hidden" name="{{ $prefix }}[comments]" :value="comment">
                                                                     <button type="button"
                                                                         x-on:click.prevent="$dispatch('open-modal', 'comment-{{ $item->id }}')"
@@ -291,8 +320,10 @@
                                                                                 rows="4"
                                                                                 class="w-full text-sm border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
                                                                                 placeholder="Enter comment..."></textarea>
-                                                                            <div class="mt-4 flex justify-end">
-                                                                                <x-primary-button type="button" x-on:click="$dispatch('close')">Done</x-primary-button>
+                                                                            <p x-show="error" x-cloak class="mt-2 text-sm text-red-600">Failed to save. Please try again.</p>
+                                                                            <div class="mt-4 flex justify-end gap-2">
+                                                                                <span x-show="saving" class="text-sm text-gray-400 self-center">Saving...</span>
+                                                                                <x-primary-button type="button" x-on:click="saveComment()" x-bind:disabled="saving">Save</x-primary-button>
                                                                             </div>
                                                                         </div>
                                                                     </x-modal>

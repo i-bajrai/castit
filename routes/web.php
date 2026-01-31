@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'destroy'])->name('projects.line-items.destroy');
 
     Route::post('/projects/{project}/data-entry/line-items', [LineItemForecastController::class, 'store'])->name('projects.data-entry.line-items.store');
+    Route::patch('/projects/{project}/forecasts/{forecast}/comment', [LineItemForecastController::class, 'updateComment'])->name('projects.forecasts.update-comment');
 });
 
 Route::middleware('auth')->group(function () {

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use Domain\Forecasting\Actions\SaveLineItemForecasts;
 use Domain\Forecasting\DataTransferObjects\LineItemForecastData;
+use App\Models\LineItemForecast;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -38,5 +40,20 @@ class LineItemForecastController extends Controller
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Line item forecasts saved.');
+    }
+
+    public function updateComment(Request $request, Project $project, LineItemForecast $forecast): JsonResponse
+    {
+        Gate::authorize('update', $project);
+
+        abort_if(! $forecast->forecastPeriod->isEditable(), 403, 'Period is not editable.');
+
+        $validated = $request->validate([
+            'comments' => 'nullable|string|max:2000',
+        ]);
+
+        $forecast->update(['comments' => $validated['comments']]);
+
+        return response()->json(['status' => 'ok']);
     }
 }
