@@ -37,6 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects/{project}/control-accounts', [ControlAccountController::class, 'store'])->name('projects.control-accounts.store');
     Route::put('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'update'])->name('projects.control-accounts.update');
     Route::delete('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'destroy'])->name('projects.control-accounts.destroy');
+    Route::get('/projects/{project}/control-accounts/{controlAccount}/line-items', [ControlAccountController::class, 'lineItems'])->name('projects.control-accounts.line-items');
+    Route::post('/projects/{project}/control-accounts/{controlAccount}/line-items/import', [ControlAccountController::class, 'importLineItems'])->name('projects.control-accounts.line-items.import');
 
     Route::post('/projects/{project}/budget-adjustments', [BudgetAdjustmentController::class, 'store'])->name('projects.budget-adjustments.store');
 

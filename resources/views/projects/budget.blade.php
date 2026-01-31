@@ -66,8 +66,8 @@
                                 'id' => $ca->id,
                                 'code' => $ca->code,
                                 'description' => $ca->description,
-                                'baseline_budget' => $ca->baseline_budget > 0 ? $ca->baseline_budget : '',
-                                'approved_budget' => $ca->approved_budget > 0 ? $ca->approved_budget : '',
+                                'baseline_budget' => $ca->baseline_budget ?? 0,
+                                'approved_budget' => $ca->approved_budget ?? 0,
                                 'packages' => [],
                             ])->values()),
                             importCsv(event) {
@@ -170,7 +170,7 @@
                             },
                             clearPackages(index) {
                                 this.accounts[index].packages = [];
-                                this.accounts[index].baseline_budget = '';
+                                this.accounts[index].baseline_budget = 0;
                             },
                             lineItemCount(account) {
                                 return account.packages.reduce((sum, pkg) => sum + pkg.line_items.length, 0);

@@ -147,6 +147,7 @@ class ProjectController extends Controller
             'accounts' => 'required|array|min:1',
             'accounts.*.control_account_id' => 'required|integer|exists:control_accounts,id',
             'accounts.*.baseline_budget' => 'required|numeric|min:0',
+            'accounts.*.approved_budget' => 'required|numeric|min:0',
             'accounts.*.packages' => 'nullable|array',
             'accounts.*.packages.*.item_no' => 'nullable|string|max:255',
             'accounts.*.packages.*.name' => 'required|string|max:255',

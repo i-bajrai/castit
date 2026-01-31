@@ -3,14 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\ControlAccount;
+use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateControlAccount;
+use Domain\Forecasting\Actions\CreateCostPackage;
+use Domain\Forecasting\Actions\CreateLineItem;
 use Domain\Forecasting\Actions\DeleteControlAccount;
 use Domain\Forecasting\Actions\UpdateControlAccount;
 use Domain\Forecasting\DataTransferObjects\ControlAccountData;
+use Domain\Forecasting\DataTransferObjects\CostPackageData;
+use Domain\Forecasting\DataTransferObjects\LineItemData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class ControlAccountController extends Controller
 {
@@ -117,5 +124,111 @@ class ControlAccountController extends Controller
 
         return redirect()->route('projects.settings', $project)
             ->with('success', 'Control account deleted.');
+    }
+
+    public function lineItems(Project $project, ControlAccount $controlAccount): View
+    {
+        Gate::authorize('view', $project);
+        abort_unless($controlAccount->project_id === $project->id, 404);
+
+        $costPackages = $controlAccount->costPackages()
+            ->with(['lineItems' => fn ($q) => $q->orderBy('sort_order')])
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('projects.control-accounts.line-items', [
+            'project' => $project,
+            'controlAccount' => $controlAccount,
+            'costPackages' => $costPackages,
+        ]);
+    }
+
+    public function importLineItems(
+        Request $request,
+        Project $project,
+        ControlAccount $controlAccount,
+        CreateCostPackage $createCostPackage,
+        CreateLineItem $createLineItem,
+    ): RedirectResponse {
+        Gate::authorize('update', $project);
+        abort_unless($controlAccount->project_id === $project->id, 404);
+
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
+        ]);
+
+        $currentPeriod = ForecastPeriod::where('project_id', $project->id)
+            ->where('period_date', now()->startOfMonth())
+            ->first();
+
+        $handle = fopen($request->file('csv_file')->getPathname(), 'r');
+        $header = fgetcsv($handle);
+        $grouped = [];
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) < 8 || empty($row[0])) {
+                continue;
+            }
+
+            $code = trim($row[0]);
+            if (strtolower($code) !== strtolower($controlAccount->code)) {
+                continue;
+            }
+
+            $pkgName = trim($row[1]);
+            if (! isset($grouped[$pkgName])) {
+                $grouped[$pkgName] = [];
+            }
+
+            $grouped[$pkgName][] = [
+                'item_no' => trim($row[2]),
+                'description' => trim($row[3]),
+                'unit_of_measure' => trim($row[4]),
+                'qty' => (float) $row[5],
+                'rate' => (float) $row[6],
+                'amount' => (float) $row[7],
+            ];
+        }
+
+        fclose($handle);
+
+        if (empty($grouped)) {
+            return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
+                ->with('error', 'No matching rows found for ' . $controlAccount->code);
+        }
+
+        $existingPkgCount = $controlAccount->costPackages()->count();
+
+        DB::transaction(function () use ($controlAccount, $grouped, $createCostPackage, $createLineItem, $currentPeriod, $existingPkgCount) {
+            $pkgIndex = $existingPkgCount;
+            foreach ($grouped as $pkgName => $items) {
+                $pkgData = new CostPackageData(
+                    name: $pkgName,
+                    sortOrder: $pkgIndex++,
+                    controlAccountId: $controlAccount->id,
+                );
+
+                $package = $createCostPackage->execute($controlAccount, $pkgData);
+
+                foreach ($items as $liIndex => $item) {
+                    $liData = new LineItemData(
+                        description: $item['description'],
+                        itemNo: $item['item_no'] ?: null,
+                        unitOfMeasure: $item['unit_of_measure'] ?: null,
+                        originalQty: $item['qty'],
+                        originalRate: $item['rate'],
+                        originalAmount: $item['amount'],
+                        sortOrder: $liIndex,
+                    );
+
+                    $createLineItem->execute($package, $liData, $currentPeriod);
+                }
+            }
+        });
+
+        $totalItems = collect($grouped)->flatten(1)->count();
+
+        return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
+            ->with('success', count($grouped) . ' cost package(s) with ' . $totalItems . ' line item(s) imported.');
     }
 }

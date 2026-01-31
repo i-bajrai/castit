@@ -50,7 +50,7 @@ class LineItemController extends Controller
 
         $action->execute($costPackage, $data, $currentPeriod);
 
-        return redirect()->route('projects.show', $project)
+        return redirect()->back()
             ->with('success', 'Line item created.');
     }
 
@@ -85,7 +85,7 @@ class LineItemController extends Controller
 
         $action->execute($lineItem, $data);
 
-        return redirect()->route('projects.show', $project)
+        return redirect()->back()
             ->with('success', 'Line item updated.');
     }
 
@@ -99,7 +99,7 @@ class LineItemController extends Controller
 
         $action->execute($lineItem);
 
-        return redirect()->route('projects.show', $project)
+        return redirect()->back()
             ->with('success', 'Line item deleted.');
     }
 }

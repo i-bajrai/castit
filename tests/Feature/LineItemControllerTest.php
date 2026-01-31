@@ -47,7 +47,7 @@ class LineItemControllerTest extends TestCase
                 'original_amount' => 25000,
                 'sort_order' => 1,
             ])
-            ->assertRedirect(route('projects.show', $project));
+            ->assertRedirect();
 
         $this->assertDatabaseHas('line_items', [
             'cost_package_id' => $package->id,
@@ -76,7 +76,7 @@ class LineItemControllerTest extends TestCase
                 'original_amount' => 400,
                 'sort_order' => 2,
             ])
-            ->assertRedirect(route('projects.show', $project));
+            ->assertRedirect();
 
         $this->assertDatabaseHas('line_items', [
             'id' => $item->id,
@@ -99,7 +99,7 @@ class LineItemControllerTest extends TestCase
 
         $this->actingAs($user)
             ->delete("/projects/{$project->id}/cost-packages/{$package->id}/line-items/{$item->id}")
-            ->assertRedirect(route('projects.show', $project));
+            ->assertRedirect();
 
         $this->assertDatabaseMissing('line_items', ['id' => $item->id]);
     }

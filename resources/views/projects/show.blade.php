@@ -145,7 +145,15 @@
                                 </button>
                                 <div class="flex items-center gap-3">
                                     <span class="text-sm text-gray-500">{{ $caItemCount }} items</span>
-                                    {{-- Structure changes happen in Settings --}}
+                                    <a href="{{ route('projects.control-accounts.line-items', [$project, $account]) }}" class="text-xs text-gray-500 hover:text-gray-700 font-medium">Manage</a>
+                                    @if($isEditable)
+                                        <a href="#" x-on:click.stop.prevent="$dispatch('open-modal', 'create-cost-package-{{ $account->id }}')" class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            Add Package
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
                             {{-- CA Aggregated Totals --}}
@@ -182,7 +190,7 @@
                     <div x-show="open" x-transition>
                         @if($account->costPackages->isEmpty())
                             <div class="p-6 text-center text-gray-500 text-sm">
-                                No cost packages in this control account. <a href="{{ route('projects.settings', $project) }}" class="text-indigo-600 hover:underline">Add in Settings</a>.
+                                No cost packages in this control account. <a href="{{ route('projects.control-accounts.line-items', [$project, $account]) }}" class="text-indigo-600 hover:underline">Manage line items</a>.
                             </div>
                         @else
                             @if($isEditable)
@@ -199,12 +207,21 @@
                                                 @endif
                                                 <span class="text-xs text-gray-400">{{ $package->lineItems->count() }} items</span>
                                             </div>
-                                            {{-- Structure changes happen in Settings --}}
+                                            <div class="flex items-center gap-2">
+                                                <a href="#" x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+                                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    Add Line Item
+                                                </a>
+                                                <a href="#" x-on:click.prevent="$dispatch('open-modal', 'edit-cost-package-{{ $package->id }}')" class="text-xs text-gray-400 hover:text-gray-600">Edit</a>
+                                                <a href="#" x-on:click.prevent="$dispatch('open-modal', 'delete-cost-package-{{ $package->id }}')" class="text-xs text-red-400 hover:text-red-600">Delete</a>
+                                            </div>
                                         </div>
 
                                         @if($package->lineItems->isEmpty())
                                             <div class="px-6 py-4 text-center text-gray-500 text-sm border-b border-gray-100">
-                                                No line items in this package. <a href="{{ route('projects.settings', $project) }}" class="text-indigo-600 hover:underline">Add in Settings</a>.
+                                                No line items in this package. <a href="#" x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-indigo-600 hover:underline">Add a line item</a>.
                                             </div>
                                         @else
                                             <div class="overflow-x-auto">

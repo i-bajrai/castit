@@ -19,7 +19,7 @@ class StoreBudgetSetup
 
                 $ca->update([
                     'baseline_budget' => $accountData['baseline_budget'],
-                    'approved_budget' => $accountData['baseline_budget'],
+                    'approved_budget' => $accountData['approved_budget'] ?? $accountData['baseline_budget'],
                 ]);
 
                 if (! empty($accountData['packages'])) {
