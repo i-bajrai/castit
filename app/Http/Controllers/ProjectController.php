@@ -7,8 +7,13 @@ use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
 use Domain\Forecasting\Actions\ForceDeleteProject;
+use Domain\Forecasting\Actions\GetCashFlowReport;
 use Domain\Forecasting\Actions\GetCostAnalysisReport;
+use Domain\Forecasting\Actions\GetEarnedValueReport;
+use Domain\Forecasting\Actions\GetLineItemProgressReport;
+use Domain\Forecasting\Actions\GetPeriodMovementReport;
 use Domain\Forecasting\Actions\GetProjectForecastSummary;
+use Domain\Forecasting\Actions\GetVarianceDrillDownReport;
 use Domain\Forecasting\Actions\RestoreProject;
 use Domain\Forecasting\Actions\StoreBudgetSetup;
 use Domain\Forecasting\Actions\SyncForecastPeriods;
@@ -217,6 +222,139 @@ class ProjectController extends Controller
             'rows' => $data['rows'],
             'totals' => $data['totals'],
             'allPeriods' => $allPeriods,
+        ]);
+    }
+
+    public function lineItemProgress(
+        Request $request,
+        Project $project,
+        GetLineItemProgressReport $report,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $data = $report->execute($project, $period);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        return view('projects.reports.line-item-progress', [
+            'project' => $data['project'],
+            'period' => $data['period'],
+            'groups' => $data['groups'],
+            'totals' => $data['totals'],
+            'allPeriods' => $allPeriods,
+        ]);
+    }
+
+    public function varianceDrillDown(
+        Request $request,
+        Project $project,
+        GetVarianceDrillDownReport $report,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $data = $report->execute($project, $period);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        return view('projects.reports.variance-drill-down', [
+            'project' => $data['project'],
+            'period' => $data['period'],
+            'items' => $data['items'],
+            'totals' => $data['totals'],
+            'allPeriods' => $allPeriods,
+        ]);
+    }
+
+    public function periodMovement(
+        Request $request,
+        Project $project,
+        GetPeriodMovementReport $report,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $data = $report->execute($project, $period);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        return view('projects.reports.period-movement', [
+            'project' => $data['project'],
+            'period' => $data['period'],
+            'previousPeriod' => $data['previousPeriod'],
+            'rows' => $data['rows'],
+            'totals' => $data['totals'],
+            'allPeriods' => $allPeriods,
+        ]);
+    }
+
+    public function earnedValue(
+        Request $request,
+        Project $project,
+        GetEarnedValueReport $report,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $data = $report->execute($project, $period);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        return view('projects.reports.earned-value', [
+            'project' => $data['project'],
+            'period' => $data['period'],
+            'rows' => $data['rows'],
+            'totals' => $data['totals'],
+            'allPeriods' => $allPeriods,
+        ]);
+    }
+
+    public function cashFlow(
+        Project $project,
+        GetCashFlowReport $report,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $data = $report->execute($project);
+
+        return view('projects.reports.cash-flow', [
+            'project' => $data['project'],
+            'periods' => $data['periods'],
+            'totalBudget' => $data['totalBudget'],
+            'totalFcac' => $data['totalFcac'],
         ]);
     }
 

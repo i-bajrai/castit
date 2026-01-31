@@ -26,6 +26,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/{project}/reports', [ProjectController::class, 'reports'])->name('projects.reports');
     Route::get('/projects/{project}/executive-summary', [ProjectController::class, 'executiveSummary'])->name('projects.executive-summary');
     Route::get('/projects/{project}/cost-analysis', [ProjectController::class, 'costAnalysis'])->name('projects.cost-analysis');
+    Route::get('/projects/{project}/line-item-progress', [ProjectController::class, 'lineItemProgress'])->name('projects.line-item-progress');
+    Route::get('/projects/{project}/period-movement', [ProjectController::class, 'periodMovement'])->name('projects.period-movement');
+    Route::get('/projects/{project}/cash-flow', [ProjectController::class, 'cashFlow'])->name('projects.cash-flow');
+    Route::get('/projects/{project}/variance-drill-down', [ProjectController::class, 'varianceDrillDown'])->name('projects.variance-drill-down');
+    Route::get('/projects/{project}/earned-value', [ProjectController::class, 'earnedValue'])->name('projects.earned-value');
 
     Route::get('/projects/{project}/setup', [ProjectController::class, 'setup'])->name('projects.setup');
     Route::get('/projects/{project}/budget', [ProjectController::class, 'budget'])->name('projects.budget');
