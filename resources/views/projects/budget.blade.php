@@ -11,7 +11,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
@@ -22,8 +22,13 @@
                                 data-testid="download-budget-sample-csv"
                                 x-data
                                 x-on:click.prevent="
-                                    const csv = 'control_account_code,package_name,item_no,description,unit_of_measure,qty,rate,amount\n401CB00,Design Package 02,007,TL5 BARRIER 295-CB-001,LM,98,342.00,33516.00\n401CB00,Design Package 02,008,TL5 BARRIER 295-CB-002,LM,116,313.85,36406.60\n402ST00,Steel Fabrication,001,I-Beams Grade 350,Tonne,50,2500.00,125000.00';
-                                    const blob = new Blob([csv], { type: 'text/csv' });
+                                    const accounts = @js($controlAccounts->pluck('code')->values());
+                                    let csv = 'control_account_code,package_name,item_no,description,unit_of_measure,qty,rate,amount\n';
+                                    accounts.forEach((code, i) => {
+                                        csv += code + ',Package ' + String(i + 1).padStart(2, '0') + ',001,Sample item description,EA,10,100.00,1000.00\n';
+                                        csv += code + ',Package ' + String(i + 1).padStart(2, '0') + ',002,Another sample item,LM,25,50.00,1250.00\n';
+                                    });
+                                    const blob = new Blob([csv.trimEnd()], { type: 'text/csv' });
                                     const a = document.createElement('a');
                                     a.href = URL.createObjectURL(blob);
                                     a.download = 'budget-import-sample.csv';
@@ -142,6 +147,19 @@
                             },
                             lineItemCount(account) {
                                 return account.packages.reduce((sum, pkg) => sum + pkg.line_items.length, 0);
+                            },
+                            deleteAccount(index) {
+                                const account = this.accounts[index];
+                                if (!confirm('Delete control account ' + account.code + '? This cannot be undone.')) return;
+                                fetch('{{ url('projects/' . $project->id . '/control-accounts') }}/' + account.id, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                        'Accept': 'application/json',
+                                    },
+                                }).then(() => {
+                                    this.accounts.splice(index, 1);
+                                });
                             }
                         }"
                     >
@@ -160,13 +178,24 @@
                                 <div data-testid="account-budget-card" class="border border-gray-200 rounded-lg p-4">
                                     <input type="hidden" :name="`accounts[${ai}][control_account_id]`" :value="account.id">
 
-                                    <div class="flex items-center justify-between">
-                                        <div>
+                                    <div class="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            x-on:click="deleteAccount(ai)"
+                                            data-testid="delete-account-button"
+                                            class="text-gray-300 hover:text-red-500 transition-colors shrink-0"
+                                            title="Delete control account"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                        <div class="flex-1 min-w-0">
                                             <span class="font-semibold text-gray-900" x-text="account.code"></span>
                                             <span class="ml-2 text-sm text-gray-600" x-text="account.description"></span>
                                         </div>
-                                        <div class="flex items-center gap-3">
-                                            <label class="text-sm text-gray-500">Baseline Budget $</label>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <label class="text-sm text-gray-500">Budget $</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
@@ -174,7 +203,7 @@
                                                 x-model="account.baseline_budget"
                                                 :name="`accounts[${ai}][baseline_budget]`"
                                                 data-testid="baseline-budget-input"
-                                                class="w-40 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
+                                                class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
                                                 placeholder="0.00"
                                                 required
                                             />

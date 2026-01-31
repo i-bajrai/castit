@@ -48,6 +48,16 @@
                 </div>
             @endif
 
+            {{-- ==================== SETUP PROMPT ==================== --}}
+            @if($accounts->isNotEmpty() && $accounts->every(fn($a) => $a->baseline_budget == 0 && $a->costPackages->isEmpty()))
+                <div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4 flex items-center justify-between" data-testid="setup-budget-banner">
+                    <p class="text-sm text-indigo-700">Your control accounts are set up but have no budgets yet. Set up your baseline budgets to get started.</p>
+                    <a href="{{ route('projects.budget', $project) }}" class="shrink-0 ml-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700">
+                        Set Up Budget
+                    </a>
+                </div>
+            @endif
+
             {{-- ==================== PROJECT SUMMARY CARDS ==================== --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">
