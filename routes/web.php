@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects/{project}/data-entry/line-items', [LineItemForecastController::class, 'store'])->name('projects.data-entry.line-items.store');
     Route::patch('/projects/{project}/forecasts/{forecast}/ctd-qty', [LineItemForecastController::class, 'updateCtdQty'])->name('projects.forecasts.update-ctd-qty');
     Route::patch('/projects/{project}/forecasts/{forecast}/comment', [LineItemForecastController::class, 'updateComment'])->name('projects.forecasts.update-comment');
+    Route::post('/projects/{project}/forecasts/import', [LineItemForecastController::class, 'import'])->name('projects.forecasts.import');
 });
 
 Route::middleware('auth')->group(function () {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LineItemForecast;
 use App\Models\Project;
+use Domain\Forecasting\Actions\ImportForecastsFromCsv;
 use Domain\Forecasting\Actions\SaveLineItemForecasts;
 use Domain\Forecasting\DataTransferObjects\LineItemForecastData;
 use Illuminate\Http\JsonResponse;
@@ -79,6 +80,47 @@ class LineItemForecastController extends Controller
         ]);
 
         return response()->json(['status' => 'ok']);
+    }
+
+    public function import(Request $request, Project $project, ImportForecastsFromCsv $action): RedirectResponse
+    {
+        Gate::authorize('update', $project);
+
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('csv_file');
+        $rows = [];
+
+        if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
+            $header = fgetcsv($handle);
+
+            if ($header) {
+                $header = array_map(fn ($h) => strtolower(trim($h)), $header);
+
+                while (($data = fgetcsv($handle)) !== false) {
+                    if (count($data) === count($header)) {
+                        $rows[] = array_combine($header, $data);
+                    }
+                }
+            }
+
+            fclose($handle);
+        }
+
+        if (empty($rows)) {
+            return redirect()->route('projects.settings', $project)
+                ->with('error', 'No valid rows found in CSV.');
+        }
+
+        $result = $action->execute($project, $rows);
+
+        $flash = $result->imported > 0 ? 'success' : 'error';
+
+        return redirect()->route('projects.settings', $project)
+            ->with($flash, $result->summary())
+            ->with('import_errors', $result->errors);
     }
 
     public function updateComment(Request $request, Project $project, LineItemForecast $forecast): JsonResponse

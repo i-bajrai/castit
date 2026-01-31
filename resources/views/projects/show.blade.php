@@ -84,6 +84,12 @@
             </div>
 
             {{-- ==================== CONTROL ACCOUNTS & COST PACKAGES ==================== --}}
+            @if($accounts->isEmpty())
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-12 text-center" data-testid="no-control-accounts">
+                    <p class="text-gray-500">No control accounts yet. <a href="{{ route('projects.setup', $project) }}" class="text-indigo-600 hover:underline">Add control accounts</a> to get started.</p>
+                </div>
+            @endif
+
             @foreach($accounts as $account)
                 @php
                     // Compute CA-level totals from line items across all packages
