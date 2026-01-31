@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-project-header :project="$project" active="cost-detail" :subtitle="$period ? 'Forecast Period: ' . $period->period_date->format('F Y') : null">
+        <x-project-header :project="$project" active="cost-detail">
             {{ $project->name }}
         </x-project-header>
     </x-slot>
@@ -126,11 +126,7 @@
                                 </button>
                                 <div class="flex items-center gap-3">
                                     <span class="text-sm text-gray-500">{{ $caItemCount }} items</span>
-                                    @if($isEditable)
-                                        <button x-on:click.prevent="$dispatch('open-modal', 'create-cost-package-{{ $account->id }}')" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 border border-transparent rounded-lg text-xs font-medium text-white hover:bg-indigo-700 transition">
-                                            Add Cost Package
-                                        </button>
-                                    @endif
+                                    {{-- Structure changes happen in Settings --}}
                                 </div>
                             </div>
                             {{-- CA Aggregated Totals --}}
@@ -167,10 +163,7 @@
                     <div x-show="open" x-transition>
                         @if($account->costPackages->isEmpty())
                             <div class="p-6 text-center text-gray-500 text-sm">
-                                No cost packages in this control account.
-                                @if($isEditable)
-                                    <button x-on:click.prevent="$dispatch('open-modal', 'create-cost-package-{{ $account->id }}')" class="text-indigo-600 hover:underline">Add one</button>.
-                                @endif
+                                No cost packages in this control account. <a href="{{ route('projects.settings', $project) }}" class="text-indigo-600 hover:underline">Add in Settings</a>.
                             </div>
                         @else
                             @if($isEditable)
@@ -189,17 +182,12 @@
                                                 @endif
                                                 <span class="text-xs text-gray-400">{{ $package->lineItems->count() }} items</span>
                                             </div>
-                                            <div class="flex items-center gap-3">
-                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-sm text-green-600 hover:text-green-800 font-medium">Add Item</button>
-                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'edit-cost-package-{{ $package->id }}')" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Edit</button>
-                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'delete-cost-package-{{ $package->id }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
-                                            </div>
+                                            {{-- Structure changes happen in Settings --}}
                                         </div>
 
                                         @if($package->lineItems->isEmpty())
                                             <div class="px-6 py-4 text-center text-gray-500 text-sm border-b border-gray-100">
-                                                No line items in this package.
-                                                <button type="button" x-on:click.prevent="$dispatch('open-modal', 'add-line-item-{{ $package->id }}')" class="text-indigo-600 hover:underline">Add one</button>.
+                                                No line items in this package. <a href="{{ route('projects.settings', $project) }}" class="text-indigo-600 hover:underline">Add in Settings</a>.
                                             </div>
                                         @else
                                             <div class="overflow-x-auto">
@@ -221,7 +209,6 @@
                                                             <th class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-24 bg-indigo-50">FCAC</th>
                                                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Variance</th>
                                                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-40">Comments</th>
-                                                            <th class="px-3 py-3 w-16"></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody class="divide-y divide-gray-100">
@@ -300,6 +287,7 @@
                                                                             <p class="text-sm text-gray-500 mb-4">Item {{ $item->item_no }}</p>
                                                                             <input type="number" step="0.01"
                                                                                 x-model.number="editQty"
+                                                                                x-on:keydown.enter.prevent="saveCtdQty()"
                                                                                 class="w-full text-sm border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500">
                                                                             <p x-show="error" x-cloak class="mt-2 text-sm text-red-600">Failed to save. Please try again.</p>
                                                                             <div class="mt-4 flex justify-end gap-2">
@@ -377,16 +365,7 @@
                                                                         </div>
                                                                     </x-modal>
                                                                 </td>
-                                                                <td class="px-2 py-2">
-                                                                    <div class="flex gap-1">
-                                                                        <button type="button" x-on:click.prevent="$dispatch('open-modal', 'edit-line-item-{{ $item->id }}')" class="text-indigo-500 hover:text-indigo-700" title="Edit">
-                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                                                        </button>
-                                                                        <button type="button" x-on:click.prevent="$dispatch('open-modal', 'delete-line-item-{{ $item->id }}')" class="text-red-500 hover:text-red-700" title="Delete">
-                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
+                                                                {{-- No edit/delete during forecasting — structure is locked --}}
                                                             </tr>
                                                         @endforeach
                                                     </tbody>

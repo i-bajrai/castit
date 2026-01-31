@@ -1,13 +1,19 @@
-@props(['project', 'active', 'subtitle' => null])
+@props(['project', 'active', 'breadcrumbs' => []])
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-        <a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">&larr; Projects</a>
+        <nav class="flex items-center gap-1 text-sm">
+            <a href="{{ route('dashboard') }}" class="text-indigo-600 hover:text-indigo-800 hover:underline">&larr; Projects</a>
+            @foreach($breadcrumbs as $crumb)
+                <span class="text-gray-400">/</span>
+                <a href="{{ $crumb['route'] }}" class="text-indigo-600 hover:text-indigo-800 hover:underline">{{ $crumb['label'] }}</a>
+            @endforeach
+        </nav>
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ $slot }}
         </h2>
-        @if($subtitle)
-            <p class="text-sm text-gray-500 mt-1">{{ $subtitle }}</p>
+        @if($project->start_date && $project->end_date)
+            <p class="text-sm text-gray-500 mt-1">{{ $project->start_date->format('M Y') }} &ndash; {{ $project->end_date->format('M Y') }}</p>
         @endif
     </div>
     @php

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-project-header :project="$project" active="executive-summary" :subtitle="$period ? 'Period: ' . $period->period_date->format('F Y') : null">
+        <x-project-header :project="$project" active="reports" :breadcrumbs="[['route' => route('projects.reports', $project), 'label' => 'Reports']]">
             Executive Summary - {{ $project->name }}
         </x-project-header>
     </x-slot>

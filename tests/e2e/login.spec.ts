@@ -7,19 +7,19 @@ test.describe('Login Page', () => {
     test('should display the login form', async ({ page }) => {
         await page.goto('/login');
 
-        await expect(page.locator('input#email')).toBeVisible();
-        await expect(page.locator('input#password')).toBeVisible();
-        await expect(page.locator('input#remember_me')).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible();
+        await expect(page.getByTestId('email-input')).toBeVisible();
+        await expect(page.getByTestId('password-input')).toBeVisible();
+        await expect(page.getByTestId('remember-me-checkbox')).toBeVisible();
+        await expect(page.getByTestId('login-button')).toBeVisible();
         await expect(page.getByText('Forgot your password?')).toBeVisible();
     });
 
     test('should login successfully with valid credentials', async ({ page }) => {
         await page.goto('/login');
 
-        await page.locator('input#email').fill(TEST_USER_EMAIL);
-        await page.locator('input#password').fill(TEST_USER_PASSWORD);
-        await page.getByRole('button', { name: 'Log in' }).click();
+        await page.getByTestId('email-input').fill(TEST_USER_EMAIL);
+        await page.getByTestId('password-input').fill(TEST_USER_PASSWORD);
+        await page.getByTestId('login-button').click();
 
         await page.waitForURL('**/dashboard');
         await expect(page).toHaveURL(/dashboard/);
@@ -28,22 +28,21 @@ test.describe('Login Page', () => {
     test('should show error with invalid credentials', async ({ page }) => {
         await page.goto('/login');
 
-        await page.locator('input#email').fill(TEST_USER_EMAIL);
-        await page.locator('input#password').fill('wrong-password');
-        await page.getByRole('button', { name: 'Log in' }).click();
+        await page.getByTestId('email-input').fill(TEST_USER_EMAIL);
+        await page.getByTestId('password-input').fill('wrong-password');
+        await page.getByTestId('login-button').click();
 
-        await expect(page.locator('.mt-2')).toContainText('These credentials do not match our records');
+        await expect(page.getByText('These credentials do not match our records')).toBeVisible();
     });
 
     test('should show validation errors for empty form submission', async ({ page }) => {
         await page.goto('/login');
 
-        // The email and password fields have the "required" attribute,
-        // so the browser prevents submission. We remove it to test server-side validation.
-        await page.locator('input#email').evaluate(el => el.removeAttribute('required'));
-        await page.locator('input#password').evaluate(el => el.removeAttribute('required'));
+        // Remove required attributes to bypass browser validation
+        await page.getByTestId('email-input').evaluate(el => el.removeAttribute('required'));
+        await page.getByTestId('password-input').evaluate(el => el.removeAttribute('required'));
 
-        await page.getByRole('button', { name: 'Log in' }).click();
+        await page.getByTestId('login-button').click();
 
         await expect(page.getByText('The email field is required.')).toBeVisible();
     });
@@ -51,7 +50,7 @@ test.describe('Login Page', () => {
     test('should have a working remember me checkbox', async ({ page }) => {
         await page.goto('/login');
 
-        const checkbox = page.locator('input#remember_me');
+        const checkbox = page.getByTestId('remember-me-checkbox');
         await expect(checkbox).not.toBeChecked();
 
         await checkbox.check();

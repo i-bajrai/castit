@@ -5,6 +5,7 @@
                 {{ __('Projects') }}
             </h2>
             <button
+                data-testid="new-project-button"
                 x-data=""
                 x-on:click="$dispatch('open-modal', 'create-project')"
                 class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
@@ -18,13 +19,14 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if($projects->isEmpty())
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-12 text-center">
+                    <div data-testid="empty-state" class="p-12 text-center">
                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                         <h3 class="mt-4 text-lg font-semibold text-gray-900">No projects yet</h3>
                         <p class="mt-2 text-gray-600">Get started by creating your first construction project.</p>
                         <button
+                            data-testid="empty-state-create-button"
                             x-data=""
                             x-on:click="$dispatch('open-modal', 'create-project')"
                             class="mt-6 inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
@@ -34,9 +36,9 @@
                     </div>
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div data-testid="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($projects as $project)
-                        <a href="{{ route('projects.show', $project) }}" class="block bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition">
+                        <a data-testid="project-card" href="{{ route('projects.show', $project) }}" class="block bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition">
                             <div class="p-6">
                                 <div class="flex items-start justify-between">
                                     <div>
@@ -73,7 +75,7 @@
     </div>
 
     <x-modal name="create-project" focusable>
-        <form method="POST" action="{{ route('projects.store') }}" class="p-6">
+        <form data-testid="create-project-form" method="POST" action="{{ route('projects.store') }}" class="p-6">
             @csrf
 
             <h2 class="text-lg font-medium text-gray-900">Create New Project</h2>
@@ -119,7 +121,7 @@
 
             <div class="mt-6 flex justify-end gap-3">
                 <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                <x-primary-button>Create Project</x-primary-button>
+                <x-primary-button data-testid="submit-create-project">Create Project</x-primary-button>
             </div>
         </form>
     </x-modal>
