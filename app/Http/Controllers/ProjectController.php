@@ -6,9 +6,12 @@ use App\Models\Company;
 use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
+use Domain\Forecasting\Actions\ForceDeleteProject;
 use Domain\Forecasting\Actions\GetProjectForecastSummary;
+use Domain\Forecasting\Actions\RestoreProject;
 use Domain\Forecasting\Actions\StoreBudgetSetup;
 use Domain\Forecasting\Actions\SyncForecastPeriods;
+use Domain\Forecasting\Actions\TrashProject;
 use Domain\Forecasting\DataTransferObjects\ProjectData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -183,5 +186,47 @@ class ProjectController extends Controller
             'totals' => $summary['totals'],
             'period' => $summary['period'],
         ]);
+    }
+
+    public function destroy(Project $project, TrashProject $action): RedirectResponse
+    {
+        Gate::authorize('delete', $project);
+
+        $action->execute($project);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Project moved to trash.');
+    }
+
+    public function trash(Request $request): View
+    {
+        $companyIds = $request->user()->companies()->pluck('id');
+
+        $trashedProjects = Project::onlyTrashed()
+            ->whereIn('company_id', $companyIds)
+            ->latest('deleted_at')
+            ->get();
+
+        return view('projects.trash', compact('trashedProjects'));
+    }
+
+    public function restore(Project $project, RestoreProject $action): RedirectResponse
+    {
+        Gate::authorize('restore', $project);
+
+        $action->execute($project);
+
+        return redirect()->route('projects.trash')
+            ->with('success', 'Project restored successfully.');
+    }
+
+    public function forceDelete(Project $project, ForceDeleteProject $action): RedirectResponse
+    {
+        Gate::authorize('forceDelete', $project);
+
+        $action->execute($project);
+
+        return redirect()->route('projects.trash')
+            ->with('success', 'Project permanently deleted.');
     }
 }

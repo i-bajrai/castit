@@ -36,10 +36,29 @@
                     </div>
                 </div>
             @else
+                <div class="mb-4 flex justify-end">
+                    <a href="{{ route('projects.trash') }}" class="inline-flex items-center text-sm text-red-600 hover:text-red-800 transition">
+                        View deleted projects
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+
                 <div data-testid="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($projects as $project)
-                        <a data-testid="project-card" href="{{ route('projects.show', $project) }}" class="block bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition">
-                            <div class="p-6">
+                        <div data-testid="project-card" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition relative group">
+                            <button
+                                x-data=""
+                                x-on:click="$dispatch('open-trash-modal', { id: {{ $project->id }}, name: '{{ addslashes($project->name) }}' })"
+                                class="absolute top-4 right-4 z-10 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                                title="Delete project"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                            <a href="{{ route('projects.show', $project) }}" class="block p-6">
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <h3 class="text-lg font-semibold text-gray-900">{{ $project->name }}</h3>
@@ -47,7 +66,7 @@
                                             <p class="mt-1 text-sm text-gray-500">{{ $project->project_number }}</p>
                                         @endif
                                     </div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $project->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $project->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }} mr-6">
                                         {{ ucfirst($project->status) }}
                                     </span>
                                 </div>
@@ -66,12 +85,33 @@
                                         <span class="font-medium text-gray-700">{{ $project->control_accounts_count }}</span>
                                     </div>
                                 </div>
-                            </div>
-                        </a>
+                            </a>
+                        </div>
                     @endforeach
                 </div>
             @endif
         </div>
+    </div>
+
+    {{-- Trash confirmation modal --}}
+    <div x-data="{ projectId: null, projectName: '' }"
+         x-on:open-trash-modal.window="projectId = $event.detail.id; projectName = $event.detail.name; $dispatch('open-modal', 'confirm-trash-project')">
+
+        <x-modal name="confirm-trash-project" focusable>
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">Delete Project</h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Are you sure you want to delete <span class="font-semibold" x-text="projectName"></span>? You can restore it later from deleted projects.
+                </p>
+
+                <form :action="'/projects/' + projectId" method="POST" class="mt-6 flex justify-end gap-3">
+                    @csrf
+                    @method('DELETE')
+                    <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                    <x-danger-button>Delete</x-danger-button>
+                </form>
+            </div>
+        </x-modal>
     </div>
 
     <x-modal name="create-project" focusable>
