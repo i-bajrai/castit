@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ControlAccount;
 use App\Models\ForecastPeriod;
+use App\Models\LineItemForecast;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateControlAccount;
 use Domain\Forecasting\Actions\CreateCostPackage;
@@ -158,7 +159,7 @@ class ControlAccountController extends Controller
         ]);
 
         $currentPeriod = ForecastPeriod::where('project_id', $project->id)
-            ->where('period_date', now()->startOfMonth())
+            ->orderByDesc('period_date')
             ->first();
 
         $handle = fopen($request->file('csv_file')->getPathname(), 'r');
@@ -227,7 +228,27 @@ class ControlAccountController extends Controller
                         sortOrder: $liIndex,
                     );
 
-                    $createLineItem->execute($package, $liData, $currentPeriod);
+                    $lineItem = $createLineItem->execute($package, $liData, $currentPeriod);
+
+                    if ($currentPeriod) {
+                        LineItemForecast::create([
+                            'line_item_id' => $lineItem->id,
+                            'forecast_period_id' => $currentPeriod->id,
+                            'previous_qty' => 0,
+                            'previous_rate' => 0,
+                            'previous_amount' => 0,
+                            'ctd_qty' => 0,
+                            'ctd_rate' => $item['rate'],
+                            'ctd_amount' => 0,
+                            'ctc_qty' => $item['qty'],
+                            'ctc_rate' => $item['rate'],
+                            'ctc_amount' => $item['amount'],
+                            'fcac_rate' => $item['rate'],
+                            'fcac_amount' => $item['amount'],
+                            'variance' => -$item['amount'],
+                            'comments' => null,
+                        ]);
+                    }
                 }
             }
         });
