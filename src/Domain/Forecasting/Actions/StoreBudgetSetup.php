@@ -3,6 +3,7 @@
 namespace Domain\Forecasting\Actions;
 
 use App\Models\ControlAccount;
+use App\Models\LineItemForecast;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
 
@@ -42,6 +43,41 @@ class StoreBudgetSetup
                             ]);
                         }
                     }
+                }
+            }
+
+            // Create forecast records for new line items across all existing periods
+            (new SyncForecastPeriods)->execute($project);
+
+            // Initialize forecasts with original budget as the baseline:
+            // previous = original, CTC = original (since CTD is 0), FCAC = original
+            $periods = $project->forecastPeriods()->pluck('id');
+            if ($periods->isNotEmpty()) {
+                $lineItems = $project->controlAccounts()
+                    ->with('costPackages.lineItems')
+                    ->get()
+                    ->flatMap(fn ($ca) => $ca->costPackages->flatMap->lineItems);
+
+                foreach ($lineItems as $item) {
+                    $origQty = (float) $item->original_qty;
+                    $origRate = (float) $item->original_rate;
+                    $origAmount = (float) $item->original_amount;
+
+                    LineItemForecast::where('line_item_id', $item->id)
+                        ->whereIn('forecast_period_id', $periods)
+                        ->where('previous_amount', 0)
+                        ->where('fcac_amount', 0)
+                        ->update([
+                            'previous_qty' => $origQty,
+                            'previous_rate' => $origRate,
+                            'previous_amount' => $origAmount,
+                            'ctc_qty' => $origQty,
+                            'ctc_rate' => $origRate,
+                            'ctc_amount' => $origAmount,
+                            'fcac_rate' => $origRate,
+                            'fcac_amount' => $origAmount,
+                            'variance' => 0,
+                        ]);
                 }
             }
         });
