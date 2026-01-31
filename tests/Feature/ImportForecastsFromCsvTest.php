@@ -217,6 +217,32 @@ class ImportForecastsFromCsvTest extends TestCase
             ->assertSessionHasErrors('csv_file');
     }
 
+    public function test_rejects_current_and_future_periods(): void
+    {
+        [$user, $project] = $this->seedImportData();
+
+        $currentPeriod = now()->startOfMonth()->format('Y-m');
+
+        $futurePeriod = now()->addMonth()->startOfMonth();
+        ForecastPeriod::create(['project_id' => $project->id, 'period_date' => $futurePeriod]);
+        LineItemForecast::create([
+            'line_item_id' => \App\Models\LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))->first()->id,
+            'forecast_period_id' => ForecastPeriod::where('project_id', $project->id)->where('period_date', $futurePeriod)->first()->id,
+            'previous_qty' => 0, 'previous_rate' => 0, 'previous_amount' => 0,
+            'ctd_qty' => 0, 'ctd_rate' => 0, 'ctd_amount' => 0,
+            'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
+            'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
+        ]);
+
+        $futureKey = $futurePeriod->format('Y-m');
+        $csv = $this->makeCsv("item_no,period,ctd_qty\n006-001,{$futureKey},80\n");
+
+        $this->actingAs($user)
+            ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
+            ->assertRedirect(route('projects.settings', $project))
+            ->assertSessionHas('import_errors');
+    }
+
     public function test_empty_csv_returns_error(): void
     {
         [$user, $project] = $this->seedImportData();

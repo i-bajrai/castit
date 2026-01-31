@@ -53,6 +53,11 @@ class ImportForecastsFromCsv
                 continue;
             }
 
+            if ($period->period_date->gte(now()->startOfMonth())) {
+                $errors[] = "Row {$rowNum}: period '{$periodKey}' is not a past period.";
+                continue;
+            }
+
             $forecast = LineItemForecast::where('line_item_id', $lineItem->id)
                 ->where('forecast_period_id', $period->id)
                 ->first();

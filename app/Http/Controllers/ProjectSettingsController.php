@@ -20,6 +20,7 @@ class ProjectSettingsController extends Controller
             ->get(['id', 'item_no', 'description']);
 
         $periods = $project->forecastPeriods()
+            ->where('period_date', '<', now()->startOfMonth())
             ->orderBy('period_date')
             ->pluck('period_date')
             ->map(fn ($d) => $d->format('Y-m'));
