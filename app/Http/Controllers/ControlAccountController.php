@@ -197,18 +197,24 @@ class ControlAccountController extends Controller
                 ->with('error', 'No matching rows found for ' . $controlAccount->code);
         }
 
-        $existingPkgCount = $controlAccount->costPackages()->count();
+        $existingPackages = $controlAccount->costPackages()->pluck('id', 'name');
+        $existingPkgCount = $existingPackages->count();
 
-        DB::transaction(function () use ($controlAccount, $grouped, $createCostPackage, $createLineItem, $currentPeriod, $existingPkgCount) {
+        DB::transaction(function () use ($controlAccount, $grouped, $createCostPackage, $createLineItem, $currentPeriod, $existingPackages, $existingPkgCount) {
             $pkgIndex = $existingPkgCount;
             foreach ($grouped as $pkgName => $items) {
-                $pkgData = new CostPackageData(
-                    name: $pkgName,
-                    sortOrder: $pkgIndex++,
-                    controlAccountId: $controlAccount->id,
-                );
+                if ($existingPackages->has($pkgName)) {
+                    $package = $controlAccount->costPackages()->find($existingPackages[$pkgName]);
+                    $package->lineItems()->delete();
+                } else {
+                    $pkgData = new CostPackageData(
+                        name: $pkgName,
+                        sortOrder: $pkgIndex++,
+                        controlAccountId: $controlAccount->id,
+                    );
 
-                $package = $createCostPackage->execute($controlAccount, $pkgData);
+                    $package = $createCostPackage->execute($controlAccount, $pkgData);
+                }
 
                 foreach ($items as $liIndex => $item) {
                     $liData = new LineItemData(
