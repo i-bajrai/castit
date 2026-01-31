@@ -23,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/{project}/executive-summary', [ProjectController::class, 'executiveSummary'])->name('projects.executive-summary');
 
     Route::get('/projects/{project}/setup', [ProjectController::class, 'setup'])->name('projects.setup');
+    Route::get('/projects/{project}/budget', [ProjectController::class, 'budget'])->name('projects.budget');
+    Route::post('/projects/{project}/budget', [ProjectController::class, 'storeBudget'])->name('projects.budget.store');
 
     Route::get('/projects/{project}/settings', [ProjectSettingsController::class, 'index'])->name('projects.settings');
 

@@ -484,7 +484,6 @@
                                 @endforeach
                             @endif
                         @endif
-                        </div>
                     </div>
                 </div>
             @endforeach

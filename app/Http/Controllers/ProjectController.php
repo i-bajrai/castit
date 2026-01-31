@@ -7,6 +7,7 @@ use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
 use Domain\Forecasting\Actions\GetProjectForecastSummary;
+use Domain\Forecasting\Actions\StoreBudgetSetup;
 use Domain\Forecasting\Actions\SyncForecastPeriods;
 use Domain\Forecasting\DataTransferObjects\ProjectData;
 use Illuminate\Http\RedirectResponse;
@@ -120,6 +121,43 @@ class ProjectController extends Controller
             'project' => $project,
             'controlAccounts' => $controlAccounts,
         ]);
+    }
+
+    public function budget(Project $project): View
+    {
+        Gate::authorize('view', $project);
+
+        $controlAccounts = $project->controlAccounts()->orderBy('sort_order')->get();
+
+        return view('projects.budget', [
+            'project' => $project,
+            'controlAccounts' => $controlAccounts,
+        ]);
+    }
+
+    public function storeBudget(Request $request, Project $project, StoreBudgetSetup $action): RedirectResponse
+    {
+        Gate::authorize('update', $project);
+
+        $validated = $request->validate([
+            'accounts' => 'required|array|min:1',
+            'accounts.*.control_account_id' => 'required|integer|exists:control_accounts,id',
+            'accounts.*.baseline_budget' => 'required|numeric|min:0',
+            'accounts.*.packages' => 'nullable|array',
+            'accounts.*.packages.*.item_no' => 'nullable|string|max:255',
+            'accounts.*.packages.*.name' => 'required|string|max:255',
+            'accounts.*.packages.*.line_items' => 'required|array|min:1',
+            'accounts.*.packages.*.line_items.*.item_no' => 'nullable|string|max:255',
+            'accounts.*.packages.*.line_items.*.description' => 'required|string|max:255',
+            'accounts.*.packages.*.line_items.*.unit_of_measure' => 'nullable|string|max:255',
+            'accounts.*.packages.*.line_items.*.qty' => 'required|numeric|min:0',
+            'accounts.*.packages.*.line_items.*.rate' => 'required|numeric|min:0',
+            'accounts.*.packages.*.line_items.*.amount' => 'required|numeric',
+        ]);
+
+        $action->execute($project, $validated['accounts']);
+
+        return redirect()->route('projects.show', $project);
     }
 
     public function reports(Project $project): View

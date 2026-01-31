@@ -38,7 +38,7 @@ class ControlAccountController extends Controller
             $action->execute($project, $data);
         }
 
-        return redirect()->route('projects.show', $project);
+        return redirect()->route('projects.budget', $project);
     }
 
     public function store(Request $request, Project $project, CreateControlAccount $action): RedirectResponse

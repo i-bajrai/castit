@@ -138,52 +138,54 @@
             </div>
 
             {{-- ==================== IMPORT HISTORICAL DATA ==================== --}}
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6"
-                x-data="{
-                    downloadSample() {
-                        const items = @js($sampleLineItems->map(fn ($i) => ['item_no' => $i->item_no, 'description' => $i->description]));
-                        const periods = @js($samplePeriods);
-                        let csv = 'item_no,period,ctd_qty\n';
-                        items.forEach(item => {
-                            periods.forEach(period => {
-                                csv += item.item_no + ',' + period + ',0\n';
+            @if($sampleLineItems->isNotEmpty() && $samplePeriods->isNotEmpty())
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-6"
+                    x-data="{
+                        downloadSample() {
+                            const items = @js($sampleLineItems->map(fn ($i) => ['item_no' => $i->item_no, 'description' => $i->description]));
+                            const periods = @js($samplePeriods);
+                            let csv = 'item_no,period,ctd_qty\n';
+                            items.forEach(item => {
+                                periods.forEach(period => {
+                                    csv += item.item_no + ',' + period + ',0\n';
+                                });
                             });
-                        });
-                        const blob = new Blob([csv], { type: 'text/csv' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'forecast-import-template.csv';
-                        a.click();
-                        URL.revokeObjectURL(url);
-                    }
-                }">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Import Historical Data</h3>
-                        <a href="#" x-on:click.prevent="downloadSample()" class="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">Download sample CSV</a>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">
-                        Upload a CSV file to import historical CTD quantities. Only forecasts that haven't been set yet (CTD Qty = 0) will be updated.
-                    </p>
-
-                    <form method="POST" action="{{ route('projects.forecasts.import', $project) }}" enctype="multipart/form-data">
-                        @csrf
-                        <div class="flex items-end gap-4">
-                            <div class="flex-1">
-                                <x-input-label for="csv_file" value="CSV File" />
-                                <input id="csv_file" name="csv_file" type="file" accept=".csv,.txt"
-                                    class="mt-1 block w-full text-sm text-gray-500
-                                        file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
-                                        file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
-                                        hover:file:bg-indigo-100" />
-                                <x-input-error :messages="$errors->get('csv_file')" class="mt-2" />
-                            </div>
-                            <x-primary-button>Import</x-primary-button>
+                            const blob = new Blob([csv], { type: 'text/csv' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'forecast-import-template.csv';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }
+                    }">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Import Historical Data</h3>
+                            <a href="#" x-on:click.prevent="downloadSample()" class="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">Download sample CSV</a>
                         </div>
-                    </form>
+                        <p class="text-sm text-gray-600 mb-4">
+                            Upload a CSV file to import historical CTD quantities. Only forecasts that haven't been set yet (CTD Qty = 0) will be updated.
+                        </p>
+
+                        <form method="POST" action="{{ route('projects.forecasts.import', $project) }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="flex items-end gap-4">
+                                <div class="flex-1">
+                                    <x-input-label for="csv_file" value="CSV File" />
+                                    <input id="csv_file" name="csv_file" type="file" accept=".csv,.txt"
+                                        class="mt-1 block w-full text-sm text-gray-500
+                                            file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
+                                            file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700
+                                            hover:file:bg-indigo-100" />
+                                    <x-input-error :messages="$errors->get('csv_file')" class="mt-2" />
+                                </div>
+                                <x-primary-button>Import</x-primary-button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             {{-- ==================== MODALS ==================== --}}
 
