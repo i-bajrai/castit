@@ -20,14 +20,15 @@ class GetCashFlowReport
 
         $totalBudget = $lineItems->sum('original_amount');
 
-        // For each period, sum ctd_amount across all line items
+        // ctd_amount is already cumulative (cost-to-date), so summing it per period
+        // gives the total project CTD at that point. Period spend = current CTD - previous CTD.
         $periods = [];
-        $cumulativeCtd = 0.0;
+        $previousCtd = 0.0;
         $periodCount = $allPeriods->count();
 
         foreach ($allPeriods as $index => $period) {
-            $periodCtd = (float) $period->lineItemForecasts()->sum('ctd_amount');
-            $cumulativeCtd += $periodCtd;
+            $cumulativeCtd = (float) $period->lineItemForecasts()->sum('ctd_amount');
+            $periodSpend = $cumulativeCtd - $previousCtd;
 
             $periodCtc = (float) $period->lineItemForecasts()->sum('ctc_amount');
             $periodFcac = (float) $period->lineItemForecasts()->sum('fcac_amount');
@@ -40,12 +41,14 @@ class GetCashFlowReport
             $periods[] = [
                 'period_date' => $period->period_date,
                 'label' => $period->period_date->format('M Y'),
-                'period_ctd' => $periodCtd,
+                'period_ctd' => $periodSpend,
                 'cumulative_ctd' => $cumulativeCtd,
                 'period_ctc' => $periodCtc,
                 'period_fcac' => $periodFcac,
                 'planned_cumulative' => $plannedCumulative,
             ];
+
+            $previousCtd = $cumulativeCtd;
         }
 
         return [
