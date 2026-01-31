@@ -14,6 +14,33 @@ use Illuminate\Support\Facades\Gate;
 
 class ControlAccountController extends Controller
 {
+    public function bulkStore(Request $request, Project $project, CreateControlAccount $action): RedirectResponse
+    {
+        Gate::authorize('update', $project);
+
+        $validated = $request->validate([
+            'accounts' => 'required|array|min:1',
+            'accounts.*.code' => 'required|string|max:255',
+            'accounts.*.description' => 'required|string|max:255',
+        ]);
+
+        $existingCount = $project->controlAccounts()->count();
+
+        foreach ($validated['accounts'] as $index => $account) {
+            $data = new ControlAccountData(
+                phase: '',
+                code: $account['code'],
+                description: $account['description'],
+                category: null,
+                sortOrder: $existingCount + $index,
+            );
+
+            $action->execute($project, $data);
+        }
+
+        return redirect()->route('projects.show', $project);
+    }
+
     public function store(Request $request, Project $project, CreateControlAccount $action): RedirectResponse
     {
         Gate::authorize('update', $project);

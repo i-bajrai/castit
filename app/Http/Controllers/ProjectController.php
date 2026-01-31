@@ -55,7 +55,7 @@ class ProjectController extends Controller
 
         $project = $action->execute($company, $data);
 
-        return redirect()->route('projects.show', $project);
+        return redirect()->route('projects.setup', $project);
     }
 
     public function update(Request $request, Project $project, SyncForecastPeriods $syncPeriods): RedirectResponse
@@ -107,6 +107,18 @@ class ProjectController extends Controller
             'totals' => $summary['totals'],
             'allPeriods' => $allPeriods,
             'isEditable' => $isEditable,
+        ]);
+    }
+
+    public function setup(Project $project): View
+    {
+        Gate::authorize('view', $project);
+
+        $controlAccounts = $project->controlAccounts()->orderBy('sort_order')->get();
+
+        return view('projects.setup', [
+            'project' => $project,
+            'controlAccounts' => $controlAccounts,
         ]);
     }
 

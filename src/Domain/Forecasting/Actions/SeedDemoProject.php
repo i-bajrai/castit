@@ -31,23 +31,21 @@ class SeedDemoProject
             $p->delete();
         });
 
-        // 2. Project
+        // 2. Project — end date extends to current month so it's always editable
+        $endDate = max(
+            now()->startOfMonth(),
+            \Carbon\Carbon::parse('2025-12-01'),
+        );
+
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'PRISM Highway Extension',
             'original_budget' => 248117066,
             'start_date' => '2024-01-01',
-            'end_date' => '2025-12-01',
+            'end_date' => $endDate->format('Y-m-d'),
         ]);
 
-        // 3. Forecast period (current month so it's editable)
-        $period = ForecastPeriod::create([
-            'project_id' => $project->id,
-            'period_date' => now()->startOfMonth(),
-            'is_current' => true,
-        ]);
-
-        // 4. Control Account: 401CB00
+        // 3. Control Account: 401CB00
         $ca = ControlAccount::create([
             'project_id' => $project->id,
             'phase' => '4 - Construction',
@@ -170,42 +168,50 @@ class SeedDemoProject
         ]);
 
         // ============================================================
-        // FORECASTS — simulate partial completion for current period
+        // 4. Sync all forecast periods (prepopulates with zeros)
         // ============================================================
+        (new SyncForecastPeriods)->execute($project);
+
+        // ============================================================
+        // 5. FORECASTS — simulate partial completion for current period
+        // ============================================================
+        $period = $project->forecastPeriods()
+            ->where('period_date', now()->startOfMonth())
+            ->firstOrFail();
 
         foreach ($items006 as $item) {
-            $this->createForecast($item, $period, ctdQty: (float) $item->original_qty);
+            $this->updateForecast($item, $period, ctdQty: (float) $item->original_qty);
         }
 
         $wp009Ctd = [1500, 0, 88, 0, 0];
         $wp009Comments = [null, 'Done by SVG', null, 'Done by SVG', null];
         foreach ($items009 as $i => $item) {
-            $this->createForecast($item, $period, ctdQty: $wp009Ctd[$i], comments: $wp009Comments[$i]);
+            $this->updateForecast($item, $period, ctdQty: $wp009Ctd[$i], comments: $wp009Comments[$i]);
         }
 
         $btbCtd = [3, 2, 2, 2, 0];
         foreach ($itemsBtB as $i => $item) {
-            $this->createForecast($item, $period, ctdQty: $btbCtd[$i]);
+            $this->updateForecast($item, $period, ctdQty: $btbCtd[$i]);
         }
 
         $prelimCtd = [4, 4, 0];
         foreach ($itemsPrelim as $i => $item) {
-            $this->createForecast($item, $period, ctdQty: $prelimCtd[$i]);
+            $this->updateForecast($item, $period, ctdQty: $prelimCtd[$i]);
         }
 
         $otherCtd = [3, 4];
         foreach ($itemsOther as $i => $item) {
-            $this->createForecast($item, $period, ctdQty: $otherCtd[$i]);
+            $this->updateForecast($item, $period, ctdQty: $otherCtd[$i]);
         }
 
         $varCtd = [0, 0, 0, 1, 15, 0];
         foreach ($itemsVar as $i => $item) {
-            $this->createForecast($item, $period, ctdQty: $varCtd[$i]);
+            $this->updateForecast($item, $period, ctdQty: $varCtd[$i]);
         }
 
         $unletCtd = [280, 60, 120, 1];
         foreach ($itemsUnlet as $i => $item) {
-            $this->createForecast($item, $period, ctdQty: $unletCtd[$i]);
+            $this->updateForecast($item, $period, ctdQty: $unletCtd[$i]);
         }
 
         return $project;
@@ -249,7 +255,7 @@ class SeedDemoProject
         return $items;
     }
 
-    private function createForecast(
+    private function updateForecast(
         LineItem $item,
         ForecastPeriod $period,
         float $ctdQty,
@@ -266,25 +272,46 @@ class SeedDemoProject
         $fcacAmount = $ctdAmount + $ctcAmount;
         $totalQty = $ctdQty + $ctcQty;
         $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-        $previousAmount = (float) $item->original_amount;
+
+        $forecast = LineItemForecast::where('line_item_id', $item->id)
+            ->where('forecast_period_id', $period->id)
+            ->first();
+
+        $previousAmount = $forecast?->previous_amount ?? (float) $item->original_amount;
         $variance = $previousAmount - $fcacAmount;
 
-        LineItemForecast::create([
-            'line_item_id' => $item->id,
-            'forecast_period_id' => $period->id,
-            'previous_qty' => $origQty,
-            'previous_rate' => $origRate,
-            'previous_amount' => $previousAmount,
-            'ctd_qty' => $ctdQty,
-            'ctd_rate' => $ctdRate,
-            'ctd_amount' => $ctdAmount,
-            'ctc_qty' => $ctcQty,
-            'ctc_rate' => $ctcRate,
-            'ctc_amount' => $ctcAmount,
-            'fcac_rate' => $fcacRate,
-            'fcac_amount' => $fcacAmount,
-            'variance' => $variance,
-            'comments' => $comments,
-        ]);
+        if ($forecast) {
+            $forecast->update([
+                'ctd_qty' => $ctdQty,
+                'ctd_rate' => $ctdRate,
+                'ctd_amount' => $ctdAmount,
+                'ctc_qty' => $ctcQty,
+                'ctc_rate' => $ctcRate,
+                'ctc_amount' => $ctcAmount,
+                'fcac_rate' => $fcacRate,
+                'fcac_amount' => $fcacAmount,
+                'previous_amount' => $previousAmount,
+                'variance' => $variance,
+                'comments' => $comments,
+            ]);
+        } else {
+            LineItemForecast::create([
+                'line_item_id' => $item->id,
+                'forecast_period_id' => $period->id,
+                'previous_qty' => $origQty,
+                'previous_rate' => $origRate,
+                'previous_amount' => $previousAmount,
+                'ctd_qty' => $ctdQty,
+                'ctd_rate' => $ctdRate,
+                'ctd_amount' => $ctdAmount,
+                'ctc_qty' => $ctcQty,
+                'ctc_rate' => $ctcRate,
+                'ctc_amount' => $ctcAmount,
+                'fcac_rate' => $fcacRate,
+                'fcac_amount' => $fcacAmount,
+                'variance' => $variance,
+                'comments' => $comments,
+            ]);
+        }
     }
 }

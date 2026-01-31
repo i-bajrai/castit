@@ -22,8 +22,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/{project}/reports', [ProjectController::class, 'reports'])->name('projects.reports');
     Route::get('/projects/{project}/executive-summary', [ProjectController::class, 'executiveSummary'])->name('projects.executive-summary');
 
+    Route::get('/projects/{project}/setup', [ProjectController::class, 'setup'])->name('projects.setup');
+
     Route::get('/projects/{project}/settings', [ProjectSettingsController::class, 'index'])->name('projects.settings');
 
+    Route::post('/projects/{project}/control-accounts/bulk', [ControlAccountController::class, 'bulkStore'])->name('projects.control-accounts.bulk-store');
     Route::post('/projects/{project}/control-accounts', [ControlAccountController::class, 'store'])->name('projects.control-accounts.store');
     Route::put('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'update'])->name('projects.control-accounts.update');
     Route::delete('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'destroy'])->name('projects.control-accounts.destroy');

@@ -3,6 +3,7 @@
 namespace Domain\Forecasting\Actions;
 
 use App\Models\ForecastPeriod;
+use App\Models\LineItem;
 use App\Models\LineItemForecast;
 use App\Models\Project;
 
@@ -36,6 +37,8 @@ class SyncForecastPeriods
                 $this->carryForwardLineItemForecasts($previousPeriod, $period);
             }
 
+            $this->ensureAllLineItemsHaveForecasts($project, $period);
+
             $previousPeriod = $period;
 
             $current->addMonth();
@@ -53,6 +56,35 @@ class SyncForecastPeriods
                 'previous_qty' => $oldForecast->ctd_qty + $oldForecast->ctc_qty,
                 'previous_rate' => $oldForecast->fcac_rate,
                 'previous_amount' => $oldForecast->fcac_amount,
+                'ctd_qty' => 0,
+                'ctd_rate' => 0,
+                'ctd_amount' => 0,
+                'ctc_qty' => 0,
+                'ctc_rate' => 0,
+                'ctc_amount' => 0,
+                'fcac_rate' => 0,
+                'fcac_amount' => 0,
+                'variance' => 0,
+            ]);
+        }
+    }
+
+    private function ensureAllLineItemsHaveForecasts(Project $project, ForecastPeriod $period): void
+    {
+        $existingLineItemIds = LineItemForecast::where('forecast_period_id', $period->id)
+            ->pluck('line_item_id');
+
+        $lineItems = LineItem::whereHas('costPackage', function ($q) use ($project) {
+            $q->where('project_id', $project->id);
+        })->whereNotIn('id', $existingLineItemIds)->get();
+
+        foreach ($lineItems as $item) {
+            LineItemForecast::create([
+                'line_item_id' => $item->id,
+                'forecast_period_id' => $period->id,
+                'previous_qty' => 0,
+                'previous_rate' => 0,
+                'previous_amount' => 0,
                 'ctd_qty' => 0,
                 'ctd_rate' => 0,
                 'ctd_amount' => 0,
