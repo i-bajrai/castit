@@ -7,6 +7,7 @@ use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
 use Domain\Forecasting\Actions\ForceDeleteProject;
+use Domain\Forecasting\Actions\GetCostAnalysisReport;
 use Domain\Forecasting\Actions\GetProjectForecastSummary;
 use Domain\Forecasting\Actions\RestoreProject;
 use Domain\Forecasting\Actions\StoreBudgetSetup;
@@ -185,6 +186,36 @@ class ProjectController extends Controller
             'accounts' => $summary['accounts'],
             'totals' => $summary['totals'],
             'period' => $summary['period'],
+        ]);
+    }
+
+    public function costAnalysis(
+        Request $request,
+        Project $project,
+        GetCostAnalysisReport $report,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $data = $report->execute($project, $period);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        return view('projects.cost-analysis', [
+            'project' => $data['project'],
+            'period' => $data['period'],
+            'previousPeriod' => $data['previousPeriod'],
+            'rows' => $data['rows'],
+            'totals' => $data['totals'],
+            'allPeriods' => $allPeriods,
         ]);
     }
 

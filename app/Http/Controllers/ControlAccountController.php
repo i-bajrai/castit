@@ -22,6 +22,7 @@ class ControlAccountController extends Controller
             'accounts' => 'required|array|min:1',
             'accounts.*.code' => 'required|string|max:255',
             'accounts.*.description' => 'required|string|max:255',
+            'accounts.*.category' => 'nullable|string|max:255',
         ]);
 
         $existingCount = $project->controlAccounts()->count();
@@ -31,7 +32,7 @@ class ControlAccountController extends Controller
                 phase: '',
                 code: $account['code'],
                 description: $account['description'],
-                category: null,
+                category: $account['category'] ?? null,
                 sortOrder: $existingCount + $index,
             );
 

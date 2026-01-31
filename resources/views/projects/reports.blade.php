@@ -13,6 +13,12 @@
                     <h3 class="text-lg font-semibold text-gray-900">Executive Summary</h3>
                     <p class="mt-2 text-sm text-gray-500">High-level overview of control account forecasts and variances.</p>
                 </a>
+
+                <a href="{{ route('projects.cost-analysis', $project) }}"
+                   class="block bg-white shadow-sm sm:rounded-lg p-6 hover:shadow-md transition border border-transparent hover:border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Detailed Value and Cost Analysis</h3>
+                    <p class="mt-2 text-sm text-gray-500">Budget values, cost to date, estimates, and monthly movements per control account.</p>
+                </a>
             </div>
         </div>
     </div>

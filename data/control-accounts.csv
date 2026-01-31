@@ -1,124 +1,124 @@
-CODE,DESCRIPTION
-401AN00,Line Wide - Civil - Anti Graffiti
-401AS00,Line Wide - Civil - Asphalt
-401BE00,Line Wide - Civil - Bearing Install
-401BS00,Line Wide - Civil - Bearing Supply
-401CB00,Line Wide - Civil - Civil - Concrete Barriers
-401CI01,Line Wide - Civil - Concrete Install - Structures
-401CI02,Line Wide - Civil - Concrete Pump Hire
-401CL00,Line Wide - Civil - Site preparation & Clearing
-401CS00,Line Wide - Civil - Concrete Supply - Holcim
-401CS01,Line wide - Civil - Concrete Supply - WA Premix
-401CW00,Line Wide - Civil - Construction Water
-401DC01,Line Wide - Civil - Incomplete TGA Scope
-401DM00,Line Wide - Civil - Demolition
-401DO00,Line Wide - Civil - Diesel Oil
-401DR00,Line Wide - Civil - Drainage Install
-401DS00,Line Wide - Civil - Drainage Supply
-401DW00,Line Wide - Civil - Dewatering
-401DW02,Line Wide - Civil - Dewatering Civil Works
-401EA00,Line Wide - Civil - Earthworks - Haulage Road
-401EA01,Line Wide - Civil - Earthworks - Cut and Haul
-401EA02,Line Wide - Civil - Earthworks - Foundation Preparation
-401EA03,Line Wide - Civil - Earthworks - Place and Compact General Fill
-401EA07,Line Wide - Civil - Earthworks - Subgrade Preparation
-401EA08,Line Wide - Civil - Earthworks - Top Soil Strip
-401EA09,Line Wide - Civil - Capping Layer & Access Track - Place, Compact and Trim
-401EA10,Line Wide - Civil - Batter Trim
-401EA11,Line Wide - Civil - Earthworks - Import Sand
-401EA12,Line Wide - Civil - Capping Layer & Access Track - Import Material
-401EA14,Line Wide - Civil - Earthworks - Detailed Excavation
-401EA15,Line Wide - Civil - Earthworks - Detailed Backfill
-401EA16,Line Wide - Civil - Earthworks - Profiling
-401EA17,Line Wide - Civil - Earthworks - Disposal
-401EA18,Line Wide - Civil - Trim Capping Layer
-401EA28,Line Wide - Civil - Earthworks - Leading Heads
-401EP00,Line Wide - Civil - Edge Protection
-401ET00,Line Wide - Civil - Earthing
-401ET01,Line Wide - Civil - Earthing and Bonding Materials
-401FB00,Line Wide - Civil - Civil Barriers and W-Beams
-401FE00,Line Wide - Civil - Fencing
-401FE01,Line Wide - Civil - Semi-Permanent Fencing
-401FE02,Line Wide - Civil - Stations Palisade and Chainlink Fencing
-401FRP1,Line Wide - Civil - Formwork, Reinforce and Concrete (TALCO)
-401FRP2,Line Wide - Civil - Formwork, Reinforce and Concrete (DASH)
-401FRP3,Line Wide - Civil - Formwork, Reinforce and Concrete (FSC)
-401FRP4,"Line Wide - Civil - Formwork, Reinforce and Concrete - Whiteman Park Viaduct and Underpass"
-401FRP5,"Line Wide - Civil - Formwork, Reinforce and Concrete - Whiteman Park Retaining Walls"
-401FRP6,"Line Wide - Civil - Formwork, Reinforce and Concrete - Heritage Retaining Walls"
-401FRP7,"Line Wide - Civil - Formwork, Reinforce and Concrete ECC Underpass"
-401FRP8,"Line Wide - Civil - Formwork, Reinforce and Concrete Benara Underpass"
-401FRP9,"Line Wide - Civil - Formwork, Reinforce and Concrete - Sundry Items"
-401FRPA,Line Wide - Track Slab - Northern Dive to Malaga Rail Yard
-401FRPC,"Line Wide - Civil - Formwork, Reinforce and Concrete - Misc FRP Works"
-401FW01,Line Wide - Civil - Formwork Supply & Install Structures
-401FW02,Line Wide - Civil - Permadec Permanent Formworks
-401GL01,Line Wide - Civil - Civil General Labour
-401HD10,Line Wide - Civil - Dive Structures Pump and Fitout
-401HD11,Line Wide - Civil - Dive Structures Drainage Pumps and Bayswater Fire Services
-401JT00,Line Wide - Civil - Joints
-401KE00,Line Wide - Civil - Civil - Kerbing & Ramps
-401LA00,Line Wide - Civil - Landscaping
-401LA02,Line Wide - Civil - Rock Pitching
-401LA07,Line Wide - Civil - Mulching and Top Soil Re-spread
-401LA08,Line Wide - Civil - Landscaping Planting
-401LA09,Line Wide - Civil - Misc Landscaping Works
-401LB00,Line Wide - Civil - Labour Hire
-401LG01,Line Wide - Civil - PSP Lighting
-401LM00,Line Wide - Civil - Linemarking
-401LV00,Line Wide - Electrical Works - LV
-401MM00,Line Wide - Civil - Metalwork barriers/Screens/Handrails/Balustrades
-401MM04,Line Wide - Civil - Bridge Metalwork
-401MM05,Line Wide - Civil - Handrails/Balustrades
-401MT00,Line Wide - Civil - Earthworks Material Testing
-401MV00,Line Wide - Civil - LORA Assistance
-401NW00,Line Wide - Civil - Noise Walls
-401NW01,Line Wide - Civil - Noise Walls (Noranda and Morley)
-401PH00,Line Wide - Civil - Plant Hire
-401PI00,Line Wide - Civil - Piling
-401PI01,Line Wide - Civil - Piling Cropper
-401PI02,Line Wide - Civil - Sheet Piling
-401PP00,Line Wide - Civil - Paving & Pavements
-401PP01,Line Wide - Civil - Stencilcrete
-401PP02,Line Wide - Civil - Stations Brick Paving Subbase
-401PR12,Line Wide - Civil - Service Locating
-401PRB2,Line Wide - Civil - Precast Install
-401PRB9,Line Wide - Civil - Precast Beam Unloading
-401PRS3,Line Wide - Civil - Precast Supply - T-Roff
-401PRS4,Line Wide - Civil - Precast Supply - Planks
-401PRS5,Line Wide - Civil - Precast Supply - Culverts
-401PRS8,Line Wide - Civil - Precast Supply - Trapezoidal Arch and Spandrel Wal
-401RD00,Line Wide - Civil - Roads
-401RD02,"Line Wide - Civil - Pavements - Place, Compact and Trim Subbase"
-401RD03,"Line Wide - Civil - Pavements - Place, Compact & Trim Basecourse"
-401RD04,Line Wide - Civil - Pavements - Import Subbase
-401RD05,Line Wide - Civil - Pavements - Import Basecourse
-401RD06,Line Wide - Civil - Pavements - Recycled Road Base
-401RE00,Line Wide - Civil - Reinforcing Install
-401RF00,Line Wide - Civil - Reinforcing Supply
-401RF01,Line Wide - Civil - Reinforcing - Pile Cage Prefabrication
-401RW00,Line Wide - Civil - Retaining Walls
-401RW01,Line Wide - Civil - MSE Walls
-401SC00,Line Wide - Civil - Scaffolding
-401SI01,Line Wide - Civil - Permanent Signage
-401SM00,Line Wide - Civil - Plant Service and Maintenance
-401TB00,Line Wide - Civil - Underboring
-401TE00,Line Wide - Civil - Temp Works
-401TE01,Line Wide - Civil - Temp Asphalt
-401TE02,Line Wide - Civil - Temp Works - Crane/Piling/ Laydown Pads
-401TE03,Line Wide - Civil - Temp Signage
-401TE04,Line Wide - Civil - Temp Barriers
-401TE05,Line Wide - Civil - FBW Yard Setup
-401TE06,Line Wide - Civil - Temp ITS
-401TE08,Line Wide - Civil - Temporary Structures
-401TF00,Line Wide - Civil - Temporary Fencing
-401TI00,Line Wide - Civil - T-Roff Install
-401TM00,Line Wide - Civil - Traffic Management
-401TR00,Line Wide - Civil - T-Roff Supply
-401TS00,Line Wide - Civil - Traffic Signals
-401WA00,Line Wide - Civil - Waterproofing
-401YY02,Line Wide - Contaminated Site
-401YY05,Line Wide - Civil - Whiteman Park Entry Statement
-4G4FS00,Gnangara - Fire Services
-4W1PI00,Whiteman Park Civils - Piling
-4W1PT00,Whiteman Park Civils - Post Tensioning
+CODE,DESCRIPTION,CATEGORY
+401AN00,Line Wide - Civil - Anti Graffiti,401S - Structure
+401AS00,Line Wide - Civil - Asphalt,401C - Civil
+401BE00,Line Wide - Civil - Bearing Install,401S - Structure
+401BS00,Line Wide - Civil - Bearing Supply,401S - Structure
+401CB00,Line Wide - Civil - Civil - Concrete Barriers,401S - Structure
+401CI01,Line Wide - Civil - Concrete Install - Structures,401S - Structure
+401CI02,Line Wide - Civil - Concrete Pump Hire,401S - Structure
+401CL00,Line Wide - Civil - Site preparation & Clearing,401C - Civil
+401CS00,Line Wide - Civil - Concrete Supply - Holcim,401S - Structure
+401CS01,Line wide - Civil - Concrete Supply - WA Premix,401S - Structure
+401CW00,Line Wide - Civil - Construction Water,401C - Civil
+401DC01,Line Wide - Civil - Incomplete TGA Scope,401C - Civil
+401DM00,Line Wide - Civil - Demolition,401S - Structure
+401DO00,Line Wide - Civil - Diesel Oil,401C - Civil
+401DR00,Line Wide - Civil - Drainage Install,401C - Civil
+401DS00,Line Wide - Civil - Drainage Supply,401C - Civil
+401DW00,Line Wide - Civil - Dewatering,401C - Civil
+401DW02,Line Wide - Civil - Dewatering Civil Works,401C - Civil
+401EA00,Line Wide - Civil - Earthworks - Haulage Road,401C - Civil
+401EA01,Line Wide - Civil - Earthworks - Cut and Haul,401C - Civil
+401EA02,Line Wide - Civil - Earthworks - Foundation Preparation,401C - Civil
+401EA03,Line Wide - Civil - Earthworks - Place and Compact General Fill,401C - Civil
+401EA07,Line Wide - Civil - Earthworks - Subgrade Preparation,401C - Civil
+401EA08,Line Wide - Civil - Earthworks - Top Soil Strip,401C - Civil
+401EA09,"Line Wide - Civil - Capping Layer & Access Track - Place, Compact and Trim",401C - Civil
+401EA10,Line Wide - Civil - Batter Trim,401C - Civil
+401EA11,Line Wide - Civil - Earthworks - Import Sand,401C - Civil
+401EA12,Line Wide - Civil - Capping Layer & Access Track - Import Material,401C - Civil
+401EA14,Line Wide - Civil - Earthworks - Detailed Excavation,401C - Civil
+401EA15,Line Wide - Civil - Earthworks - Detailed Backfill,401C - Civil
+401EA16,Line Wide - Civil - Earthworks - Profiling,401C - Civil
+401EA17,Line Wide - Civil - Earthworks - Disposal,401C - Civil
+401EA18,Line Wide - Civil - Trim Capping Layer,401C - Civil
+401EA28,Line Wide - Civil - Earthworks - Leading Heads,401C - Civil
+401EP00,Line Wide - Civil - Edge Protection,401S - Structure
+401ET00,Line Wide - Civil - Earthing,401S - Structure
+401ET01,Line Wide - Civil - Earthing and Bonding Materials,401S - Structure
+401FB00,Line Wide - Civil - Civil Barriers and W-Beams,401C - Civil
+401FE00,Line Wide - Civil - Fencing,401C - Civil
+401FE01,Line Wide - Civil - Semi-Permanent Fencing,401C - Civil
+401FE02,Line Wide - Civil - Stations Palisade and Chainlink Fencing,401C - Civil
+401FRP1,"Line Wide - Civil - Formwork, Reinforce and Concrete (TALCO)",401S - Structure
+401FRP2,"Line Wide - Civil - Formwork, Reinforce and Concrete (DASH)",401S - Structure
+401FRP3,"Line Wide - Civil - Formwork, Reinforce and Concrete (FSC)",401S - Structure
+401FRP4,"Line Wide - Civil - Formwork, Reinforce and Concrete - Whiteman Park Viaduct and Underpass",401S - Structure
+401FRP5,"Line Wide - Civil - Formwork, Reinforce and Concrete - Whiteman Park Retaining Walls",401S - Structure
+401FRP6,"Line Wide - Civil - Formwork, Reinforce and Concrete - Heritage Retaining Walls",401S - Structure
+401FRP7,"Line Wide - Civil - Formwork, Reinforce and Concrete ECC Underpass",401S - Structure
+401FRP8,"Line Wide - Civil - Formwork, Reinforce and Concrete Benara Underpass",401S - Structure
+401FRP9,"Line Wide - Civil - Formwork, Reinforce and Concrete - Sundry Items",401S - Structure
+401FRPA,Line Wide - Track Slab - Northern Dive to Malaga Rail Yard,401S - Structure
+401FRPC,"Line Wide - Civil - Formwork, Reinforce and Concrete - Misc FRP Works",401S - Structure
+401FW01,Line Wide - Civil - Formwork Supply & Install Structures,401S - Structure
+401FW02,Line Wide - Civil - Permadec Permanent Formworks,401S - Structure
+401GL01,Line Wide - Civil - Civil General Labour,401C - Civil
+401HD10,Line Wide - Civil - Dive Structures Pump and Fitout,401C - Civil
+401HD11,Line Wide - Civil - Dive Structures Drainage Pumps and Bayswater Fire Services,401C - Civil
+401JT00,Line Wide - Civil - Joints,401S - Structure
+401KE00,Line Wide - Civil - Civil - Kerbing & Ramps,401C - Civil
+401LA00,Line Wide - Civil - Landscaping,401C - Civil
+401LA02,Line Wide - Civil - Rock Pitching,401C - Civil
+401LA07,Line Wide - Civil - Mulching and Top Soil Re-spread,401C - Civil
+401LA08,Line Wide - Civil - Landscaping Planting,401C - Civil
+401LA09,Line Wide - Civil - Misc Landscaping Works,401C - Civil
+401LB00,Line Wide - Civil - Labour Hire,401C - Civil
+401LG01,Line Wide - Civil - PSP Lighting,401C - Civil
+401LM00,Line Wide - Civil - Linemarking,401C - Civil
+401LV00,Line Wide - Electrical Works - LV,401C - Civil
+401MM00,Line Wide - Civil - Metalwork barriers/Screens/Handrails/Balustrades,401S - Structure
+401MM04,Line Wide - Civil - Bridge Metalwork,401S - Structure
+401MM05,Line Wide - Civil - Handrails/Balustrades,401S - Structure
+401MT00,Line Wide - Civil - Earthworks Material Testing,401C - Civil
+401MV00,Line Wide - Civil - LORA Assistance,401C - Civil
+401NW00,Line Wide - Civil - Noise Walls,401S - Structure
+401NW01,Line Wide - Civil - Noise Walls (Noranda and Morley),401S - Structure
+401PH00,Line Wide - Civil - Plant Hire,401C - Civil
+401PI00,Line Wide - Civil - Piling,401S - Structure
+401PI01,Line Wide - Civil - Piling Cropper,401S - Structure
+401PI02,Line Wide - Civil - Sheet Piling,401S - Structure
+401PP00,Line Wide - Civil - Paving & Pavements,401C - Civil
+401PP01,Line Wide - Civil - Stencilcrete,401C - Civil
+401PP02,Line Wide - Civil - Stations Brick Paving Subbase,401C - Civil
+401PR12,Line Wide - Civil - Service Locating,401C - Civil
+401PRB2,Line Wide - Civil - Precast Install,401S - Structure
+401PRB9,Line Wide - Civil - Precast Beam Unloading,401S - Structure
+401PRS3,Line Wide - Civil - Precast Supply - T-Roff,401S - Structure
+401PRS4,Line Wide - Civil - Precast Supply - Planks,401S - Structure
+401PRS5,Line Wide - Civil - Precast Supply - Culverts,401S - Structure
+401PRS8,Line Wide - Civil - Precast Supply - Trapezoidal Arch and Spandrel Wal,401S - Structure
+401RD00,Line Wide - Civil - Roads,401C - Civil
+401RD02,"Line Wide - Civil - Pavements - Place, Compact and Trim Subbase",401C - Civil
+401RD03,"Line Wide - Civil - Pavements - Place, Compact & Trim Basecourse",401C - Civil
+401RD04,Line Wide - Civil - Pavements - Import Subbase,401C - Civil
+401RD05,Line Wide - Civil - Pavements - Import Basecourse,401C - Civil
+401RD06,Line Wide - Civil - Pavements - Recycled Road Base,401C - Civil
+401RE00,Line Wide - Civil - Reinforcing Install,401S - Structure
+401RF00,Line Wide - Civil - Reinforcing Supply,401S - Structure
+401RF01,Line Wide - Civil - Reinforcing - Pile Cage Prefabrication,401S - Structure
+401RW00,Line Wide - Civil - Retaining Walls,401C - Civil
+401RW01,Line Wide - Civil - MSE Walls,401S - Structure
+401SC00,Line Wide - Civil - Scaffolding,401S - Structure
+401SI01,Line Wide - Civil - Permanent Signage,401C - Civil
+401SM00,Line Wide - Civil - Plant Service and Maintenance,401C - Civil
+401TB00,Line Wide - Civil - Underboring,401C - Civil
+401TE00,Line Wide - Civil - Temp Works,401C - Civil
+401TE01,Line Wide - Civil - Temp Asphalt,401C - Civil
+401TE02,Line Wide - Civil - Temp Works - Crane/Piling/ Laydown Pads,401C - Civil
+401TE03,Line Wide - Civil - Temp Signage,401C - Civil
+401TE04,Line Wide - Civil - Temp Barriers,401C - Civil
+401TE05,Line Wide - Civil - FBW Yard Setup,401C - Civil
+401TE06,Line Wide - Civil - Temp ITS,401C - Civil
+401TE08,Line Wide - Civil - Temporary Structures,401S - Structure
+401TF00,Line Wide - Civil - Temporary Fencing,401C - Civil
+401TI00,Line Wide - Civil - T-Roff Install,401S - Structure
+401TM00,Line Wide - Civil - Traffic Management,401C - Civil
+401TR00,Line Wide - Civil - T-Roff Supply,401S - Structure
+401TS00,Line Wide - Civil - Traffic Signals,401C - Civil
+401WA00,Line Wide - Civil - Waterproofing,401S - Structure
+401YY02,Line Wide - Contaminated Site,401C - Civil
+401YY05,Line Wide - Civil - Whiteman Park Entry Statement,401C - Civil
+4G4FS00,Gnangara - Fire Services,401C - Civil
+4W1PI00,Whiteman Park Civils - Piling,401S - Structure
+4W1PT00,Whiteman Park Civils - Post Tensioning,401S - Structure

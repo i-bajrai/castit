@@ -11,7 +11,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
@@ -67,6 +67,7 @@
                                 'code' => $ca->code,
                                 'description' => $ca->description,
                                 'baseline_budget' => $ca->baseline_budget > 0 ? $ca->baseline_budget : '',
+                                'approved_budget' => $ca->approved_budget > 0 ? $ca->approved_budget : '',
                                 'packages' => [],
                             ])->values()),
                             importCsv(event) {
@@ -97,43 +98,69 @@
                                         return result;
                                     };
 
-                                    // Group by (code, package_name)
-                                    const grouped = {};
-                                    for (let i = 0; i < lines.length; i++) {
-                                        const parts = parseLine(lines[i]);
-                                        if (parts.length >= 8 && parts[0].toLowerCase() === 'control_account_code') continue;
-                                        if (parts.length < 8 || !parts[0]) continue;
+                                    // Detect format: budget-only (3 cols) vs line-item detail (8 cols)
+                                    const firstData = lines.find(l => {
+                                        const p = parseLine(l);
+                                        return p[0] && p[0].toLowerCase() !== 'code' && p[0].toLowerCase() !== 'control_account_code';
+                                    });
+                                    const isBudgetOnly = firstData && parseLine(firstData).length <= 3;
 
-                                        const code = parts[0];
-                                        const pkgName = parts[1];
-                                        const li = {
-                                            item_no: parts[2] || '',
-                                            description: parts[3] || '',
-                                            unit_of_measure: parts[4] || '',
-                                            qty: parseFloat(parts[5]) || 0,
-                                            rate: parseFloat(parts[6]) || 0,
-                                            amount: parseFloat(parts[7]) || 0,
-                                        };
-
-                                        if (!grouped[code]) grouped[code] = {};
-                                        if (!grouped[code][pkgName]) grouped[code][pkgName] = [];
-                                        grouped[code][pkgName].push(li);
-                                    }
-
-                                    // Apply to accounts
-                                    for (const account of this.accounts) {
-                                        if (grouped[account.code]) {
-                                            account.packages = [];
-                                            let total = 0;
-                                            for (const [pkgName, items] of Object.entries(grouped[account.code])) {
-                                                account.packages.push({
-                                                    item_no: '',
-                                                    name: pkgName,
-                                                    line_items: items,
-                                                });
-                                                total += items.reduce((s, li) => s + li.amount, 0);
+                                    if (isBudgetOnly) {
+                                        // Budget CSV: CODE,BASELINE_BUDGET,APPROVED_BUDGET
+                                        for (let i = 0; i < lines.length; i++) {
+                                            const parts = parseLine(lines[i]);
+                                            if (parts[0].toLowerCase() === 'code') continue;
+                                            if (!parts[0]) continue;
+                                            const code = parts[0];
+                                            const baseline = parseFloat(parts[1]) || 0;
+                                            const approved = parseFloat(parts[2]) || 0;
+                                            for (const account of this.accounts) {
+                                                if (account.code === code) {
+                                                    account.baseline_budget = baseline;
+                                                    account.approved_budget = approved;
+                                                    break;
+                                                }
                                             }
-                                            account.baseline_budget = Math.round(total * 100) / 100;
+                                        }
+                                    } else {
+                                        // Line-item CSV: control_account_code,package_name,item_no,description,unit_of_measure,qty,rate,amount
+                                        const grouped = {};
+                                        for (let i = 0; i < lines.length; i++) {
+                                            const parts = parseLine(lines[i]);
+                                            if (parts.length >= 8 && parts[0].toLowerCase() === 'control_account_code') continue;
+                                            if (parts.length < 8 || !parts[0]) continue;
+
+                                            const code = parts[0];
+                                            const pkgName = parts[1];
+                                            const li = {
+                                                item_no: parts[2] || '',
+                                                description: parts[3] || '',
+                                                unit_of_measure: parts[4] || '',
+                                                qty: parseFloat(parts[5]) || 0,
+                                                rate: parseFloat(parts[6]) || 0,
+                                                amount: parseFloat(parts[7]) || 0,
+                                            };
+
+                                            if (!grouped[code]) grouped[code] = {};
+                                            if (!grouped[code][pkgName]) grouped[code][pkgName] = [];
+                                            grouped[code][pkgName].push(li);
+                                        }
+
+                                        for (const account of this.accounts) {
+                                            if (grouped[account.code]) {
+                                                account.packages = [];
+                                                let total = 0;
+                                                for (const [pkgName, items] of Object.entries(grouped[account.code])) {
+                                                    account.packages.push({
+                                                        item_no: '',
+                                                        name: pkgName,
+                                                        line_items: items,
+                                                    });
+                                                    total += items.reduce((s, li) => s + li.amount, 0);
+                                                }
+                                                account.baseline_budget = Math.round(total * 100) / 100;
+                                                account.approved_budget = account.baseline_budget;
+                                            }
                                         }
                                     }
 
@@ -194,19 +221,35 @@
                                             <span class="font-semibold text-gray-900" x-text="account.code"></span>
                                             <span class="ml-2 text-sm text-gray-600" x-text="account.description"></span>
                                         </div>
-                                        <div class="flex items-center gap-2 shrink-0">
-                                            <label class="text-sm text-gray-500">Budget $</label>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                x-model="account.baseline_budget"
-                                                :name="`accounts[${ai}][baseline_budget]`"
-                                                data-testid="baseline-budget-input"
-                                                class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
-                                                placeholder="0.00"
-                                                required
-                                            />
+                                        <div class="flex items-center gap-4 shrink-0">
+                                            <div class="flex items-center gap-1">
+                                                <label class="text-xs text-gray-500">Baseline $</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    x-model="account.baseline_budget"
+                                                    :name="`accounts[${ai}][baseline_budget]`"
+                                                    data-testid="baseline-budget-input"
+                                                    class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
+                                                    placeholder="0.00"
+                                                    required
+                                                />
+                                            </div>
+                                            <div class="flex items-center gap-1">
+                                                <label class="text-xs text-gray-500">Approved $</label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    x-model="account.approved_budget"
+                                                    :name="`accounts[${ai}][approved_budget]`"
+                                                    data-testid="approved-budget-input"
+                                                    class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
+                                                    placeholder="0.00"
+                                                    required
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 

@@ -22,7 +22,7 @@
                                 data-testid="download-sample-csv"
                                 x-data
                                 x-on:click.prevent="
-                                    const csv = 'code,description\n100GC00,General Conditions\n200SI00,Site Improvements\n301FW00,Foundation Work\n401CB00,Civil - Concrete Barriers\n402ST00,Structural - Steel Works\n403EL00,Electrical - Lighting\n501ME00,Mechanical - HVAC\n502PL00,Plumbing Systems\n601LA00,Landscaping\n701PM00,Project Management';
+                                    const csv = 'code,description,category\n100GC00,General Conditions,100 - General\n200SI00,Site Improvements,200 - Site\n301FW00,Foundation Work,301 - Structure\n401CB00,Civil - Concrete Barriers,401S - Structure\n402ST00,Structural - Steel Works,401S - Structure\n403EL00,Electrical - Lighting,401C - Civil\n501ME00,Mechanical - HVAC,501 - Mechanical\n502PL00,Plumbing Systems,502 - Plumbing\n601LA00,Landscaping,601 - Landscape\n701PM00,Project Management,701 - Management';
                                     const blob = new Blob([csv], { type: 'text/csv' });
                                     const a = document.createElement('a');
                                     a.href = URL.createObjectURL(blob);
@@ -58,10 +58,10 @@
                         action="{{ route('projects.control-accounts.bulk-store', $project) }}"
                         x-data="{
                             accounts: {{ $controlAccounts->count() > 0
-                                ? $controlAccounts->map(fn($ca) => ['code' => $ca->code, 'description' => $ca->description])->values()->toJson()
-                                : json_encode([['code' => '', 'description' => '']]) }},
+                                ? $controlAccounts->map(fn($ca) => ['code' => $ca->code, 'description' => $ca->description, 'category' => $ca->category ?? ''])->values()->toJson()
+                                : json_encode([['code' => '', 'description' => '', 'category' => '']]) }},
                             addRow() {
-                                this.accounts.push({ code: '', description: '' });
+                                this.accounts.push({ code: '', description: '', category: '' });
                                 this.$nextTick(() => {
                                     const rows = this.$el.querySelectorAll('[data-testid=account-row]');
                                     rows[rows.length - 1].querySelector('input').focus();
@@ -72,6 +72,24 @@
                                     this.accounts.splice(index, 1);
                                 }
                             },
+                            parseCsvLine(line) {
+                                const result = [];
+                                let current = '';
+                                let inQuotes = false;
+                                for (let i = 0; i < line.length; i++) {
+                                    const ch = line[i];
+                                    if (ch === '\"') {
+                                        inQuotes = !inQuotes;
+                                    } else if (ch === ',' && !inQuotes) {
+                                        result.push(current.trim());
+                                        current = '';
+                                    } else {
+                                        current += ch;
+                                    }
+                                }
+                                result.push(current.trim());
+                                return result;
+                            },
                             importCsv(event) {
                                 const file = event.target.files[0];
                                 if (!file) return;
@@ -81,12 +99,16 @@
                                     const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
                                     const imported = [];
                                     for (const line of lines) {
-                                        const parts = line.split(',').map(p => p.trim());
+                                        const parts = this.parseCsvLine(line);
                                         if (parts.length >= 2 && parts[0].toLowerCase() === 'code' && parts[1].toLowerCase() === 'description') {
                                             continue;
                                         }
                                         if (parts.length >= 2 && parts[0]) {
-                                            imported.push({ code: parts[0], description: parts.slice(1).join(',').trim() });
+                                            imported.push({
+                                                code: parts[0],
+                                                description: parts[1] || '',
+                                                category: parts[2] || '',
+                                            });
                                         }
                                     }
                                     if (imported.length > 0) {
@@ -114,14 +136,15 @@
 
                         <div class="space-y-3">
                             <div class="grid grid-cols-12 gap-3 text-xs font-medium text-gray-500 uppercase tracking-wider px-1">
-                                <div class="col-span-4">Code</div>
-                                <div class="col-span-7">Description</div>
+                                <div class="col-span-3">Code</div>
+                                <div class="col-span-5">Description</div>
+                                <div class="col-span-3">Category</div>
                                 <div class="col-span-1"></div>
                             </div>
 
                             <template x-for="(account, index) in accounts" :key="index">
                                 <div data-testid="account-row" class="grid grid-cols-12 gap-3 items-center">
-                                    <div class="col-span-4">
+                                    <div class="col-span-3">
                                         <input
                                             type="text"
                                             x-model="account.code"
@@ -132,7 +155,7 @@
                                             required
                                         />
                                     </div>
-                                    <div class="col-span-7">
+                                    <div class="col-span-5">
                                         <input
                                             type="text"
                                             x-model="account.description"
@@ -141,6 +164,16 @@
                                             class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
                                             placeholder="e.g. Civil - Concrete Barriers"
                                             required
+                                        />
+                                    </div>
+                                    <div class="col-span-3">
+                                        <input
+                                            type="text"
+                                            x-model="account.category"
+                                            :name="`accounts[${index}][category]`"
+                                            data-testid="account-category-input"
+                                            class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                            placeholder="e.g. 401S - Structure"
                                         />
                                     </div>
                                     <div class="col-span-1 flex justify-center">
