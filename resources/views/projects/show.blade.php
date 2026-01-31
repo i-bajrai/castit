@@ -273,12 +273,29 @@
                                                                 {{-- Variance (computed) --}}
                                                                 <td class="px-3 py-2 text-sm text-right" :class="variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900'" x-text="variance !== 0 ? '$' + variance.toFixed(2) : '-'"></td>
 
-                                                                {{-- Comments (INPUT) --}}
-                                                                <td class="px-1 py-1">
-                                                                    <input type="text" name="{{ $prefix }}[comments]"
-                                                                        value="{{ $forecast->comments ?? '' }}"
-                                                                        class="w-full text-sm border-gray-300 rounded px-2 py-1 focus:border-indigo-500 focus:ring-indigo-500"
-                                                                        placeholder="Notes...">
+                                                                {{-- Comments (MODAL) --}}
+                                                                <td class="px-1 py-1" x-data="{ comment: '{{ str_replace("'", "\\'", $forecast->comments ?? '') }}' }">
+                                                                    <input type="hidden" name="{{ $prefix }}[comments]" :value="comment">
+                                                                    <button type="button"
+                                                                        x-on:click.prevent="$dispatch('open-modal', 'comment-{{ $item->id }}')"
+                                                                        class="w-full text-sm text-left px-2 py-1 rounded border border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 transition truncate"
+                                                                        :class="comment ? 'text-gray-900' : 'text-gray-400'"
+                                                                        x-text="comment || 'Add comment...'">
+                                                                    </button>
+                                                                    <x-modal name="comment-{{ $item->id }}" :show="false" maxWidth="lg">
+                                                                        <div class="p-6">
+                                                                            <h2 class="text-lg font-medium text-gray-900 mb-1">Comment - {{ $item->description }}</h2>
+                                                                            <p class="text-sm text-gray-500 mb-4">Item {{ $item->item_no }}</p>
+                                                                            <textarea
+                                                                                x-model="comment"
+                                                                                rows="4"
+                                                                                class="w-full text-sm border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                                                                                placeholder="Enter comment..."></textarea>
+                                                                            <div class="mt-4 flex justify-end">
+                                                                                <x-primary-button type="button" x-on:click="$dispatch('close')">Done</x-primary-button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </x-modal>
                                                                 </td>
                                                                 <td class="px-2 py-2">
                                                                     <div class="flex gap-1">

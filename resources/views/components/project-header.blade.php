@@ -2,6 +2,7 @@
 
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
+        <a href="{{ route('dashboard') }}" class="text-sm text-indigo-600 hover:text-indigo-800 hover:underline">&larr; Projects</a>
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ $slot }}
         </h2>
@@ -14,7 +15,6 @@
             'cost-detail' => ['route' => route('projects.show', $project), 'label' => 'Cost Detail'],
             'executive-summary' => ['route' => route('projects.executive-summary', $project), 'label' => 'Executive Summary'],
             'settings' => ['route' => route('projects.settings', $project), 'label' => 'Settings'],
-            'dashboard' => ['route' => route('dashboard'), 'label' => 'Back to Projects'],
         ];
     @endphp
 
