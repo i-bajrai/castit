@@ -254,11 +254,60 @@
                                                                 <td class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
                                                                 <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount ?? 0, 2) }}</td>
 
-                                                                {{-- CTD Qty (INPUT) --}}
-                                                                <td class="px-1 py-1 bg-green-50/30">
-                                                                    <input type="number" step="0.01" name="{{ $prefix }}[ctd_qty]"
-                                                                        x-model.number="ctdQty"
-                                                                        class="w-full text-sm text-right border-gray-300 rounded px-2 py-1 focus:border-green-500 focus:ring-green-500">
+                                                                {{-- CTD Qty (MODAL) --}}
+                                                                <td class="px-1 py-1 bg-green-50/30"
+                                                                    x-data="{
+                                                                        editQty: ctdQty,
+                                                                        saving: false,
+                                                                        error: false,
+                                                                        async saveCtdQty() {
+                                                                            @if($forecast?->id)
+                                                                                this.saving = true;
+                                                                                this.error = false;
+                                                                                try {
+                                                                                    const res = await fetch('{{ route('projects.forecasts.update-ctd-qty', [$project, $forecast]) }}', {
+                                                                                        method: 'PATCH',
+                                                                                        headers: {
+                                                                                            'Content-Type': 'application/json',
+                                                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                                        },
+                                                                                        body: JSON.stringify({ ctd_qty: this.editQty }),
+                                                                                    });
+                                                                                    if (!res.ok) throw new Error();
+                                                                                    ctdQty = this.editQty;
+                                                                                    this.$dispatch('close');
+                                                                                } catch {
+                                                                                    this.error = true;
+                                                                                } finally {
+                                                                                    this.saving = false;
+                                                                                }
+                                                                            @else
+                                                                                ctdQty = this.editQty;
+                                                                                this.$dispatch('close');
+                                                                            @endif
+                                                                        }
+                                                                    }"
+                                                                    x-on:open-modal.window="if ($event.detail === 'ctd-qty-{{ $item->id }}') editQty = ctdQty">
+                                                                    <input type="hidden" name="{{ $prefix }}[ctd_qty]" :value="ctdQty">
+                                                                    <button type="button"
+                                                                        x-on:click.prevent="$dispatch('open-modal', 'ctd-qty-{{ $item->id }}')"
+                                                                        class="w-full text-sm text-right px-2 py-1 rounded border border-gray-300 hover:border-green-400 hover:bg-green-50 transition"
+                                                                        x-text="ctdQty">
+                                                                    </button>
+                                                                    <x-modal name="ctd-qty-{{ $item->id }}" :show="false" maxWidth="sm">
+                                                                        <div class="p-6">
+                                                                            <h2 class="text-lg font-medium text-gray-900 mb-1">CTD Qty - {{ $item->description }}</h2>
+                                                                            <p class="text-sm text-gray-500 mb-4">Item {{ $item->item_no }}</p>
+                                                                            <input type="number" step="0.01"
+                                                                                x-model.number="editQty"
+                                                                                class="w-full text-sm border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500">
+                                                                            <p x-show="error" x-cloak class="mt-2 text-sm text-red-600">Failed to save. Please try again.</p>
+                                                                            <div class="mt-4 flex justify-end gap-2">
+                                                                                <span x-show="saving" class="text-sm text-gray-400 self-center">Saving...</span>
+                                                                                <x-primary-button type="button" x-on:click="saveCtdQty()" x-bind:disabled="saving">Save</x-primary-button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </x-modal>
                                                                 </td>
                                                                 {{-- CTD Rate (computed) --}}
                                                                 <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdRate.toFixed(2)"></td>

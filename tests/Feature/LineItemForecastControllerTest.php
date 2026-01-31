@@ -7,6 +7,7 @@ use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
+use App\Models\LineItemForecast;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -113,5 +114,145 @@ class LineItemForecastControllerTest extends TestCase
         $this->actingAs($user)
             ->post("/projects/{$project->id}/data-entry/line-items", [])
             ->assertSessionHasErrors('forecasts');
+    }
+
+    private function seedForecast(): array
+    {
+        [$user, $project, $period, $package, $item] = $this->seedData();
+
+        $forecast = LineItemForecast::create([
+            'line_item_id' => $item->id,
+            'forecast_period_id' => $period->id,
+            'ctd_qty' => 50,
+            'ctd_rate' => 250,
+            'ctd_amount' => 12500,
+            'ctc_qty' => 50,
+            'ctc_rate' => 250,
+            'ctc_amount' => 12500,
+            'fcac_rate' => 250,
+            'fcac_amount' => 25000,
+            'previous_amount' => 30000,
+            'variance' => 5000,
+        ]);
+
+        return [$user, $project, $period, $item, $forecast];
+    }
+
+    public function test_owner_can_update_ctd_qty(): void
+    {
+        [$user, $project, , $item, $forecast] = $this->seedForecast();
+
+        $this->actingAs($user)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
+                'ctd_qty' => 80,
+            ])
+            ->assertOk()
+            ->assertJson(['status' => 'ok']);
+
+        // ctdAmount = 80 * 250 = 20000, ctcQty = 20, ctcAmount = 5000, fcac = 25000, variance = 30000 - 25000 = 5000
+        $this->assertDatabaseHas('line_item_forecasts', [
+            'id' => $forecast->id,
+            'ctd_qty' => 80,
+            'ctd_amount' => 20000,
+            'ctc_qty' => 20,
+            'ctc_amount' => 5000,
+            'fcac_amount' => 25000,
+            'variance' => 5000,
+        ]);
+    }
+
+    public function test_cannot_update_ctd_qty_for_locked_period(): void
+    {
+        [$user, $project, $period, , $forecast] = $this->seedForecast();
+
+        $period->update(['period_date' => '2023-01-01']);
+
+        $this->actingAs($user)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
+                'ctd_qty' => 80,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_ctd_qty_requires_numeric_value(): void
+    {
+        [$user, $project, , , $forecast] = $this->seedForecast();
+
+        $this->actingAs($user)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ctd_qty');
+    }
+
+    public function test_owner_can_update_comment(): void
+    {
+        [$user, $project, , , $forecast] = $this->seedForecast();
+
+        $this->actingAs($user)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/comment", [
+                'comments' => 'Updated note',
+            ])
+            ->assertOk()
+            ->assertJson(['status' => 'ok']);
+
+        $this->assertDatabaseHas('line_item_forecasts', [
+            'id' => $forecast->id,
+            'comments' => 'Updated note',
+        ]);
+    }
+
+    public function test_can_clear_comment(): void
+    {
+        [$user, $project, , , $forecast] = $this->seedForecast();
+
+        $forecast->update(['comments' => 'Old note']);
+
+        $this->actingAs($user)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/comment", [
+                'comments' => null,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('line_item_forecasts', [
+            'id' => $forecast->id,
+            'comments' => null,
+        ]);
+    }
+
+    public function test_cannot_update_comment_for_locked_period(): void
+    {
+        [$user, $project, $period, , $forecast] = $this->seedForecast();
+
+        $period->update(['period_date' => '2023-01-01']);
+
+        $this->actingAs($user)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/comment", [
+                'comments' => 'Should fail',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_non_owner_cannot_update_ctd_qty(): void
+    {
+        [, $project, , , $forecast] = $this->seedForecast();
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($otherUser)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
+                'ctd_qty' => 80,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_non_owner_cannot_update_comment(): void
+    {
+        [, $project, , , $forecast] = $this->seedForecast();
+        $otherUser = User::factory()->create();
+
+        $this->actingAs($otherUser)
+            ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/comment", [
+                'comments' => 'Should fail',
+            ])
+            ->assertForbidden();
     }
 }

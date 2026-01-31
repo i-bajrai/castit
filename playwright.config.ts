@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const testDatabase = 'DB_DATABASE=castit_test';
-const migration = `${testDatabase} php artisan migrate:fresh && ${testDatabase} php artisan db:seed --class=PlaywrightTestSeeder`;
+const testEnv = 'DB_DATABASE=castit_test APP_ENV=testing';
+const migration = `${testEnv} php artisan migrate:fresh && ${testEnv} php artisan db:seed --class=PlaywrightTestSeeder`;
 
 export default defineConfig({
     testDir: './tests/e2e',
@@ -22,7 +22,7 @@ export default defineConfig({
         },
     ],
     webServer: {
-        command: `${migration} && ${testDatabase} php artisan serve --port=8100`,
+        command: `${migration} && ${testEnv} php artisan serve --port=8100`,
         url: 'http://localhost:8100',
         reuseExistingServer: !process.env.CI,
         timeout: 120000,

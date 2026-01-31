@@ -13,7 +13,7 @@
     @php
         $links = [
             'cost-detail' => ['route' => route('projects.show', $project), 'label' => 'Cost Detail'],
-            'executive-summary' => ['route' => route('projects.executive-summary', $project), 'label' => 'Executive Summary'],
+            'reports' => ['route' => route('projects.reports', $project), 'label' => 'Reports'],
             'settings' => ['route' => route('projects.settings', $project), 'label' => 'Settings'],
         ];
     @endphp

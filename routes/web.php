@@ -19,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project}/reports', [ProjectController::class, 'reports'])->name('projects.reports');
     Route::get('/projects/{project}/executive-summary', [ProjectController::class, 'executiveSummary'])->name('projects.executive-summary');
 
     Route::get('/projects/{project}/settings', [ProjectSettingsController::class, 'index'])->name('projects.settings');
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'destroy'])->name('projects.line-items.destroy');
 
     Route::post('/projects/{project}/data-entry/line-items', [LineItemForecastController::class, 'store'])->name('projects.data-entry.line-items.store');
+    Route::patch('/projects/{project}/forecasts/{forecast}/ctd-qty', [LineItemForecastController::class, 'updateCtdQty'])->name('projects.forecasts.update-ctd-qty');
     Route::patch('/projects/{project}/forecasts/{forecast}/comment', [LineItemForecastController::class, 'updateComment'])->name('projects.forecasts.update-comment');
 });
 

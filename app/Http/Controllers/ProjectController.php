@@ -106,6 +106,15 @@ class ProjectController extends Controller
         ]);
     }
 
+    public function reports(Project $project): View
+    {
+        Gate::authorize('view', $project);
+
+        return view('projects.reports', [
+            'project' => $project,
+        ]);
+    }
+
     public function executiveSummary(
         Project $project,
         GetProjectForecastSummary $forecastSummary,
