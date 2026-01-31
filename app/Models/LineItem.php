@@ -17,6 +17,7 @@ class LineItem extends Model
         'original_rate',
         'original_amount',
         'sort_order',
+        'created_in_period_id',
     ];
 
     /**
@@ -25,6 +26,23 @@ class LineItem extends Model
     public function costPackage(): BelongsTo
     {
         return $this->belongsTo(CostPackage::class);
+    }
+
+    /**
+     * @return BelongsTo<ForecastPeriod, $this>
+     */
+    public function createdInPeriod(): BelongsTo
+    {
+        return $this->belongsTo(ForecastPeriod::class, 'created_in_period_id');
+    }
+
+    public function existedInPeriod(ForecastPeriod $period): bool
+    {
+        if (! $this->created_in_period_id) {
+            return true;
+        }
+
+        return $period->period_date->gte($this->createdInPeriod->period_date);
     }
 
     /**

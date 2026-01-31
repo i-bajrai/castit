@@ -30,6 +30,7 @@ class GetProjectForecastSummary
                 $query->orderBy('sort_order');
                 $query->with(['lineItems' => function ($q) use ($period): void {
                     $q->orderBy('sort_order');
+                    $q->with('createdInPeriod');
                     if ($period) {
                         $q->with(['forecasts' => function ($fq) use ($period): void {
                             $fq->where('forecast_period_id', $period->id);
@@ -52,6 +53,9 @@ class GetProjectForecastSummary
         foreach ($accounts as $account) {
             foreach ($account->costPackages as $package) {
                 foreach ($package->lineItems as $item) {
+                    if ($period && ! $item->existedInPeriod($period)) {
+                        continue;
+                    }
                     $totals['original_budget'] += (float) $item->original_amount;
                     $forecast = $item->forecasts->first();
                     if ($forecast) {

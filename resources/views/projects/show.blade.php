@@ -112,6 +112,9 @@
                     $caItemCount = 0;
                     foreach ($account->costPackages as $pkg) {
                         foreach ($pkg->lineItems as $li) {
+                            if ($period && ! $li->existedInPeriod($period)) {
+                                continue;
+                            }
                             $caOriginal += $li->original_amount;
                             $caItemCount++;
                             $f = $li->forecasts->first();
@@ -435,16 +438,27 @@
                                                     @endphp
                                                     @foreach($package->lineItems as $item)
                                                         @php
+                                                            $existedInPeriod = !$period || $item->existedInPeriod($period);
                                                             $forecast = $item->forecasts->first();
-                                                            $pkgOriginal += $item->original_amount;
-                                                            if ($forecast) {
-                                                                $pkgPrevious += $forecast->previous_amount ?? 0;
-                                                                $pkgCtd += $forecast->ctd_amount ?? 0;
-                                                                $pkgCtc += $forecast->ctc_amount ?? 0;
-                                                                $pkgFcac += $forecast->fcac_amount ?? 0;
-                                                                $pkgVariance += $forecast->variance ?? 0;
+                                                            if ($existedInPeriod) {
+                                                                $pkgOriginal += $item->original_amount;
+                                                                if ($forecast) {
+                                                                    $pkgPrevious += $forecast->previous_amount ?? 0;
+                                                                    $pkgCtd += $forecast->ctd_amount ?? 0;
+                                                                    $pkgCtc += $forecast->ctc_amount ?? 0;
+                                                                    $pkgFcac += $forecast->fcac_amount ?? 0;
+                                                                    $pkgVariance += $forecast->variance ?? 0;
+                                                                }
                                                             }
                                                         @endphp
+                                                        @if(!$existedInPeriod)
+                                                            <tr class="hover:bg-gray-50 opacity-40">
+                                                                <td class="px-3 py-2 text-sm text-gray-400">{{ $item->item_no }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-400">{{ $item->description }}</td>
+                                                                <td class="px-3 py-2 text-sm text-gray-400 text-center">{{ $item->unit_of_measure }}</td>
+                                                                <td colspan="12" class="px-3 py-2 text-sm text-gray-400 text-center italic">Added in {{ $item->createdInPeriod->period_date->format('M Y') }}</td>
+                                                            </tr>
+                                                        @else
                                                         <tr class="hover:bg-gray-50">
                                                             <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
                                                             <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
@@ -472,6 +486,7 @@
                                                                 <td colspan="9" class="px-3 py-2 text-sm text-gray-400 text-center">No forecast data</td>
                                                             @endif
                                                         </tr>
+                                                        @endif
                                                     @endforeach
                                                 </tbody>
                                                 <tfoot class="bg-gray-100">

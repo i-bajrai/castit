@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CostPackage;
+use App\Models\ForecastPeriod;
 use App\Models\LineItem;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateLineItem;
@@ -43,7 +44,11 @@ class LineItemController extends Controller
             sortOrder: (int) $validated['sort_order'],
         );
 
-        $action->execute($costPackage, $data);
+        $currentPeriod = ForecastPeriod::where('project_id', $project->id)
+            ->where('period_date', now()->startOfMonth())
+            ->first();
+
+        $action->execute($costPackage, $data, $currentPeriod);
 
         return redirect()->route('projects.show', $project)
             ->with('success', 'Line item created.');
