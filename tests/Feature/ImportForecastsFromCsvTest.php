@@ -148,16 +148,40 @@ class ImportForecastsFromCsvTest extends TestCase
         ]);
     }
 
-    public function test_errors_on_unknown_item_no(): void
+    public function test_auto_creates_unknown_line_items(): void
     {
-        [$user, $project] = $this->seedImportData();
+        [$user, $project, $period1] = $this->seedImportData();
 
         $csv = $this->makeCsv("description,period,ctd_qty\nNonexistent Item,2024-01,80\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
             ->assertRedirect(route('projects.settings', $project))
-            ->assertSessionHas('import_errors');
+            ->assertSessionHas('success');
+
+        // Line item should have been created under an "Imported Items" package
+        $this->assertDatabaseHas('line_items', [
+            'description' => 'Nonexistent Item',
+        ]);
+
+        $this->assertDatabaseHas('control_accounts', [
+            'project_id' => $project->id,
+            'code' => 'IMPORTED',
+            'phase' => 'Imported',
+        ]);
+
+        $this->assertDatabaseHas('cost_packages', [
+            'project_id' => $project->id,
+            'name' => 'Imported Items',
+        ]);
+
+        // Forecast should have been created with ctd_qty=80
+        $newItem = LineItem::where('description', 'Nonexistent Item')->first();
+        $this->assertDatabaseHas('line_item_forecasts', [
+            'line_item_id' => $newItem->id,
+            'forecast_period_id' => $period1->id,
+            'ctd_qty' => 80,
+        ]);
     }
 
     public function test_errors_on_unknown_period(): void

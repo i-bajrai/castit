@@ -8,11 +8,16 @@ class ImportForecastResult
         public readonly int $imported,
         public readonly int $skipped,
         public readonly array $errors,
+        public readonly int $created = 0,
     ) {}
 
     public function summary(): string
     {
         $parts = [];
+
+        if ($this->created > 0) {
+            $parts[] = "{$this->created} line item(s) created";
+        }
 
         if ($this->imported > 0) {
             $parts[] = "{$this->imported} forecast(s) imported";

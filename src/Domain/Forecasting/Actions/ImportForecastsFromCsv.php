@@ -2,11 +2,12 @@
 
 namespace Domain\Forecasting\Actions;
 
+use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
 use App\Models\LineItemForecast;
 use App\Models\Project;
-use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class ImportForecastsFromCsv
 {
@@ -14,6 +15,7 @@ class ImportForecastsFromCsv
     {
         $imported = 0;
         $skipped = 0;
+        $created = 0;
         $errors = [];
 
         $lineItems = LineItem::whereHas('costPackage', function ($q) use ($project) {
@@ -24,9 +26,12 @@ class ImportForecastsFromCsv
             fn (LineItem $li) => strtolower(trim($li->description))
         );
 
-        $periods = $project->forecastPeriods()->get()->keyBy(
+        $periods = $project->forecastPeriods()->orderBy('period_date')->get();
+        $periodsByKey = $periods->keyBy(
             fn (ForecastPeriod $p) => $p->period_date->format('Y-m')
         );
+
+        $defaultPackage = null;
 
         foreach ($rows as $index => $row) {
             $rowNum = $index + 2; // +2 for 1-indexed + header row
@@ -47,11 +52,13 @@ class ImportForecastsFromCsv
 
             $lineItem = $lineItemsByDescription->get(strtolower($description));
             if (! $lineItem) {
-                $errors[] = "Row {$rowNum}: description '{$description}' not found.";
-                continue;
+                $defaultPackage ??= $this->getOrCreateDefaultPackage($project);
+                $lineItem = $this->createLineItem($defaultPackage, $description, $periods);
+                $lineItemsByDescription->put(strtolower($description), $lineItem);
+                $created++;
             }
 
-            $period = $periods->get($periodKey);
+            $period = $periodsByKey->get($periodKey);
             if (! $period) {
                 $errors[] = "Row {$rowNum}: period '{$periodKey}' not found.";
                 continue;
@@ -67,8 +74,10 @@ class ImportForecastsFromCsv
                 ->first();
 
             if (! $forecast) {
-                $errors[] = "Row {$rowNum}: no forecast record found for '{$description}' in period '{$periodKey}'.";
-                continue;
+                $forecast = LineItemForecast::create([
+                    'line_item_id' => $lineItem->id,
+                    'forecast_period_id' => $period->id,
+                ]);
             }
 
             if ((float) $forecast->ctd_qty !== 0.0) {
@@ -104,6 +113,39 @@ class ImportForecastsFromCsv
             $imported++;
         }
 
-        return new ImportForecastResult($imported, $skipped, $errors);
+        return new ImportForecastResult($imported, $skipped, $errors, $created);
+    }
+
+    private function getOrCreateDefaultPackage(Project $project): CostPackage
+    {
+        $defaultCa = $project->controlAccounts()->firstOrCreate(
+            ['code' => 'IMPORTED'],
+            ['description' => 'Imported Items', 'phase' => 'Imported', 'sort_order' => 999],
+        );
+
+        return CostPackage::firstOrCreate(
+            ['project_id' => $project->id, 'name' => 'Imported Items'],
+            ['control_account_id' => $defaultCa->id, 'sort_order' => 999],
+        );
+    }
+
+    private function createLineItem(CostPackage $package, string $description, Collection $periods): LineItem
+    {
+        $lineItem = LineItem::create([
+            'cost_package_id' => $package->id,
+            'description' => $description,
+            'original_qty' => 0,
+            'original_rate' => 0,
+            'original_amount' => 0,
+        ]);
+
+        foreach ($periods as $period) {
+            LineItemForecast::create([
+                'line_item_id' => $lineItem->id,
+                'forecast_period_id' => $period->id,
+            ]);
+        }
+
+        return $lineItem;
     }
 }
