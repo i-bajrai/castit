@@ -40,8 +40,15 @@
 
                 <div class="space-y-3">
                     @foreach($unassignedItems as $index => $item)
+                        @php
+                            $itemSuggestions = $suggestions[$item->id] ?? [];
+                            $bestMatch = ! empty($itemSuggestions) ? $itemSuggestions[0] : null;
+                        @endphp
                         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
-                             x-data="{ action: 'move' }">
+                             x-data="{
+                                action: '{{ $bestMatch && $bestMatch['score'] >= 60 ? 'merge' : 'move' }}',
+                                mergeTarget: '{{ $bestMatch && $bestMatch['score'] >= 60 ? $bestMatch['id'] : '' }}'
+                             }">
                             <div class="p-4">
                                 <input type="hidden" name="operations[{{ $index }}][line_item_id]" value="{{ $item->id }}">
                                 <input type="hidden" name="operations[{{ $index }}][action]" :value="action">
@@ -57,6 +64,25 @@
                                         <p class="text-xs text-gray-500 mt-0.5">
                                             {{ $periodsWithData }} of {{ $totalPeriods }} period(s) with data
                                         </p>
+
+                                        {{-- Close Match Suggestions --}}
+                                        @if(! empty($itemSuggestions))
+                                            <div class="mt-2 flex flex-wrap gap-1.5">
+                                                @foreach($itemSuggestions as $suggestion)
+                                                    <button type="button"
+                                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs cursor-pointer transition-colors
+                                                                {{ $suggestion['score'] >= 60 ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
+                                                            x-on:click="action = 'merge'; mergeTarget = '{{ $suggestion['id'] }}'; $nextTick(() => $refs.mergeSelect{{ $index }}.value = '{{ $suggestion['id'] }}')"
+                                                            title="{{ $suggestion['ca_code'] }} > {{ $suggestion['package_name'] }} ({{ $suggestion['score'] }}% match)">
+                                                        @if($suggestion['score'] >= 60)
+                                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                                                        @endif
+                                                        {{ Str::limit($suggestion['description'], 40) }}
+                                                        <span class="font-semibold">{{ $suggestion['score'] }}%</span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
 
                                     {{-- Action Toggle --}}
@@ -87,6 +113,7 @@
                                     {{-- Target: Line Item (for merge) --}}
                                     <div x-show="action === 'merge'" class="shrink-0 w-full lg:w-80">
                                         <select name="operations[{{ $index }}][merge_into_id]"
+                                                x-ref="mergeSelect{{ $index }}"
                                                 class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                                 :required="action === 'merge'">
                                             <option value="">Select line item...</option>
@@ -94,7 +121,7 @@
                                                 @foreach($ca->costPackages as $pkg)
                                                     <optgroup label="{{ $ca->code }} > {{ $pkg->name }}">
                                                         @foreach($pkg->lineItems as $li)
-                                                            <option value="{{ $li->id }}">{{ $li->description }}</option>
+                                                            <option value="{{ $li->id }}" {{ $bestMatch && $bestMatch['id'] === $li->id ? 'selected' : '' }}>{{ $li->description }}</option>
                                                         @endforeach
                                                     </optgroup>
                                                 @endforeach

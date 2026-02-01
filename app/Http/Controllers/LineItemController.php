@@ -47,10 +47,34 @@ class LineItemController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        // Build a flat list of all existing line items for similarity matching
+        $existingItems = $controlAccounts->flatMap(function ($ca) {
+            return $ca->costPackages->flatMap(function ($pkg) use ($ca) {
+                return $pkg->lineItems->map(function ($li) use ($ca, $pkg) {
+                    return [
+                        'id' => $li->id,
+                        'description' => $li->description,
+                        'package_name' => $pkg->name,
+                        'ca_code' => $ca->code,
+                    ];
+                });
+            });
+        });
+
+        // Compute close matches for each unassigned item
+        $suggestions = [];
+        foreach ($unassignedItems as $item) {
+            $matches = $this->findCloseMatches($item->description, $existingItems);
+            if (! empty($matches)) {
+                $suggestions[$item->id] = $matches;
+            }
+        }
+
         return view('projects.unassigned', [
             'project' => $project,
             'unassignedItems' => $unassignedItems,
             'controlAccounts' => $controlAccounts,
+            'suggestions' => $suggestions,
         ]);
     }
 
@@ -97,6 +121,65 @@ class LineItemController extends Controller
 
         return redirect()->route('projects.unassigned', $project)
             ->with('success', $result->summary());
+    }
+
+    /**
+     * @return array<int, array{id: int, description: string, package_name: string, ca_code: string, score: int}>
+     */
+    private function findCloseMatches(string $needle, \Illuminate\Support\Collection $haystack, int $limit = 3): array
+    {
+        $normalizedNeedle = $this->normalizeDescription($needle);
+        $needleTokens = $this->tokenize($needle);
+
+        $scored = [];
+
+        foreach ($haystack as $item) {
+            $normalizedHay = $this->normalizeDescription($item['description']);
+
+            // Percentage from similar_text
+            similar_text($normalizedNeedle, $normalizedHay, $percent);
+
+            // Token overlap bonus — how many words in common
+            $hayTokens = $this->tokenize($item['description']);
+            $commonTokens = count(array_intersect($needleTokens, $hayTokens));
+            $maxTokens = max(count($needleTokens), count($hayTokens), 1);
+            $tokenScore = ($commonTokens / $maxTokens) * 100;
+
+            // Combined score: weight similar_text and token overlap
+            $score = (int) round(($percent * 0.6) + ($tokenScore * 0.4));
+
+            if ($score >= 35) {
+                $scored[] = array_merge($item, ['score' => $score]);
+            }
+        }
+
+        // Sort by score descending, take top N
+        usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_slice($scored, 0, $limit);
+    }
+
+    private function normalizeDescription(string $text): string
+    {
+        $text = mb_strtolower($text);
+        $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
+        $text = preg_replace('/\s+/', ' ', $text);
+
+        return trim($text);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function tokenize(string $text): array
+    {
+        $text = $this->normalizeDescription($text);
+
+        // Filter out very short tokens (1-2 chars) that are noise
+        return array_values(array_filter(
+            explode(' ', $text),
+            fn ($t) => strlen($t) > 2
+        ));
     }
 
     public function store(
