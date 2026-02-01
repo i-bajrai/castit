@@ -51,6 +51,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/projects/{project}/cost-packages/{costPackage}', [CostPackageController::class, 'update'])->name('projects.cost-packages.update');
     Route::delete('/projects/{project}/cost-packages/{costPackage}', [CostPackageController::class, 'destroy'])->name('projects.cost-packages.destroy');
 
+    Route::get('/projects/{project}/unassigned', [LineItemController::class, 'unassigned'])->name('projects.unassigned');
+    Route::post('/projects/{project}/unassigned/reassign', [LineItemController::class, 'bulkReassign'])->name('projects.unassigned.reassign');
+
     Route::post('/projects/{project}/cost-packages/{costPackage}/line-items', [LineItemController::class, 'store'])->name('projects.line-items.store');
     Route::put('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'update'])->name('projects.line-items.update');
     Route::delete('/projects/{project}/cost-packages/{costPackage}/line-items/{lineItem}', [LineItemController::class, 'destroy'])->name('projects.line-items.destroy');

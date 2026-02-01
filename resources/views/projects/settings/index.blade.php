@@ -26,6 +26,19 @@
                 </div>
             @endif
 
+            {{-- Unassigned Items Banner --}}
+            @if($unassignedCount > 0)
+                <div class="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-amber-800">You have {{ $unassignedCount }} unassigned line item(s)</p>
+                        <p class="text-xs text-amber-600 mt-0.5">These items were created during import and need to be assigned to a cost package.</p>
+                    </div>
+                    <a href="{{ route('projects.unassigned', $project) }}" class="inline-flex items-center px-4 py-2 bg-amber-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-amber-700 transition">
+                        Review &amp; Assign
+                    </a>
+                </div>
+            @endif
+
             {{-- ==================== PROJECT DETAILS ==================== --}}
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">

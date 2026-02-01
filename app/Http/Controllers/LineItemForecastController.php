@@ -116,6 +116,13 @@ class LineItemForecastController extends Controller
 
         $result = $action->execute($project, $rows);
 
+        // If unassigned items were created, redirect to the resolver page
+        if ($result->created > 0) {
+            return redirect()->route('projects.unassigned', $project)
+                ->with('success', $result->summary())
+                ->with('import_errors', $result->errors);
+        }
+
         $flash = $result->imported > 0 ? 'success' : 'error';
 
         return redirect()->route('projects.settings', $project)

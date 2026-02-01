@@ -119,12 +119,12 @@ class ImportForecastsFromCsv
     private function getOrCreateDefaultPackage(Project $project): CostPackage
     {
         $defaultCa = $project->controlAccounts()->firstOrCreate(
-            ['code' => 'IMPORTED'],
-            ['description' => 'Imported Items', 'phase' => 'Imported', 'sort_order' => 999],
+            ['code' => 'UNASSIGNED'],
+            ['description' => 'Unassigned', 'phase' => 'Unassigned', 'sort_order' => 999],
         );
 
         return CostPackage::firstOrCreate(
-            ['project_id' => $project->id, 'name' => 'Imported Items'],
+            ['project_id' => $project->id, 'name' => 'Unassigned'],
             ['control_account_id' => $defaultCa->id, 'sort_order' => 999],
         );
     }

@@ -156,23 +156,23 @@ class ImportForecastsFromCsvTest extends TestCase
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
-            ->assertRedirect(route('projects.settings', $project))
+            ->assertRedirect(route('projects.unassigned', $project))
             ->assertSessionHas('success');
 
-        // Line item should have been created under an "Imported Items" package
+        // Line item should have been created under an "Unassigned" package
         $this->assertDatabaseHas('line_items', [
             'description' => 'Nonexistent Item',
         ]);
 
         $this->assertDatabaseHas('control_accounts', [
             'project_id' => $project->id,
-            'code' => 'IMPORTED',
-            'phase' => 'Imported',
+            'code' => 'UNASSIGNED',
+            'phase' => 'Unassigned',
         ]);
 
         $this->assertDatabaseHas('cost_packages', [
             'project_id' => $project->id,
-            'name' => 'Imported Items',
+            'name' => 'Unassigned',
         ]);
 
         // Forecast should have been created with ctd_qty=80

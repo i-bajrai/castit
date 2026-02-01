@@ -12,7 +12,13 @@ class ProjectSettingsController extends Controller
     {
         Gate::authorize('update', $project);
 
-        $controlAccounts = $project->controlAccounts()->orderBy('sort_order')->get();
+        $controlAccounts = $project->controlAccounts()->where('code', '!=', 'UNASSIGNED')->orderBy('sort_order')->get();
+
+        $unassignedCount = 0;
+        $unassignedCa = $project->controlAccounts()->where('code', 'UNASSIGNED')->first();
+        if ($unassignedCa) {
+            $unassignedCount = \App\Models\LineItem::whereHas('costPackage', fn ($q) => $q->where('control_account_id', $unassignedCa->id))->count();
+        }
 
         $lineItems = \App\Models\LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))
             ->whereNotNull('item_no')
@@ -30,6 +36,7 @@ class ProjectSettingsController extends Controller
             'controlAccounts' => $controlAccounts,
             'sampleLineItems' => $lineItems,
             'samplePeriods' => $periods,
+            'unassignedCount' => $unassignedCount,
         ]);
     }
 }
