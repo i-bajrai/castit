@@ -42,6 +42,7 @@ test.describe('Unassigned Items', () => {
 
         const lineItem = await create(page, 'App\\Models\\LineItem', {
             cost_package_id: pkg.id,
+            item_no: '006-001',
             description: 'Concrete',
             original_qty: 100,
             original_rate: 250,
