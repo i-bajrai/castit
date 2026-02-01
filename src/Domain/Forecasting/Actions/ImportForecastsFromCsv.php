@@ -23,7 +23,7 @@ class ImportForecastsFromCsv
         })->get();
 
         $lineItemsByDescription = $lineItems->keyBy(
-            fn (LineItem $li) => strtolower(trim($li->description))
+            fn (LineItem $li) => $this->normalizeDescription($li->description)
         );
 
         $periods = $project->forecastPeriods()->orderBy('period_date')->get();
@@ -50,11 +50,12 @@ class ImportForecastsFromCsv
                 continue;
             }
 
-            $lineItem = $lineItemsByDescription->get(strtolower($description));
+            $normalizedDesc = $this->normalizeDescription($description);
+            $lineItem = $lineItemsByDescription->get($normalizedDesc);
             if (! $lineItem) {
                 $defaultPackage ??= $this->getOrCreateDefaultPackage($project);
                 $lineItem = $this->createLineItem($defaultPackage, $description, $periods);
-                $lineItemsByDescription->put(strtolower($description), $lineItem);
+                $lineItemsByDescription->put($normalizedDesc, $lineItem);
                 $created++;
             }
 
@@ -127,6 +128,15 @@ class ImportForecastsFromCsv
             ['project_id' => $project->id, 'name' => 'Unassigned'],
             ['control_account_id' => $defaultCa->id, 'sort_order' => 999],
         );
+    }
+
+    private function normalizeDescription(string $text): string
+    {
+        $text = mb_strtolower(trim($text));
+        $text = preg_replace('/[^a-z0-9\s]/', ' ', $text);
+        $text = preg_replace('/\s+/', ' ', $text);
+
+        return trim($text);
     }
 
     private function createLineItem(CostPackage $package, string $description, Collection $periods): LineItem
