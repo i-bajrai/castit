@@ -18,8 +18,14 @@ class ImportForecastsFromCsv
         $created = 0;
         $errors = [];
 
-        $lineItems = LineItem::whereHas('costPackage', function ($q) use ($project) {
+        // Exclude items in the UNASSIGNED package so we always prefer matching against real assigned items
+        $unassignedCaId = $project->controlAccounts()->where('code', 'UNASSIGNED')->value('id');
+
+        $lineItems = LineItem::whereHas('costPackage', function ($q) use ($project, $unassignedCaId) {
             $q->where('project_id', $project->id);
+            if ($unassignedCaId) {
+                $q->where('control_account_id', '!=', $unassignedCaId);
+            }
         })->get();
 
         $lineItemsByDescription = $lineItems->keyBy(

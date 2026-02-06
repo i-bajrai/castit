@@ -98,7 +98,7 @@
                                     <div x-show="action === 'move'" class="shrink-0 w-full lg:w-80">
                                         <select name="operations[{{ $index }}][target_package_id]"
                                                 class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                :required="action === 'move'">
+                                                >
                                             <option value="">Select cost package...</option>
                                             @foreach($controlAccounts as $ca)
                                                 <optgroup label="{{ $ca->code }} - {{ $ca->description }}">
@@ -115,7 +115,7 @@
                                         <select name="operations[{{ $index }}][merge_into_id]"
                                                 x-ref="mergeSelect{{ $index }}"
                                                 class="w-full rounded-md border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                                :required="action === 'merge'">
+                                                >
                                             <option value="">Select line item...</option>
                                             @foreach($controlAccounts as $ca)
                                                 @foreach($ca->costPackages as $pkg)
@@ -137,7 +137,7 @@
                 {{-- Submit --}}
                 <div class="mt-6 flex justify-end">
                     <x-primary-button>
-                        Reassign All Items
+                        Reassign Selected Items
                     </x-primary-button>
                 </div>
             </form>

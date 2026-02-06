@@ -89,17 +89,25 @@ class LineItemController extends Controller
             'operations' => 'required|array|min:1',
             'operations.*.line_item_id' => 'required|integer|exists:line_items,id',
             'operations.*.action' => 'required|in:move,merge',
-            'operations.*.target_package_id' => 'required_if:operations.*.action,move|nullable|integer|exists:cost_packages,id',
-            'operations.*.merge_into_id' => 'required_if:operations.*.action,merge|nullable|integer|exists:line_items,id',
+            'operations.*.target_package_id' => 'nullable|integer|exists:cost_packages,id',
+            'operations.*.merge_into_id' => 'nullable|integer|exists:line_items,id',
         ]);
 
+        // Filter out operations where no target was selected
         $operations = collect($validated['operations'])->map(function ($op) {
             return [
                 'line_item_id' => $op['line_item_id'],
-                'target_package_id' => $op['action'] === 'move' ? $op['target_package_id'] : null,
-                'merge_into_id' => $op['action'] === 'merge' ? $op['merge_into_id'] : null,
+                'target_package_id' => $op['action'] === 'move' ? ($op['target_package_id'] ?? null) : null,
+                'merge_into_id' => $op['action'] === 'merge' ? ($op['merge_into_id'] ?? null) : null,
             ];
-        })->all();
+        })->filter(function ($op) {
+            return $op['target_package_id'] || $op['merge_into_id'];
+        })->values()->all();
+
+        if (empty($operations)) {
+            return redirect()->route('projects.unassigned', $project)
+                ->with('error', 'No items were selected for reassignment.');
+        }
 
         $result = $action->execute($operations);
 
