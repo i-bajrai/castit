@@ -78,7 +78,7 @@
                                 let inQuotes = false;
                                 for (let i = 0; i < line.length; i++) {
                                     const ch = line[i];
-                                    if (ch === '\"') {
+                                    if (ch === '&quot;') {
                                         inQuotes = !inQuotes;
                                     } else if (ch === ',' && !inQuotes) {
                                         result.push(current.trim());
