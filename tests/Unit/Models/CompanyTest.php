@@ -69,12 +69,12 @@ class CompanyTest extends TestCase
         $this->assertDatabaseMissing('projects', ['name' => 'Doomed Project']);
     }
 
-    public function test_deleting_user_nullifies_company_ownership(): void
+    public function test_force_deleting_user_nullifies_company_ownership(): void
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Owned Co']);
 
-        $user->delete();
+        $user->forceDelete();
 
         $this->assertDatabaseHas('companies', [
             'id' => $company->id,

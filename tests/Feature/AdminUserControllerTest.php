@@ -49,6 +49,116 @@ class AdminUserControllerTest extends TestCase
             ->assertRedirect('/login');
     }
 
+    // --- FILTERS ---
+
+    public function test_users_page_can_filter_by_name_search(): void
+    {
+        $admin = $this->createSuperAdmin();
+        User::factory()->create(['name' => 'Alice Johnson']);
+        User::factory()->create(['name' => 'Bob Smith']);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?search=Alice')
+            ->assertOk()
+            ->assertSee('Alice Johnson')
+            ->assertDontSee('Bob Smith');
+    }
+
+    public function test_users_page_can_filter_by_email_search(): void
+    {
+        $admin = $this->createSuperAdmin();
+        User::factory()->create(['name' => 'Alice', 'email' => 'alice@special.com']);
+        User::factory()->create(['name' => 'Bob', 'email' => 'bob@other.com']);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?search=special')
+            ->assertOk()
+            ->assertSee('Alice')
+            ->assertDontSee('Bob');
+    }
+
+    public function test_users_page_can_filter_by_system_role(): void
+    {
+        $admin = User::factory()->admin()->create(['name' => 'Admin Alpha']);
+        $anotherAdmin = User::factory()->admin()->create(['name' => 'Admin Bravo']);
+        $regularUser = User::factory()->create(['name' => 'Regular Charlie']);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?role=user')
+            ->assertOk()
+            ->assertSee('Regular Charlie')
+            ->assertDontSee('Admin Bravo');
+    }
+
+    public function test_users_page_can_filter_by_company(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $company = Company::create(['user_id' => $admin->id, 'name' => 'Acme Corp']);
+        $userInCompany = User::factory()->create([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Engineer,
+        ]);
+        $userNoCompany = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->get('/admin/users?company_id=' . $company->id)
+            ->assertOk()
+            ->assertSee($userInCompany->name)
+            ->assertDontSee($userNoCompany->name);
+    }
+
+    public function test_users_page_can_filter_by_company_role(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $company = Company::create(['user_id' => $admin->id, 'name' => 'Acme Corp']);
+        $engineer = User::factory()->create([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Engineer,
+        ]);
+        $viewer = User::factory()->create([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Viewer,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?company_role=engineer')
+            ->assertOk()
+            ->assertSee($engineer->name)
+            ->assertDontSee($viewer->name);
+    }
+
+    public function test_users_page_can_combine_multiple_filters(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $company = Company::create(['user_id' => $admin->id, 'name' => 'Acme Corp']);
+        $target = User::factory()->create([
+            'name' => 'Alice Target',
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Engineer,
+        ]);
+        User::factory()->create([
+            'name' => 'Alice Decoy',
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Viewer,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/users?search=Alice&company_role=engineer')
+            ->assertOk()
+            ->assertSee('Alice Target')
+            ->assertDontSee('Alice Decoy');
+    }
+
+    public function test_users_page_empty_filters_show_all_users(): void
+    {
+        $admin = $this->createSuperAdmin();
+        User::factory()->count(3)->create();
+
+        $this->actingAs($admin)
+            ->get('/admin/users?search=&role=&company_id=&company_role=')
+            ->assertOk();
+    }
+
     // --- STORE ---
 
     public function test_super_admin_can_create_user_with_all_fields(): void
@@ -325,7 +435,7 @@ class AdminUserControllerTest extends TestCase
             ->assertRedirect(route('admin.users.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 
     public function test_cannot_delete_yourself(): void
@@ -367,7 +477,7 @@ class AdminUserControllerTest extends TestCase
             ->assertRedirect(route('admin.users.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $admin2->id]);
+        $this->assertSoftDeleted('users', ['id' => $admin2->id]);
     }
 
     public function test_deleting_user_who_owns_company_nullifies_ownership(): void
@@ -381,7 +491,7 @@ class AdminUserControllerTest extends TestCase
             ->assertRedirect(route('admin.users.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $owner->id]);
+        $this->assertSoftDeleted('users', ['id' => $owner->id]);
         $this->assertDatabaseHas('companies', [
             'id' => $company->id,
             'user_id' => null,
@@ -399,7 +509,7 @@ class AdminUserControllerTest extends TestCase
             ->assertRedirect(route('admin.users.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $this->assertSoftDeleted('users', ['id' => $user->id]);
     }
 
     public function test_regular_user_cannot_delete_users(): void
@@ -410,6 +520,76 @@ class AdminUserControllerTest extends TestCase
         $this->actingAs($user)
             ->delete("/admin/users/{$otherUser->id}")
             ->assertForbidden();
+    }
+
+    // --- RESTORE ---
+
+    public function test_super_admin_can_restore_deleted_user(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $user = User::factory()->create();
+        $user->delete();
+
+        $this->actingAs($admin)
+            ->post("/admin/users/{$user->id}/restore")
+            ->assertRedirect(route('admin.users.index'))
+            ->assertSessionHas('success', 'User restored successfully.');
+
+        $this->assertNotSoftDeleted('users', ['id' => $user->id]);
+    }
+
+    public function test_regular_user_cannot_restore_deleted_user(): void
+    {
+        $user = $this->createRegularUser();
+        $deletedUser = User::factory()->create();
+        $deletedUser->delete();
+
+        $this->actingAs($user)
+            ->post("/admin/users/{$deletedUser->id}/restore")
+            ->assertForbidden();
+    }
+
+    public function test_deleted_user_appears_in_users_list_with_deleted_badge(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $user = User::factory()->create(['name' => 'Deleted Dan']);
+        $user->delete();
+
+        $this->actingAs($admin)
+            ->get('/admin/users')
+            ->assertOk()
+            ->assertSee('Deleted Dan')
+            ->assertSee('Deleted');
+    }
+
+    // --- STATUS FILTER ---
+
+    public function test_users_page_can_filter_by_active_status(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $activeUser = User::factory()->create(['name' => 'Active Alice']);
+        $deletedUser = User::factory()->create(['name' => 'Deleted Dave']);
+        $deletedUser->delete();
+
+        $this->actingAs($admin)
+            ->get('/admin/users?status=active')
+            ->assertOk()
+            ->assertSee('Active Alice')
+            ->assertDontSee('Deleted Dave');
+    }
+
+    public function test_users_page_can_filter_by_deleted_status(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $activeUser = User::factory()->create(['name' => 'Active Alice']);
+        $deletedUser = User::factory()->create(['name' => 'Deleted Dave']);
+        $deletedUser->delete();
+
+        $this->actingAs($admin)
+            ->get('/admin/users?status=deleted')
+            ->assertOk()
+            ->assertSee('Deleted Dave')
+            ->assertDontSee('Active Alice');
     }
 
     // --- EDGE CASES ---

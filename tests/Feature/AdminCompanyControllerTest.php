@@ -73,6 +73,107 @@ class AdminCompanyControllerTest extends TestCase
             ->assertSee('Acme Corp');
     }
 
+    // --- FILTERS ---
+
+    public function test_companies_page_can_filter_by_search(): void
+    {
+        $admin = $this->createSuperAdmin();
+        Company::create(['user_id' => $admin->id, 'name' => 'Acme Corp']);
+        Company::create(['user_id' => $admin->id, 'name' => 'Beta Inc']);
+
+        $this->actingAs($admin)
+            ->get('/admin/companies?search=Acme')
+            ->assertOk()
+            ->assertSee('Acme Corp')
+            ->assertDontSee('Beta Inc');
+    }
+
+    public function test_companies_page_empty_search_shows_all(): void
+    {
+        $admin = $this->createSuperAdmin();
+        Company::create(['user_id' => $admin->id, 'name' => 'Acme Corp']);
+        Company::create(['user_id' => $admin->id, 'name' => 'Beta Inc']);
+
+        $this->actingAs($admin)
+            ->get('/admin/companies?search=')
+            ->assertOk()
+            ->assertSee('Acme Corp')
+            ->assertSee('Beta Inc');
+    }
+
+    // --- SHOW ---
+
+    public function test_super_admin_can_view_company_detail_page(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $company = Company::create(['user_id' => $admin->id, 'name' => 'Acme Corp']);
+
+        $member = User::factory()->create([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Engineer,
+        ]);
+
+        $project = Project::create([
+            'company_id' => $company->id,
+            'name' => 'Big Project',
+            'original_budget' => 500000,
+        ]);
+
+        $this->actingAs($admin)
+            ->get("/admin/companies/{$company->id}")
+            ->assertOk()
+            ->assertSee('Acme Corp')
+            ->assertSee($member->name)
+            ->assertSee($member->email)
+            ->assertSee('Big Project');
+    }
+
+    public function test_regular_user_cannot_view_company_detail_page(): void
+    {
+        $user = $this->createRegularUser();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+
+        $this->actingAs($user)
+            ->get("/admin/companies/{$company->id}")
+            ->assertForbidden();
+    }
+
+    public function test_company_detail_shows_empty_state_when_no_members_or_projects(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $company = Company::create(['user_id' => $admin->id, 'name' => 'Empty Co']);
+
+        $this->actingAs($admin)
+            ->get("/admin/companies/{$company->id}")
+            ->assertOk()
+            ->assertSee('Empty Co')
+            ->assertSee('No members in this company')
+            ->assertSee('No projects in this company');
+    }
+
+    public function test_company_detail_shows_member_and_project_counts(): void
+    {
+        $admin = $this->createSuperAdmin();
+        $company = Company::create(['user_id' => $admin->id, 'name' => 'Counted Co']);
+
+        User::factory()->count(2)->create([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Engineer,
+        ]);
+
+        Project::create([
+            'company_id' => $company->id,
+            'name' => 'Project A',
+            'original_budget' => 100000,
+        ]);
+
+        $this->actingAs($admin)
+            ->get("/admin/companies/{$company->id}")
+            ->assertOk()
+            ->assertSee('Members (2)')
+            ->assertSee('Projects (1)');
+    }
+
     // --- STORE ---
 
     public function test_super_admin_can_create_company(): void

@@ -194,6 +194,8 @@ class ReassignLineItemsTest extends TestCase
     {
         [, $project] = $this->seedData();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->get("/projects/{$project->id}/unassigned")
@@ -204,6 +206,8 @@ class ReassignLineItemsTest extends TestCase
     {
         [, $project, $package, , $unassignedItem] = $this->seedData();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->post("/projects/{$project->id}/unassigned/reassign", [

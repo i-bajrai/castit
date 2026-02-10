@@ -237,6 +237,8 @@ class LineItemForecastControllerTest extends TestCase
     {
         [, $project, , , $forecast] = $this->seedForecast();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
@@ -249,6 +251,8 @@ class LineItemForecastControllerTest extends TestCase
     {
         [, $project, , , $forecast] = $this->seedForecast();
         $otherUser = User::factory()->create();
+        $otherCompany2 = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany2->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/comment", [

@@ -225,6 +225,8 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [, $project] = $this->seedImportData();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\n");
 

@@ -7,6 +7,7 @@
             <button
                 x-data=""
                 x-on:click="$dispatch('open-modal', 'create-member')"
+                data-testid="add-member-button"
                 class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
             >
                 Add Member
@@ -46,7 +47,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($members as $member)
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50" data-testid="member-row">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {{ $member->name }}
                                         @if($member->id === Auth::id())
@@ -89,6 +90,7 @@
                                                     id: {{ $member->id }},
                                                     name: @js($member->name)
                                                 })"
+                                                data-testid="remove-member-button"
                                                 class="text-red-600 hover:text-red-900"
                                             >Remove</button>
                                         @endif
@@ -121,7 +123,7 @@
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($removedMembers as $removed)
-                                        <tr class="hover:bg-gray-50">
+                                        <tr class="hover:bg-gray-50" data-testid="removed-member-row">
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
                                                 {{ $removed->name }}
                                             </td>
@@ -150,6 +152,7 @@
                                                         id: {{ $removed->id }},
                                                         name: @js($removed->name)
                                                     })"
+                                                    data-testid="restore-member-button"
                                                     class="text-green-600 hover:text-green-900"
                                                 >Restore</button>
                                             </td>
@@ -166,7 +169,7 @@
 
     {{-- Add Member Modal --}}
     <x-modal name="create-member" focusable>
-        <form method="POST" action="{{ route('company.members.store') }}" class="p-6">
+        <form method="POST" action="{{ route('company.members.store') }}" class="p-6" data-testid="create-member-form">
             @csrf
 
             <h2 class="text-lg font-medium text-gray-900">Add Team Member</h2>
@@ -207,7 +210,7 @@
 
             <div class="mt-6 flex justify-end gap-3">
                 <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                <x-primary-button>Add Member</x-primary-button>
+                <x-primary-button data-testid="submit-add-member">Add Member</x-primary-button>
             </div>
         </form>
     </x-modal>
@@ -244,7 +247,7 @@
 
                 <div class="mt-6 flex justify-end gap-3">
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                    <x-primary-button>Update Role</x-primary-button>
+                    <x-primary-button data-testid="submit-update-role">Update Role</x-primary-button>
                 </div>
             </form>
         </x-modal>
@@ -269,7 +272,7 @@
                     @csrf
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                    <x-danger-button>Remove Member</x-danger-button>
+                    <x-danger-button data-testid="confirm-remove-member">Remove Member</x-danger-button>
                 </form>
             </div>
         </x-modal>
@@ -293,7 +296,7 @@
                 <form :action="'{{ url('company/members') }}/' + memberId + '/restore'" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
-                    <x-primary-button>Restore Member</x-primary-button>
+                    <x-primary-button data-testid="confirm-restore-member">Restore Member</x-primary-button>
                 </form>
             </div>
         </x-modal>

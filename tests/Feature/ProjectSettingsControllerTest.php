@@ -37,6 +37,8 @@ class ProjectSettingsControllerTest extends TestCase
     {
         [, , $project] = $this->createUserWithProject();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->get("/projects/{$project->id}/settings")

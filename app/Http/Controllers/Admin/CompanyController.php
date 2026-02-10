@@ -10,18 +10,36 @@ use Domain\UserManagement\Actions\CreateCompany;
 use Domain\UserManagement\Actions\DeleteCompany;
 use Domain\UserManagement\Actions\UpdateCompany;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CompanyController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $companies = Company::withCount('members', 'projects')
-            ->orderBy('name')
-            ->paginate(25);
+        $query = Company::withCount('members', 'projects');
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->input('search') . '%');
+        }
+
+        $companies = $query->orderBy('name')->paginate(25)->withQueryString();
 
         return view('admin.companies.index', [
             'companies' => $companies,
+        ]);
+    }
+
+    public function show(Company $company): View
+    {
+        $company->loadCount('members', 'projects');
+        $members = $company->members()->orderBy('name')->get();
+        $projects = $company->projects()->orderBy('name')->get();
+
+        return view('admin.companies.show', [
+            'company' => $company,
+            'members' => $members,
+            'projects' => $projects,
         ]);
     }
 

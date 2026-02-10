@@ -19,9 +19,39 @@ use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $users = User::with('company')->orderBy('name')->paginate(25);
+        $query = User::withTrashed()->with('company');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->input('role'));
+        }
+
+        if ($request->filled('company_id')) {
+            $query->where('company_id', $request->input('company_id'));
+        }
+
+        if ($request->filled('company_role')) {
+            $query->where('company_role', $request->input('company_role'));
+        }
+
+        if ($request->filled('status')) {
+            match ($request->input('status')) {
+                'active' => $query->whereNull('deleted_at'),
+                'deleted' => $query->whereNotNull('deleted_at'),
+                default => null,
+            };
+        }
+
+        $users = $query->orderBy('name')->paginate(25)->withQueryString();
         $companies = Company::orderBy('name')->get();
 
         return view('admin.users.index', [
@@ -86,5 +116,13 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    public function restore(User $user): RedirectResponse
+    {
+        $user->restore();
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User restored successfully.');
     }
 }

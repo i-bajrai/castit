@@ -32,6 +32,45 @@
                 </div>
             @endif
 
+            {{-- Filters --}}
+            <div class="mb-6" x-data="{
+                search: @js(request('search', '')),
+                submitTimeout: null,
+                debounceSubmit() {
+                    clearTimeout(this.submitTimeout);
+                    this.submitTimeout = setTimeout(() => {
+                        this.$refs.filterForm.submit();
+                    }, 300);
+                }
+            }">
+                <form x-ref="filterForm" method="GET" action="{{ route('admin.companies.index') }}"
+                      class="bg-white shadow-sm sm:rounded-lg p-4">
+                    <div class="flex items-end gap-4">
+                        <div class="flex-1 max-w-md">
+                            <x-input-label value="Search" />
+                            <x-text-input
+                                type="text"
+                                name="search"
+                                x-model="search"
+                                x-on:input="debounceSubmit()"
+                                placeholder="Company name..."
+                                class="mt-1 block w-full"
+                            />
+                        </div>
+
+                        <div>
+                            <a href="{{ route('admin.companies.index') }}"
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                               x-show="search"
+                               x-transition
+                            >
+                                Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -47,8 +86,10 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($companies as $company)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {{ $company->name }}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <a href="{{ route('admin.companies.show', $company) }}" class="text-indigo-600 hover:text-indigo-900">
+                                            {{ $company->name }}
+                                        </a>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $company->members_count }}
