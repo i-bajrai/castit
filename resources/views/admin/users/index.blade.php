@@ -39,7 +39,9 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company Role</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -57,14 +59,31 @@
                                         @php
                                             $badgeClasses = match($user->role) {
                                                 \App\Enums\UserRole::Admin => 'bg-red-100 text-red-800',
-                                                \App\Enums\UserRole::ProjectManager => 'bg-blue-100 text-blue-800',
-                                                \App\Enums\UserRole::CostController => 'bg-amber-100 text-amber-800',
-                                                \App\Enums\UserRole::Viewer => 'bg-gray-100 text-gray-800',
+                                                \App\Enums\UserRole::User => 'bg-gray-100 text-gray-800',
                                             };
                                         @endphp
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $badgeClasses }}">
                                             {{ $user->role->label() }}
                                         </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ $user->company?->name ?? '—' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if($user->company_role)
+                                            @php
+                                                $companyBadge = match($user->company_role) {
+                                                    \App\Enums\CompanyRole::Admin => 'bg-purple-100 text-purple-800',
+                                                    \App\Enums\CompanyRole::Engineer => 'bg-blue-100 text-blue-800',
+                                                    \App\Enums\CompanyRole::Viewer => 'bg-gray-100 text-gray-800',
+                                                };
+                                            @endphp
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $companyBadge }}">
+                                                {{ $user->company_role->label() }}
+                                            </span>
+                                        @else
+                                            <span class="text-sm text-gray-400">—</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $user->created_at->format('M d, Y') }}
@@ -76,7 +95,9 @@
                                                 id: {{ $user->id }},
                                                 name: '{{ addslashes($user->name) }}',
                                                 email: '{{ addslashes($user->email) }}',
-                                                role: '{{ $user->role->value }}'
+                                                role: '{{ $user->role->value }}',
+                                                company_id: '{{ $user->company_id ?? '' }}',
+                                                company_role: '{{ $user->company_role?->value ?? '' }}'
                                             })"
                                             class="text-indigo-600 hover:text-indigo-900"
                                         >Edit</button>
@@ -122,13 +143,35 @@
             </div>
 
             <div class="mt-4">
-                <x-input-label for="create-role" value="Role" />
+                <x-input-label for="create-role" value="System Role" />
                 <select id="create-role" name="role" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
                     @foreach($roles as $role)
                         <option value="{{ $role->value }}" {{ old('role') === $role->value ? 'selected' : '' }}>{{ $role->label() }}</option>
                     @endforeach
                 </select>
                 <x-input-error :messages="$errors->get('role')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="create-company_id" value="Company" />
+                <select id="create-company_id" name="company_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                    <option value="">— No Company —</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="create-company_role" value="Company Role" />
+                <select id="create-company_role" name="company_role" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                    <option value="">— None —</option>
+                    @foreach($companyRoles as $companyRole)
+                        <option value="{{ $companyRole->value }}" {{ old('company_role') === $companyRole->value ? 'selected' : '' }}>{{ $companyRole->label() }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('company_role')" class="mt-2" />
             </div>
 
             <div class="mt-4">
@@ -150,12 +193,14 @@
     </x-modal>
 
     {{-- Edit User Modal --}}
-    <div x-data="{ userId: null, userName: '', userEmail: '', userRole: '' }"
+    <div x-data="{ userId: null, userName: '', userEmail: '', userRole: '', userCompanyId: '', userCompanyRole: '' }"
          x-on:open-edit-user.window="
              userId = $event.detail.id;
              userName = $event.detail.name;
              userEmail = $event.detail.email;
              userRole = $event.detail.role;
+             userCompanyId = $event.detail.company_id;
+             userCompanyRole = $event.detail.company_role;
              $dispatch('open-modal', 'edit-user')
          ">
 
@@ -182,7 +227,7 @@
                 </div>
 
                 <div class="mt-4">
-                    <x-input-label for="edit-role" value="Role" />
+                    <x-input-label for="edit-role" value="System Role" />
                     <select id="edit-role" name="role" x-model="userRole"
                             class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
                         @foreach($roles as $role)
@@ -190,6 +235,30 @@
                         @endforeach
                     </select>
                     <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <x-input-label for="edit-company_id" value="Company" />
+                    <select id="edit-company_id" name="company_id" x-model="userCompanyId"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                        <option value="">— No Company —</option>
+                        @foreach($companies as $company)
+                            <option value="{{ $company->id }}">{{ $company->name }}</option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('company_id')" class="mt-2" />
+                </div>
+
+                <div class="mt-4">
+                    <x-input-label for="edit-company_role" value="Company Role" />
+                    <select id="edit-company_role" name="company_role" x-model="userCompanyRole"
+                            class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                        <option value="">— None —</option>
+                        @foreach($companyRoles as $companyRole)
+                            <option value="{{ $companyRole->value }}">{{ $companyRole->label() }}</option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('company_role')" class="mt-2" />
                 </div>
 
                 <div class="mt-4">

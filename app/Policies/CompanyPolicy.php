@@ -13,10 +13,19 @@ class CompanyPolicy
             return true;
         }
 
-        if ($user->isViewer()) {
+        if (! $user->belongsToCompany($company->id)) {
             return false;
         }
 
-        return $user->id === $company->user_id;
+        return ! $user->isCompanyViewer();
+    }
+
+    public function manageMembers(User $user, Company $company): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->belongsToCompany($company->id) && $user->isCompanyAdmin();
     }
 }

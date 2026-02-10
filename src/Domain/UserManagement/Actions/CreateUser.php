@@ -14,6 +14,8 @@ class CreateUser
             'email' => $data->email,
             'password' => $data->password,
             'role' => $data->role,
+            'company_id' => $data->companyId,
+            'company_role' => $data->companyRole,
             'email_verified_at' => now(),
         ]);
     }

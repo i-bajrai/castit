@@ -26,6 +26,11 @@ class SeedDemoProject
             ['name' => 'CastIt Construction'],
         );
 
+        $user->update([
+            'company_id' => $company->id,
+            'company_role' => 'admin',
+        ]);
+
         // Delete existing projects for this company so it's re-runnable
         $company->projects()->each(function (Project $p): void {
             $p->delete();

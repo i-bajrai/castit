@@ -32,4 +32,12 @@ class Company extends Model
     {
         return $this->hasMany(Project::class);
     }
+
+    /**
+     * @return HasMany<User, $this>
+     */
+    public function members(): HasMany
+    {
+        return $this->hasMany(User::class, 'company_id');
+    }
 }

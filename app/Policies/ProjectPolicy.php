@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Project;
 use App\Models\User;
 
@@ -14,7 +13,7 @@ class ProjectPolicy
             return true;
         }
 
-        return $user->id === $project->company->user_id;
+        return $user->belongsToCompany($project->company_id);
     }
 
     public function update(User $user, Project $project): bool
@@ -23,11 +22,11 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->isViewer()) {
+        if (! $user->belongsToCompany($project->company_id)) {
             return false;
         }
 
-        return $user->id === $project->company->user_id;
+        return ! $user->isCompanyViewer();
     }
 
     public function delete(User $user, Project $project): bool
@@ -36,11 +35,11 @@ class ProjectPolicy
             return true;
         }
 
-        if ($user->hasRole(UserRole::CostController, UserRole::Viewer)) {
+        if (! $user->belongsToCompany($project->company_id)) {
             return false;
         }
 
-        return $user->id === $project->company->user_id;
+        return $user->isCompanyAdmin();
     }
 
     public function restore(User $user, Project $project): bool

@@ -2,6 +2,7 @@
 
 namespace Domain\UserManagement\DataTransferObjects;
 
+use App\Enums\CompanyRole;
 use App\Enums\UserRole;
 
 readonly class UserData
@@ -11,5 +12,7 @@ readonly class UserData
         public string $email,
         public ?string $password,
         public UserRole $role,
+        public ?int $companyId = null,
+        public ?CompanyRole $companyRole = null,
     ) {}
 }

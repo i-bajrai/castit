@@ -28,13 +28,21 @@ class ProjectController extends Controller
 {
     public function index(Request $request): View
     {
-        $companies = $request->user()->companies()->get();
-        $companyIds = $companies->pluck('id');
+        $user = $request->user();
 
-        $projects = Project::whereIn('company_id', $companyIds)
-            ->withCount('controlAccounts')
-            ->latest()
-            ->get();
+        if ($user->isAdmin()) {
+            $projects = Project::withCount('controlAccounts')->latest()->get();
+            $companies = Company::all();
+        } elseif ($user->company_id) {
+            $projects = Project::where('company_id', $user->company_id)
+                ->withCount('controlAccounts')
+                ->latest()
+                ->get();
+            $companies = collect([$user->company]);
+        } else {
+            $projects = collect();
+            $companies = collect();
+        }
 
         return view('projects.index', compact('projects', 'companies'));
     }
@@ -370,12 +378,18 @@ class ProjectController extends Controller
 
     public function trash(Request $request): View
     {
-        $companyIds = $request->user()->companies()->pluck('id');
+        $user = $request->user();
 
-        $trashedProjects = Project::onlyTrashed()
-            ->whereIn('company_id', $companyIds)
-            ->latest('deleted_at')
-            ->get();
+        if ($user->isAdmin()) {
+            $trashedProjects = Project::onlyTrashed()->latest('deleted_at')->get();
+        } elseif ($user->company_id) {
+            $trashedProjects = Project::onlyTrashed()
+                ->where('company_id', $user->company_id)
+                ->latest('deleted_at')
+                ->get();
+        } else {
+            $trashedProjects = collect();
+        }
 
         return view('projects.trash', compact('trashedProjects'));
     }

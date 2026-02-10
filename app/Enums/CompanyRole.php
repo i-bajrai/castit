@@ -2,16 +2,18 @@
 
 namespace App\Enums;
 
-enum UserRole: string
+enum CompanyRole: string
 {
     case Admin = 'admin';
-    case User = 'user';
+    case Engineer = 'engineer';
+    case Viewer = 'viewer';
 
     public function label(): string
     {
         return match ($this) {
             self::Admin => 'Admin',
-            self::User => 'User',
+            self::Engineer => 'Engineer',
+            self::Viewer => 'Viewer',
         };
     }
 }

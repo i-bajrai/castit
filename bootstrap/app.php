@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->name('admin.')
                 ->group(base_path('routes/admin.php'));
 
+            Route::middleware(['web', 'auth', 'verified'])
+                ->prefix('company')
+                ->name('company.')
+                ->group(base_path('routes/company.php'));
+
             if (! app()->environment('testing', 'local')) {
                 return;
             }

@@ -3,9 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\CompanyRole;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -24,6 +25,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'company_id',
+        'company_role',
     ];
 
     /**
@@ -47,15 +50,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'company_role' => CompanyRole::class,
         ];
     }
 
     /**
-     * @return HasMany<Company, $this>
+     * @return BelongsTo<Company, $this>
      */
-    public function companies(): HasMany
+    public function company(): BelongsTo
     {
-        return $this->hasMany(Company::class);
+        return $this->belongsTo(Company::class);
     }
 
     public function isAdmin(): bool
@@ -63,23 +67,28 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
-    public function isProjectManager(): bool
+    public function isCompanyAdmin(): bool
     {
-        return $this->role === UserRole::ProjectManager;
+        return $this->company_role === CompanyRole::Admin;
     }
 
-    public function isCostController(): bool
+    public function isEngineer(): bool
     {
-        return $this->role === UserRole::CostController;
+        return $this->company_role === CompanyRole::Engineer;
     }
 
-    public function isViewer(): bool
+    public function isCompanyViewer(): bool
     {
-        return $this->role === UserRole::Viewer;
+        return $this->company_role === CompanyRole::Viewer;
     }
 
-    public function hasRole(UserRole ...$roles): bool
+    public function hasCompanyRole(CompanyRole ...$roles): bool
     {
-        return in_array($this->role, $roles, true);
+        return in_array($this->company_role, $roles, true);
+    }
+
+    public function belongsToCompany(?int $companyId): bool
+    {
+        return $this->company_id !== null && $this->company_id === $companyId;
     }
 }

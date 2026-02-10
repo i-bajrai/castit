@@ -13,6 +13,8 @@ class UpdateUser
             'name' => $data->name,
             'email' => $data->email,
             'role' => $data->role,
+            'company_id' => $data->companyId,
+            'company_role' => $data->companyRole,
         ];
 
         if ($data->password !== null) {
