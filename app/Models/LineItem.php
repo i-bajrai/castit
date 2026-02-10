@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LineItem extends Model
 {
+    /** @use HasFactory<\Database\Factories\LineItemFactory> */
     use HasFactory;
 
     protected $fillable = [

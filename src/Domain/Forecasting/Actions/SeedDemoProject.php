@@ -309,7 +309,7 @@ class SeedDemoProject
             ->where('forecast_period_id', $period->id)
             ->first();
 
-        $previousAmount = $forecast?->previous_amount ?? (float) $item->original_amount;
+        $previousAmount = $forecast->previous_amount ?? (float) $item->original_amount;
         $variance = $previousAmount - $fcacAmount;
 
         if ($forecast) {

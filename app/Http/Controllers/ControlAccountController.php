@@ -195,7 +195,7 @@ class ControlAccountController extends Controller
 
         if (empty($grouped)) {
             return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
-                ->with('error', 'No matching rows found for ' . $controlAccount->code);
+                ->with('error', 'No matching rows found for '.$controlAccount->code);
         }
 
         $existingPackages = $controlAccount->costPackages()->pluck('id', 'name');
@@ -256,6 +256,6 @@ class ControlAccountController extends Controller
         $totalItems = collect($grouped)->flatten(1)->count();
 
         return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
-            ->with('success', count($grouped) . ' cost package(s) with ' . $totalItems . ' line item(s) imported.');
+            ->with('success', count($grouped).' cost package(s) with '.$totalItems.' line item(s) imported.');
     }
 }

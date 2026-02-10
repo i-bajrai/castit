@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class ReassignLineItems
 {
+    /**
+     * @param  array<int, array<string, mixed>>  $operations
+     */
     public function execute(array $operations): ReassignLineItemsResult
     {
         $moved = 0;
@@ -24,6 +27,7 @@ class ReassignLineItems
                 $sourceItem = LineItem::find($lineItemId);
                 if (! $sourceItem) {
                     $errors[] = "Row {$index}: line item not found.";
+
                     continue;
                 }
 
@@ -31,6 +35,7 @@ class ReassignLineItems
                     $targetItem = LineItem::find($mergeIntoId);
                     if (! $targetItem) {
                         $errors[] = "Row {$index}: merge target line item not found.";
+
                         continue;
                     }
 
@@ -41,6 +46,7 @@ class ReassignLineItems
                     $targetPackage = CostPackage::find($targetPackageId);
                     if (! $targetPackage) {
                         $errors[] = "Row {$index}: target package not found.";
+
                         continue;
                     }
 

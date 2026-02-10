@@ -21,7 +21,7 @@ class CompanyMemberController extends Controller
     {
         $company = $request->user()->company;
 
-        abort_unless($company, 404, 'You are not assigned to a company.');
+        abort_unless((bool) $company, 404, 'You are not assigned to a company.');
 
         Gate::authorize('manageMembers', $company);
 
@@ -40,7 +40,7 @@ class CompanyMemberController extends Controller
     {
         $company = $request->user()->company;
 
-        abort_unless($company, 404, 'You are not assigned to a company.');
+        abort_unless((bool) $company, 404, 'You are not assigned to a company.');
 
         Gate::authorize('manageMembers', $company);
 
@@ -62,7 +62,7 @@ class CompanyMemberController extends Controller
     {
         $company = $request->user()->company;
 
-        abort_unless($company, 404, 'You are not assigned to a company.');
+        abort_unless((bool) $company, 404, 'You are not assigned to a company.');
 
         Gate::authorize('manageMembers', $company);
 
@@ -80,7 +80,7 @@ class CompanyMemberController extends Controller
     {
         $company = $request->user()->company;
 
-        abort_unless($company, 404, 'You are not assigned to a company.');
+        abort_unless((bool) $company, 404, 'You are not assigned to a company.');
 
         Gate::authorize('manageMembers', $company);
 
@@ -102,7 +102,7 @@ class CompanyMemberController extends Controller
     {
         $company = $request->user()->company;
 
-        abort_unless($company, 404, 'You are not assigned to a company.');
+        abort_unless((bool) $company, 404, 'You are not assigned to a company.');
 
         Gate::authorize('manageMembers', $company);
 

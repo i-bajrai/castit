@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\CompanyRole;
-use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

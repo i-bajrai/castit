@@ -20,7 +20,7 @@ class CompanyController extends Controller
         $query = Company::withCount('members', 'projects');
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->input('search') . '%');
+            $query->where('name', 'like', '%'.$request->input('search').'%');
         }
 
         $companies = $query->orderBy('name')->paginate(25)->withQueryString();

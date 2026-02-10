@@ -2,12 +2,14 @@
 
 namespace Domain\Forecasting\Actions;
 
-use App\Models\ForecastPeriod;
 use App\Models\LineItem;
 use App\Models\Project;
 
 class GetCashFlowReport
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function execute(Project $project): array
     {
         $allPeriods = $project->forecastPeriods()

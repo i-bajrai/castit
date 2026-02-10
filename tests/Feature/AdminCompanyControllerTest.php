@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\CompanyRole;
-use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\Project;
 use App\Models\User;

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\CompanyRole;
-use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -101,7 +100,7 @@ class AdminUserControllerTest extends TestCase
         $userNoCompany = User::factory()->create();
 
         $this->actingAs($admin)
-            ->get('/admin/users?company_id=' . $company->id)
+            ->get('/admin/users?company_id='.$company->id)
             ->assertOk()
             ->assertSee($userInCompany->name)
             ->assertDontSee($userNoCompany->name);

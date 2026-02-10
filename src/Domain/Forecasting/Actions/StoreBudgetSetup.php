@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class StoreBudgetSetup
 {
+    /**
+     * @param  array<int, array<string, mixed>>  $accounts
+     */
     public function execute(Project $project, array $accounts): void
     {
         DB::transaction(function () use ($project, $accounts) {
