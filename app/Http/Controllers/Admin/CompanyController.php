@@ -28,7 +28,7 @@ class CompanyController extends Controller
             'name' => ['required', 'string', 'max:255'],
         ]);
 
-        $action->execute($validated['name']);
+        $action->execute($validated['name'], $request->user());
 
         return redirect()->route('admin.companies.index')
             ->with('success', 'Company created successfully.');
