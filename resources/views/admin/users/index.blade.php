@@ -93,8 +93,8 @@
                                             x-data=""
                                             x-on:click="$dispatch('open-edit-user', {
                                                 id: {{ $user->id }},
-                                                name: '{{ addslashes($user->name) }}',
-                                                email: '{{ addslashes($user->email) }}',
+                                                name: @js($user->name),
+                                                email: @js($user->email),
                                                 role: '{{ $user->role->value }}',
                                                 company_id: '{{ $user->company_id ?? '' }}',
                                                 company_role: '{{ $user->company_role?->value ?? '' }}'
@@ -107,7 +107,7 @@
                                                 x-data=""
                                                 x-on:click="$dispatch('open-delete-user', {
                                                     id: {{ $user->id }},
-                                                    name: '{{ addslashes($user->name) }}'
+                                                    name: @js($user->name)
                                                 })"
                                                 class="text-red-600 hover:text-red-900"
                                             >Delete</button>
@@ -118,6 +118,10 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="mt-4">
+                {{ $users->links() }}
             </div>
         </div>
     </div>
@@ -205,7 +209,7 @@
          ">
 
         <x-modal name="edit-user" focusable>
-            <form :action="'/admin/users/' + userId" method="POST" class="p-6">
+            <form :action="'{{ url('admin/users') }}/' + userId" method="POST" class="p-6">
                 @csrf
                 @method('PUT')
 
@@ -297,7 +301,7 @@
                     Are you sure you want to delete <span class="font-semibold" x-text="userName"></span>? This action cannot be undone and will remove all their data.
                 </p>
 
-                <form :action="'/admin/users/' + userId" method="POST" class="mt-6 flex justify-end gap-3">
+                <form :action="'{{ url('admin/users') }}/' + userId" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>

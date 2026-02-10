@@ -64,7 +64,7 @@
                                             x-data=""
                                             x-on:click="$dispatch('open-edit-company', {
                                                 id: {{ $company->id }},
-                                                name: '{{ addslashes($company->name) }}'
+                                                name: @js($company->name)
                                             })"
                                             class="text-indigo-600 hover:text-indigo-900"
                                         >Edit</button>
@@ -73,7 +73,7 @@
                                             x-data=""
                                             x-on:click="$dispatch('open-delete-company', {
                                                 id: {{ $company->id }},
-                                                name: '{{ addslashes($company->name) }}',
+                                                name: @js($company->name),
                                                 members_count: {{ $company->members_count }},
                                                 projects_count: {{ $company->projects_count }}
                                             })"
@@ -85,6 +85,10 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div class="mt-4">
+                {{ $companies->links() }}
             </div>
         </div>
     </div>
@@ -119,7 +123,7 @@
          ">
 
         <x-modal name="edit-company" focusable>
-            <form :action="'/admin/companies/' + companyId" method="POST" class="p-6">
+            <form :action="'{{ url('admin/companies') }}/' + companyId" method="POST" class="p-6">
                 @csrf
                 @method('PUT')
 
@@ -168,7 +172,7 @@
                     </p>
                 </template>
 
-                <form :action="'/admin/companies/' + companyId" method="POST" class="mt-6 flex justify-end gap-3">
+                <form :action="'{{ url('admin/companies') }}/' + companyId" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>

@@ -65,7 +65,7 @@
                             @if(Auth::user()->isAdmin() || Auth::user()->isCompanyAdmin())
                                 <button
                                     x-data=""
-                                    x-on:click="$dispatch('open-trash-modal', { id: {{ $project->id }}, name: '{{ addslashes($project->name) }}' })"
+                                    x-on:click="$dispatch('open-trash-modal', { id: {{ $project->id }}, name: @js($project->name) })"
                                     class="absolute top-4 right-4 z-10 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
                                     title="Delete project"
                                 >
@@ -120,7 +120,7 @@
                     Are you sure you want to delete <span class="font-semibold" x-text="projectName"></span>? You can restore it later from deleted projects.
                 </p>
 
-                <form :action="'/projects/' + projectId" method="POST" class="mt-6 flex justify-end gap-3">
+                <form :action="'{{ url('projects') }}/' + projectId" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>

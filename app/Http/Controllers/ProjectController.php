@@ -31,13 +31,13 @@ class ProjectController extends Controller
         $user = $request->user();
 
         if ($user->isAdmin()) {
-            $projects = Project::withCount('controlAccounts')->latest()->get();
+            $projects = Project::withCount('controlAccounts')->latest()->paginate(24);
             $companies = Company::all();
         } elseif ($user->company_id && ! $user->company_removed_at) {
             $projects = Project::where('company_id', $user->company_id)
                 ->withCount('controlAccounts')
                 ->latest()
-                ->get();
+                ->paginate(24);
             $companies = collect([$user->company]);
         } else {
             $projects = collect();

@@ -15,6 +15,16 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->company_id === null) {
+                $user->company_role = null;
+                $user->company_removed_at = null;
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *

@@ -10,7 +10,7 @@ class DeleteCompany
 {
     public function execute(Company $company): void
     {
-        if ($company->projects()->exists()) {
+        if ($company->projects()->withTrashed()->exists()) {
             throw new DomainException('Cannot delete a company that has projects. Delete the projects first.');
         }
 

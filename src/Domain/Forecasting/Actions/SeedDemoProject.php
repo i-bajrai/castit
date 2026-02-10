@@ -34,7 +34,7 @@ class SeedDemoProject
         ]);
 
         // Company members
-        $engineer = User::firstOrCreate(
+        User::firstOrCreate(
             ['email' => 'engineer@castit.com'],
             [
                 'name' => 'Engineer',
@@ -45,9 +45,8 @@ class SeedDemoProject
                 'email_verified_at' => now(),
             ],
         );
-        $engineer->update(['company_id' => $company->id, 'company_role' => CompanyRole::Engineer]);
 
-        $viewer = User::firstOrCreate(
+        User::firstOrCreate(
             ['email' => 'viewer@castit.com'],
             [
                 'name' => 'Viewer',
@@ -58,7 +57,6 @@ class SeedDemoProject
                 'email_verified_at' => now(),
             ],
         );
-        $viewer->update(['company_id' => $company->id, 'company_role' => CompanyRole::Viewer]);
 
         // Delete existing projects for this company so it's re-runnable
         $company->projects()->each(function (Project $p): void {

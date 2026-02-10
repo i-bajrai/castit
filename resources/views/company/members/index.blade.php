@@ -76,7 +76,7 @@
                                             x-data=""
                                             x-on:click="$dispatch('open-edit-member', {
                                                 id: {{ $member->id }},
-                                                name: '{{ addslashes($member->name) }}',
+                                                name: @js($member->name),
                                                 company_role: '{{ $member->company_role->value }}'
                                             })"
                                             class="text-indigo-600 hover:text-indigo-900"
@@ -87,7 +87,7 @@
                                                 x-data=""
                                                 x-on:click="$dispatch('open-remove-member', {
                                                     id: {{ $member->id }},
-                                                    name: '{{ addslashes($member->name) }}'
+                                                    name: @js($member->name)
                                                 })"
                                                 class="text-red-600 hover:text-red-900"
                                             >Remove</button>
@@ -99,6 +99,11 @@
                     </table>
                 </div>
             </div>
+
+            <div class="mt-4">
+                {{ $members->links() }}
+            </div>
+
             @if($removedMembers->isNotEmpty())
                 <div class="mt-8">
                     <h3 class="text-lg font-medium text-gray-700 mb-4">Removed Members</h3>
@@ -143,7 +148,7 @@
                                                     x-data=""
                                                     x-on:click="$dispatch('open-restore-member', {
                                                         id: {{ $removed->id }},
-                                                        name: '{{ addslashes($removed->name) }}'
+                                                        name: @js($removed->name)
                                                     })"
                                                     class="text-green-600 hover:text-green-900"
                                                 >Restore</button>
@@ -217,7 +222,7 @@
          ">
 
         <x-modal name="edit-member" focusable>
-            <form :action="'/company/members/' + memberId" method="POST" class="p-6">
+            <form :action="'{{ url('company/members') }}/' + memberId" method="POST" class="p-6">
                 @csrf
                 @method('PUT')
 
@@ -260,7 +265,7 @@
                     Are you sure you want to remove <span class="font-semibold" x-text="memberName"></span> from the company? They will lose access to all company projects.
                 </p>
 
-                <form :action="'/company/members/' + memberId" method="POST" class="mt-6 flex justify-end gap-3">
+                <form :action="'{{ url('company/members') }}/' + memberId" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
@@ -285,7 +290,7 @@
                     Are you sure you want to restore <span class="font-semibold" x-text="memberName"></span> to the company? They will regain access with their previous role.
                 </p>
 
-                <form :action="'/company/members/' + memberId + '/restore'" method="POST" class="mt-6 flex justify-end gap-3">
+                <form :action="'{{ url('company/members') }}/' + memberId + '/restore'" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
                     <x-primary-button>Restore Member</x-primary-button>

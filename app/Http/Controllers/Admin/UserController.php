@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\CompanyRole;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Company;
 use App\Models\User;
 use Domain\UserManagement\Actions\CreateUser;
@@ -13,15 +15,13 @@ use Domain\UserManagement\Actions\UpdateUser;
 use Domain\UserManagement\DataTransferObjects\UserData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     public function index(): View
     {
-        $users = User::with('company')->orderBy('name')->get();
+        $users = User::with('company')->orderBy('name')->paginate(25);
         $companies = Company::orderBy('name')->get();
 
         return view('admin.users.index', [
@@ -32,24 +32,17 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request, CreateUser $action): RedirectResponse
+    public function store(StoreUserRequest $request, CreateUser $action): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', new Enum(UserRole::class)],
-            'company_id' => ['nullable', 'exists:companies,id'],
-            'company_role' => ['nullable', 'required_with:company_id', new Enum(CompanyRole::class)],
-        ]);
+        $validated = $request->validated();
 
         $data = new UserData(
             name: $validated['name'],
             email: $validated['email'],
             password: $validated['password'],
             role: UserRole::from($validated['role']),
-            companyId: $validated['company_id'] ? (int) $validated['company_id'] : null,
-            companyRole: isset($validated['company_role']) ? CompanyRole::from($validated['company_role']) : null,
+            companyId: ! empty($validated['company_id']) ? (int) $validated['company_id'] : null,
+            companyRole: ! empty($validated['company_role']) ? CompanyRole::from($validated['company_role']) : null,
         );
 
         $action->execute($data);
@@ -58,27 +51,25 @@ class UserController extends Controller
             ->with('success', 'User created successfully.');
     }
 
-    public function update(Request $request, User $user, UpdateUser $action): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user, UpdateUser $action): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', new Enum(UserRole::class)],
-            'company_id' => ['nullable', 'exists:companies,id'],
-            'company_role' => ['nullable', 'required_with:company_id', new Enum(CompanyRole::class)],
-        ]);
+        $validated = $request->validated();
 
         $data = new UserData(
             name: $validated['name'],
             email: $validated['email'],
             password: $validated['password'] ?? null,
             role: UserRole::from($validated['role']),
-            companyId: $validated['company_id'] ? (int) $validated['company_id'] : null,
-            companyRole: isset($validated['company_role']) ? CompanyRole::from($validated['company_role']) : null,
+            companyId: ! empty($validated['company_id']) ? (int) $validated['company_id'] : null,
+            companyRole: ! empty($validated['company_role']) ? CompanyRole::from($validated['company_role']) : null,
         );
 
-        $action->execute($user, $data);
+        try {
+            $action->execute($user, $data);
+        } catch (\DomainException $e) {
+            return redirect()->route('admin.users.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');

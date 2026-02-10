@@ -15,9 +15,9 @@ class CompanyMemberControllerTest extends TestCase
 
     private function createCompanyAdmin(): array
     {
-        $admin = User::factory()->companyAdmin()->create();
+        $admin = User::factory()->create();
         $company = Company::create(['user_id' => $admin->id, 'name' => 'Test Co']);
-        $admin->update(['company_id' => $company->id]);
+        $admin->update(['company_id' => $company->id, 'company_role' => CompanyRole::Admin]);
 
         return [$admin, $company];
     }

@@ -15,7 +15,7 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
-                    @if(Auth::user()->isCompanyAdmin())
+                    @if((Auth::user()->isCompanyAdmin() || Auth::user()->isAdmin()) && Auth::user()->company_id && ! Auth::user()->company_removed_at)
                         <x-nav-link :href="route('company.members.index')" :active="request()->routeIs('company.*')">
                             {{ __('Team') }}
                         </x-nav-link>
@@ -83,7 +83,7 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            @if(Auth::user()->isCompanyAdmin())
+            @if((Auth::user()->isCompanyAdmin() || Auth::user()->isAdmin()) && Auth::user()->company_id && ! Auth::user()->company_removed_at)
                 <x-responsive-nav-link :href="route('company.members.index')" :active="request()->routeIs('company.*')">
                     {{ __('Team') }}
                 </x-responsive-nav-link>
