@@ -13,7 +13,7 @@ class AdminUserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@castit.com'],
             [
-                'name' => 'Admin',
+                'name' => 'Super Admin',
                 'password' => 'password',
                 'role' => UserRole::Admin,
                 'email_verified_at' => now(),

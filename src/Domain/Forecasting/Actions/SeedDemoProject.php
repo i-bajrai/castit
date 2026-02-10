@@ -2,6 +2,8 @@
 
 namespace Domain\Forecasting\Actions;
 
+use App\Enums\CompanyRole;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\CostPackage;
@@ -28,8 +30,35 @@ class SeedDemoProject
 
         $user->update([
             'company_id' => $company->id,
-            'company_role' => 'admin',
+            'company_role' => CompanyRole::Admin,
         ]);
+
+        // Company members
+        $engineer = User::firstOrCreate(
+            ['email' => 'engineer@castit.com'],
+            [
+                'name' => 'Engineer',
+                'password' => 'password',
+                'role' => UserRole::User,
+                'company_id' => $company->id,
+                'company_role' => CompanyRole::Engineer,
+                'email_verified_at' => now(),
+            ],
+        );
+        $engineer->update(['company_id' => $company->id, 'company_role' => CompanyRole::Engineer]);
+
+        $viewer = User::firstOrCreate(
+            ['email' => 'viewer@castit.com'],
+            [
+                'name' => 'Viewer',
+                'password' => 'password',
+                'role' => UserRole::User,
+                'company_id' => $company->id,
+                'company_role' => CompanyRole::Viewer,
+                'email_verified_at' => now(),
+            ],
+        );
+        $viewer->update(['company_id' => $company->id, 'company_role' => CompanyRole::Viewer]);
 
         // Delete existing projects for this company so it's re-runnable
         $company->projects()->each(function (Project $p): void {
