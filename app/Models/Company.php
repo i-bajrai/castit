@@ -38,6 +38,14 @@ class Company extends Model
      */
     public function members(): HasMany
     {
-        return $this->hasMany(User::class, 'company_id');
+        return $this->hasMany(User::class, 'company_id')->whereNull('company_removed_at');
+    }
+
+    /**
+     * @return HasMany<User, $this>
+     */
+    public function removedMembers(): HasMany
+    {
+        return $this->hasMany(User::class, 'company_id')->whereNotNull('company_removed_at');
     }
 }

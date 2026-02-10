@@ -80,6 +80,22 @@ class CompanyMemberControllerTest extends TestCase
             ->assertRedirect('/login');
     }
 
+    public function test_removed_members_shown_on_index_page(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+            'company_removed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/company/members')
+            ->assertOk()
+            ->assertSee('Removed Members')
+            ->assertSee($engineer->name);
+    }
+
     // --- STORE ---
 
     public function test_company_admin_can_add_member(): void
@@ -236,7 +252,7 @@ class CompanyMemberControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    // --- DESTROY ---
+    // --- DESTROY (SOFT REMOVE) ---
 
     public function test_company_admin_can_remove_member(): void
     {
@@ -250,11 +266,10 @@ class CompanyMemberControllerTest extends TestCase
             ->delete("/company/members/{$engineer->id}")
             ->assertRedirect(route('company.members.index'));
 
-        $this->assertDatabaseHas('users', [
-            'id' => $engineer->id,
-            'company_id' => null,
-            'company_role' => null,
-        ]);
+        $engineer->refresh();
+        $this->assertEquals($company->id, $engineer->company_id);
+        $this->assertEquals(CompanyRole::Engineer, $engineer->company_role);
+        $this->assertNotNull($engineer->company_removed_at);
     }
 
     public function test_removed_member_account_still_exists(): void
@@ -271,7 +286,21 @@ class CompanyMemberControllerTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $engineer->id,
             'email' => $engineer->email,
+            'company_id' => $company->id,
         ]);
+    }
+
+    public function test_removed_member_not_in_active_members(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+            'company_removed_at' => now(),
+        ]);
+
+        $this->assertFalse($company->members->contains($engineer));
+        $this->assertTrue($company->removedMembers->contains($engineer));
     }
 
     public function test_cannot_remove_self(): void
@@ -296,10 +325,6 @@ class CompanyMemberControllerTest extends TestCase
             ->delete("/company/members/{$otherAdmin->id}")
             ->assertRedirect(route('company.members.index'))
             ->assertSessionHas('success');
-
-        // Now create an engineer and try to remove via another path (not relevant here)
-        // The important thing: we can't test "last admin" via HTTP because
-        // the controller also prevents self-removal. Let's test the domain action directly.
     }
 
     public function test_cannot_remove_member_from_another_company(): void
@@ -333,7 +358,91 @@ class CompanyMemberControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    // --- RESTORE ---
+
+    public function test_company_admin_can_restore_removed_member(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+            'company_removed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post("/company/members/{$engineer->id}/restore")
+            ->assertRedirect(route('company.members.index'))
+            ->assertSessionHas('success');
+
+        $engineer->refresh();
+        $this->assertNull($engineer->company_removed_at);
+        $this->assertEquals($company->id, $engineer->company_id);
+        $this->assertEquals(CompanyRole::Engineer, $engineer->company_role);
+    }
+
+    public function test_cannot_restore_active_member(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post("/company/members/{$engineer->id}/restore")
+            ->assertNotFound();
+    }
+
+    public function test_engineer_cannot_restore_member(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+        ]);
+
+        $removed = User::factory()->companyViewer()->create([
+            'company_id' => $company->id,
+            'company_removed_at' => now(),
+        ]);
+
+        $this->actingAs($engineer)
+            ->post("/company/members/{$removed->id}/restore")
+            ->assertForbidden();
+    }
+
+    public function test_cannot_restore_member_from_another_company(): void
+    {
+        [$admin] = $this->createCompanyAdmin();
+
+        $otherCompany = Company::create(['user_id' => $admin->id, 'name' => 'Other Co']);
+        $removed = User::factory()->engineer()->create([
+            'company_id' => $otherCompany->id,
+            'company_removed_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post("/company/members/{$removed->id}/restore")
+            ->assertNotFound();
+    }
+
     // --- DOMAIN ACTION: RemoveCompanyMember ---
+
+    public function test_remove_action_sets_removed_at_timestamp(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+        ]);
+
+        (new \Domain\UserManagement\Actions\RemoveCompanyMember)->execute($engineer);
+
+        $engineer->refresh();
+        $this->assertNotNull($engineer->company_removed_at);
+        $this->assertEquals($company->id, $engineer->company_id);
+        $this->assertEquals(CompanyRole::Engineer, $engineer->company_role);
+    }
 
     public function test_remove_action_throws_when_removing_last_admin(): void
     {
@@ -356,13 +465,29 @@ class CompanyMemberControllerTest extends TestCase
         (new \Domain\UserManagement\Actions\RemoveCompanyMember)->execute($otherAdmin);
 
         $otherAdmin->refresh();
-        $this->assertNull($otherAdmin->company_id);
-        $this->assertNull($otherAdmin->company_role);
+        $this->assertNotNull($otherAdmin->company_removed_at);
     }
 
-    // --- RE-ADDING REMOVED MEMBER ---
+    // --- DOMAIN ACTION: RestoreCompanyMember ---
 
-    public function test_removed_member_can_be_readded_to_company(): void
+    public function test_restore_action_clears_removed_at(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
+            'company_id' => $company->id,
+            'company_removed_at' => now(),
+        ]);
+
+        (new \Domain\UserManagement\Actions\RestoreCompanyMember)->execute($engineer);
+
+        $engineer->refresh();
+        $this->assertNull($engineer->company_removed_at);
+        $this->assertEquals($company->id, $engineer->company_id);
+        $this->assertEquals(CompanyRole::Engineer, $engineer->company_role);
+    }
+
+    public function test_restore_action_throws_when_user_not_removed(): void
     {
         [$admin, $company] = $this->createCompanyAdmin();
 
@@ -370,19 +495,23 @@ class CompanyMemberControllerTest extends TestCase
             'company_id' => $company->id,
         ]);
 
-        // Remove
-        (new \Domain\UserManagement\Actions\RemoveCompanyMember)->execute($engineer);
-        $engineer->refresh();
-        $this->assertNull($engineer->company_id);
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('This user is not removed from the company.');
 
-        // Re-add by updating their company membership
-        $engineer->update([
+        (new \Domain\UserManagement\Actions\RestoreCompanyMember)->execute($engineer);
+    }
+
+    // --- belongsToCompany with removed users ---
+
+    public function test_removed_user_does_not_belong_to_company(): void
+    {
+        [$admin, $company] = $this->createCompanyAdmin();
+
+        $engineer = User::factory()->engineer()->create([
             'company_id' => $company->id,
-            'company_role' => CompanyRole::Viewer,
+            'company_removed_at' => now(),
         ]);
 
-        $engineer->refresh();
-        $this->assertEquals($company->id, $engineer->company_id);
-        $this->assertEquals(CompanyRole::Viewer, $engineer->company_role);
+        $this->assertFalse($engineer->belongsToCompany($company->id));
     }
 }

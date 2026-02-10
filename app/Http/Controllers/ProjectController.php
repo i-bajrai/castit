@@ -33,7 +33,7 @@ class ProjectController extends Controller
         if ($user->isAdmin()) {
             $projects = Project::withCount('controlAccounts')->latest()->get();
             $companies = Company::all();
-        } elseif ($user->company_id) {
+        } elseif ($user->company_id && ! $user->company_removed_at) {
             $projects = Project::where('company_id', $user->company_id)
                 ->withCount('controlAccounts')
                 ->latest()
@@ -382,7 +382,7 @@ class ProjectController extends Controller
 
         if ($user->isAdmin()) {
             $trashedProjects = Project::onlyTrashed()->latest('deleted_at')->get();
-        } elseif ($user->company_id) {
+        } elseif ($user->company_id && ! $user->company_removed_at) {
             $trashedProjects = Project::onlyTrashed()
                 ->where('company_id', $user->company_id)
                 ->latest('deleted_at')

@@ -99,6 +99,63 @@
                     </table>
                 </div>
             </div>
+            @if($removedMembers->isNotEmpty())
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4">Removed Members</h3>
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Role</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Removed</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($removedMembers as $removed)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
+                                                {{ $removed->name }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                                {{ $removed->email }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                @php
+                                                    $removedBadge = match($removed->company_role) {
+                                                        \App\Enums\CompanyRole::Admin => 'bg-purple-50 text-purple-400',
+                                                        \App\Enums\CompanyRole::Engineer => 'bg-blue-50 text-blue-400',
+                                                        \App\Enums\CompanyRole::Viewer => 'bg-gray-50 text-gray-400',
+                                                    };
+                                                @endphp
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $removedBadge }}">
+                                                    {{ $removed->company_role->label() }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                                {{ $removed->company_removed_at->format('M d, Y') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button
+                                                    x-data=""
+                                                    x-on:click="$dispatch('open-restore-member', {
+                                                        id: {{ $removed->id }},
+                                                        name: '{{ addslashes($removed->name) }}'
+                                                    })"
+                                                    class="text-green-600 hover:text-green-900"
+                                                >Restore</button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -208,6 +265,30 @@
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
                     <x-danger-button>Remove Member</x-danger-button>
+                </form>
+            </div>
+        </x-modal>
+    </div>
+
+    {{-- Restore Member Confirmation Modal --}}
+    <div x-data="{ memberId: null, memberName: '' }"
+         x-on:open-restore-member.window="
+             memberId = $event.detail.id;
+             memberName = $event.detail.name;
+             $dispatch('open-modal', 'confirm-restore-member')
+         ">
+
+        <x-modal name="confirm-restore-member" focusable>
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900">Restore Member</h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Are you sure you want to restore <span class="font-semibold" x-text="memberName"></span> to the company? They will regain access with their previous role.
+                </p>
+
+                <form :action="'/company/members/' + memberId + '/restore'" method="POST" class="mt-6 flex justify-end gap-3">
+                    @csrf
+                    <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>
+                    <x-primary-button>Restore Member</x-primary-button>
                 </form>
             </div>
         </x-modal>

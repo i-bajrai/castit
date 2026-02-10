@@ -14,6 +14,7 @@ class RemoveCompanyMember
             $otherAdmins = User::where('company_id', $user->company_id)
                 ->where('id', '!=', $user->id)
                 ->where('company_role', CompanyRole::Admin)
+                ->whereNull('company_removed_at')
                 ->exists();
 
             if (! $otherAdmins) {
@@ -22,8 +23,7 @@ class RemoveCompanyMember
         }
 
         $user->update([
-            'company_id' => null,
-            'company_role' => null,
+            'company_removed_at' => now(),
         ]);
 
         return $user;

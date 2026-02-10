@@ -27,6 +27,7 @@ class User extends Authenticatable
         'role',
         'company_id',
         'company_role',
+        'company_removed_at',
     ];
 
     /**
@@ -51,6 +52,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'company_role' => CompanyRole::class,
+            'company_removed_at' => 'datetime',
         ];
     }
 
@@ -89,6 +91,13 @@ class User extends Authenticatable
 
     public function belongsToCompany(?int $companyId): bool
     {
-        return $this->company_id !== null && $this->company_id === $companyId;
+        return $this->company_id !== null
+            && $this->company_id === $companyId
+            && $this->company_removed_at === null;
+    }
+
+    public function isRemovedFromCompany(): bool
+    {
+        return $this->company_removed_at !== null;
     }
 }

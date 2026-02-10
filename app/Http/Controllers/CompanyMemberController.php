@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\User;
 use Domain\UserManagement\Actions\AddCompanyMember;
 use Domain\UserManagement\Actions\RemoveCompanyMember;
+use Domain\UserManagement\Actions\RestoreCompanyMember;
 use Domain\UserManagement\Actions\UpdateCompanyMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,10 +24,12 @@ class CompanyMemberController extends Controller
         Gate::authorize('manageMembers', $company);
 
         $members = $company->members()->orderBy('name')->get();
+        $removedMembers = $company->removedMembers()->orderBy('company_removed_at', 'desc')->get();
 
         return view('company.members.index', [
             'company' => $company,
             'members' => $members,
+            'removedMembers' => $removedMembers,
             'companyRoles' => CompanyRole::cases(),
         ]);
     }
@@ -92,5 +95,19 @@ class CompanyMemberController extends Controller
 
         return redirect()->route('company.members.index')
             ->with('success', 'Member removed from company.');
+    }
+
+    public function restore(Request $request, User $user, RestoreCompanyMember $action): RedirectResponse
+    {
+        $company = $request->user()->company;
+
+        Gate::authorize('manageMembers', $company);
+
+        abort_unless($user->company_id === $company->id && $user->isRemovedFromCompany(), 404);
+
+        $action->execute($user);
+
+        return redirect()->route('company.members.index')
+            ->with('success', 'Member restored to company.');
     }
 }
