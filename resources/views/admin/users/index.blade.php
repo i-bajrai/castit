@@ -138,7 +138,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @foreach($users as $user)
-                                <tr class="{{ $user->trashed() ? 'bg-red-50 opacity-60' : 'hover:bg-gray-50' }}">
+                                <tr class="{{ $user->trashed() ? 'bg-red-50 opacity-60' : ($user->company_removed_at ? 'bg-red-50' : 'hover:bg-gray-50') }}">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {{ $user->trashed() ? 'text-gray-500' : 'text-gray-900' }}">
                                         {{ $user->name }}
                                         @if($user->trashed())
@@ -162,7 +162,16 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {{ $user->company?->name ?? '—' }}
+                                        @if($user->company)
+                                            {{ $user->company->name }}
+                                            @if($user->company_removed_at)
+                                                <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    Removed
+                                                </span>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($user->company_role)
@@ -204,6 +213,13 @@
                                             >Edit</button>
 
                                             @if($user->id !== Auth::id())
+                                                @if(!$user->isAdmin())
+                                                    <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="text-amber-600 hover:text-amber-900">Impersonate</button>
+                                                    </form>
+                                                @endif
+
                                                 <button
                                                     x-data=""
                                                     x-on:click="$dispatch('open-delete-user', {

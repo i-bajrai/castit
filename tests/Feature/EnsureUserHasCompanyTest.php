@@ -101,4 +101,21 @@ class EnsureUserHasCompanyTest extends TestCase
 
         $response->assertRedirect(route('no-company'));
     }
+
+    public function test_no_company_page_shows_revoked_message_for_removed_member(): void
+    {
+        $owner = User::factory()->create();
+        $company = Company::create(['user_id' => $owner->id, 'name' => 'Test Co']);
+        $member = User::factory()->create([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Engineer,
+            'company_removed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($member)->get('/no-company');
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Access revoked');
+        $response->assertSeeText('Your access has been revoked');
+    }
 }

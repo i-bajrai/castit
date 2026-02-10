@@ -5,6 +5,7 @@ use App\Http\Controllers\ControlAccountController;
 use App\Http\Controllers\CostPackageController;
 use App\Http\Controllers\LineItemController;
 use App\Http\Controllers\LineItemForecastController;
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectSettingsController;
@@ -65,6 +66,8 @@ Route::middleware(['auth', 'verified', 'has-company'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('/stop-impersonating', [ImpersonationController::class, 'stopImpersonating'])->name('stop-impersonating');
+
     Route::get('/no-company', function () {
         if (auth()->user()->isAdmin() || (auth()->user()->company_id && ! auth()->user()->company_removed_at)) {
             return redirect()->route('dashboard');
