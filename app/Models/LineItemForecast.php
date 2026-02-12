@@ -12,16 +12,11 @@ class LineItemForecast extends Model
         'forecast_period_id',
         'previous_qty',
         'previous_rate',
-        'previous_amount',
         'ctd_qty',
         'ctd_rate',
-        'ctd_amount',
-        'ctc_qty',
-        'ctc_rate',
-        'ctc_amount',
+        'fcac_qty',
         'fcac_rate',
-        'fcac_amount',
-        'variance',
+        'ctc_rate',
         'comments',
     ];
 
