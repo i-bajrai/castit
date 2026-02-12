@@ -22,6 +22,7 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'Test',
@@ -75,10 +76,6 @@ class ImportForecastsFromCsvTest extends TestCase
                 LineItemForecast::create([
                     'line_item_id' => $item->id,
                     'forecast_period_id' => $period->id,
-                    'previous_qty' => 0, 'previous_rate' => 0, 'previous_amount' => 0,
-                    'ctd_qty' => 0, 'ctd_rate' => 0, 'ctd_amount' => 0,
-                    'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
-                    'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
                 ]);
             }
         }
@@ -132,7 +129,7 @@ class ImportForecastsFromCsvTest extends TestCase
         // Set ctd_qty on period1 for item1
         LineItemForecast::where('line_item_id', $item1->id)
             ->where('forecast_period_id', $period1->id)
-            ->update(['ctd_qty' => 50, 'ctd_amount' => 12500]);
+            ->update(['ctd_qty' => 50]);
 
         $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\n");
 
@@ -224,6 +221,8 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [, $project] = $this->seedImportData();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\n");
 
@@ -252,10 +251,6 @@ class ImportForecastsFromCsvTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => \App\Models\LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))->first()->id,
             'forecast_period_id' => ForecastPeriod::where('project_id', $project->id)->where('period_date', $futurePeriod)->first()->id,
-            'previous_qty' => 0, 'previous_rate' => 0, 'previous_amount' => 0,
-            'ctd_qty' => 0, 'ctd_rate' => 0, 'ctd_amount' => 0,
-            'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
-            'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
         ]);
 
         $futureKey = $futurePeriod->format('Y-m');

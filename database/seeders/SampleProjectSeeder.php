@@ -9,6 +9,6 @@ class SampleProjectSeeder extends Seeder
 {
     public function run(): void
     {
-        (new SeedDemoProject)->execute();
+        app(SeedDemoProject::class)->execute();
     }
 }

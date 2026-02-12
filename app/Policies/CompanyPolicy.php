@@ -9,6 +9,23 @@ class CompanyPolicy
 {
     public function update(User $user, Company $company): bool
     {
-        return $user->id === $company->user_id;
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if (! $user->belongsToCompany($company->id)) {
+            return false;
+        }
+
+        return ! $user->isCompanyViewer();
+    }
+
+    public function manageMembers(User $user, Company $company): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->belongsToCompany($company->id) && $user->isCompanyAdmin();
     }
 }

@@ -195,7 +195,7 @@ class ControlAccountController extends Controller
 
         if (empty($grouped)) {
             return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
-                ->with('error', 'No matching rows found for ' . $controlAccount->code);
+                ->with('error', 'No matching rows found for '.$controlAccount->code);
         }
 
         $existingPackages = $controlAccount->costPackages()->pluck('id', 'name');
@@ -234,19 +234,10 @@ class ControlAccountController extends Controller
                         LineItemForecast::create([
                             'line_item_id' => $lineItem->id,
                             'forecast_period_id' => $currentPeriod->id,
-                            'previous_qty' => 0,
-                            'previous_rate' => 0,
-                            'previous_amount' => 0,
-                            'ctd_qty' => 0,
                             'ctd_rate' => $item['rate'],
-                            'ctd_amount' => 0,
-                            'ctc_qty' => $item['qty'],
                             'ctc_rate' => $item['rate'],
-                            'ctc_amount' => $item['amount'],
+                            'fcac_qty' => $item['qty'],
                             'fcac_rate' => $item['rate'],
-                            'fcac_amount' => $item['amount'],
-                            'variance' => -$item['amount'],
-                            'comments' => null,
                         ]);
                     }
                 }
@@ -256,6 +247,6 @@ class ControlAccountController extends Controller
         $totalItems = collect($grouped)->flatten(1)->count();
 
         return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
-            ->with('success', count($grouped) . ' cost package(s) with ' . $totalItems . ' line item(s) imported.');
+            ->with('success', count($grouped).' cost package(s) with '.$totalItems.' line item(s) imported.');
     }
 }

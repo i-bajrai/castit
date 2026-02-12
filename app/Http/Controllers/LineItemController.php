@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
@@ -14,6 +13,7 @@ use Domain\Forecasting\Actions\UpdateLineItem;
 use Domain\Forecasting\DataTransferObjects\LineItemData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -94,7 +94,9 @@ class LineItemController extends Controller
         ]);
 
         // Filter out operations where no target was selected
-        $operations = collect($validated['operations'])->map(function ($op) {
+        /** @var list<array<string, mixed>> $validatedOps */
+        $validatedOps = $validated['operations'];
+        $operations = collect($validatedOps)->map(function ($op) {
             return [
                 'line_item_id' => $op['line_item_id'],
                 'target_package_id' => $op['action'] === 'move' ? ($op['target_package_id'] ?? null) : null,
@@ -132,9 +134,10 @@ class LineItemController extends Controller
     }
 
     /**
+     * @param  Collection<int, array{id: int, description: string, package_name: string, ca_code: string}>  $haystack
      * @return array<int, array{id: int, description: string, package_name: string, ca_code: string, score: int}>
      */
-    private function findCloseMatches(string $needle, \Illuminate\Support\Collection $haystack, int $limit = 3): array
+    private function findCloseMatches(string $needle, Collection $haystack, int $limit = 3): array
     {
         $normalizedNeedle = $this->normalizeDescription($needle);
         $needleTokens = $this->tokenize($needle);

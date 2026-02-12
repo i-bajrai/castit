@@ -21,6 +21,7 @@ class ReassignLineItemsTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'Test',
@@ -61,9 +62,8 @@ class ReassignLineItemsTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $existingItem->id,
                 'forecast_period_id' => $period->id,
-                'ctd_qty' => 10, 'ctd_rate' => 250, 'ctd_amount' => 2500,
-                'ctc_qty' => 90, 'ctc_rate' => 250, 'ctc_amount' => 22500,
-                'fcac_rate' => 250, 'fcac_amount' => 25000, 'variance' => 0,
+                'ctd_qty' => 10, 'ctd_rate' => 250,
+                'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
             ]);
         }
 
@@ -95,9 +95,7 @@ class ReassignLineItemsTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $unassignedItem->id,
                 'forecast_period_id' => $period->id,
-                'ctd_qty' => 5, 'ctd_rate' => 0, 'ctd_amount' => 0,
-                'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
-                'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
+                'ctd_qty' => 5,
             ]);
         }
 
@@ -119,6 +117,7 @@ class ReassignLineItemsTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'Test',
@@ -192,6 +191,8 @@ class ReassignLineItemsTest extends TestCase
     {
         [, $project] = $this->seedData();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->get("/projects/{$project->id}/unassigned")
@@ -202,6 +203,8 @@ class ReassignLineItemsTest extends TestCase
     {
         [, $project, $package, , $unassignedItem] = $this->seedData();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->post("/projects/{$project->id}/unassigned/reassign", [

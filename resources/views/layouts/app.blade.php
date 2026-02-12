@@ -16,6 +16,18 @@
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
+            @if(session('impersonating_from'))
+                <div class="bg-yellow-400 text-yellow-900 text-center py-2 px-4 text-sm font-semibold">
+                    You are impersonating <strong>{{ Auth::user()->name }}</strong>.
+                    <form method="POST" action="{{ route('stop-impersonating') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="ml-2 underline hover:no-underline font-bold">
+                            Stop Impersonating
+                        </button>
+                    </form>
+                </div>
+            @endif
+
             @include('layouts.navigation')
 
             <!-- Page Heading -->

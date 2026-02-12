@@ -136,7 +136,7 @@
 
                 {{-- Submit --}}
                 <div class="mt-6 flex justify-end">
-                    <x-primary-button>
+                    <x-primary-button data-testid="reassign-items-button">
                         Reassign Selected Items
                     </x-primary-button>
                 </div>

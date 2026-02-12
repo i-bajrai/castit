@@ -28,9 +28,4 @@ return new class extends Migration
             $table->unique(['control_account_id', 'forecast_period_id'], 'ca_forecast_unique');
         });
     }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('control_account_forecasts');
-    }
 };

@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class ControlAccount extends Model
 {
+    /** @use HasFactory<\Database\Factories\ControlAccountFactory> */
     use HasFactory;
+
     protected $fillable = [
         'project_id',
         'phase',

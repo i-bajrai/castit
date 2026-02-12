@@ -7,6 +7,9 @@ use App\Models\Project;
 
 class GetPeriodMovementReport
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function execute(Project $project, ?ForecastPeriod $period = null): array
     {
         if ($period === null) {

@@ -5,7 +5,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "test:e2e": "npx playwright test"
+        "test:e2e": "npx playwright test",
+        "test:failed": "npx playwright test --last-failed"
     },
     "devDependencies": {
         "@playwright/test": "^1.58.1",

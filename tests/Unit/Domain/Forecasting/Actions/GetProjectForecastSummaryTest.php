@@ -63,11 +63,13 @@ class GetProjectForecastSummaryTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'previous_amount' => 1000,
-            'ctd_amount' => 600,
-            'ctc_amount' => 400,
-            'fcac_amount' => 1000,
-            'variance' => 0,
+            'previous_qty' => 10,
+            'previous_rate' => 100,
+            'ctd_qty' => 6,
+            'ctd_rate' => 100,
+            'ctc_rate' => 100,
+            'fcac_qty' => 10,
+            'fcac_rate' => 100,
         ]);
 
         return [$project, $period, $package, $item];
@@ -104,19 +106,21 @@ class GetProjectForecastSummaryTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $oldPeriod->id,
-            'previous_amount' => 800,
-            'ctd_amount' => 300,
-            'ctc_amount' => 500,
-            'fcac_amount' => 800,
-            'variance' => -200,
+            'previous_qty' => 10,
+            'previous_rate' => 100,
+            'ctd_qty' => 3,
+            'ctd_rate' => 100,
+            'ctc_rate' => 100,
+            'fcac_qty' => 6,
+            'fcac_rate' => 100,
         ]);
 
         $action = new GetProjectForecastSummary;
         $result = $action->execute($project, $oldPeriod);
 
         $this->assertSame($oldPeriod->id, $result['period']->id);
-        $this->assertEquals(800.0, $result['totals']['previous_fcac']);
-        $this->assertEquals(-200.0, $result['totals']['variance']);
+        $this->assertEquals(1000.0, $result['totals']['previous_fcac']);
+        $this->assertEquals(-400.0, $result['totals']['variance']);
     }
 
     public function test_handles_project_with_no_forecast_periods(): void
@@ -179,11 +183,13 @@ class GetProjectForecastSummaryTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $item->id,
                 'forecast_period_id' => $period->id,
-                'previous_amount' => 1000,
-                'ctd_amount' => 500,
-                'ctc_amount' => 500,
-                'fcac_amount' => 1000,
-                'variance' => 0,
+                'previous_qty' => 10,
+                'previous_rate' => 100,
+                'ctd_qty' => 5,
+                'ctd_rate' => 100,
+                'ctc_rate' => 100,
+                'fcac_qty' => 10,
+                'fcac_rate' => 100,
             ]);
         }
 

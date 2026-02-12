@@ -12,11 +12,4 @@ return new class extends Migration
             $table->foreignId('control_account_id')->nullable(false)->change();
         });
     }
-
-    public function down(): void
-    {
-        Schema::table('cost_packages', function (Blueprint $table) {
-            $table->foreignId('control_account_id')->nullable()->change();
-        });
-    }
 };

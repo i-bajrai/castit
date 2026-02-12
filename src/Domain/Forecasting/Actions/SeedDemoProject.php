@@ -2,17 +2,23 @@
 
 namespace Domain\Forecasting\Actions;
 
+use App\Enums\CompanyRole;
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
-use App\Models\LineItemForecast;
 use App\Models\Project;
 use App\Models\User;
 
 class SeedDemoProject
 {
+    public function __construct(
+        private SyncForecastPeriods $syncForecastPeriods,
+        private UpdateLineItemForecast $updateLineItemForecast,
+    ) {}
+
     public function execute(): Project
     {
         // 1. User & Company — find or create
@@ -24,6 +30,36 @@ class SeedDemoProject
         $company = Company::firstOrCreate(
             ['user_id' => $user->id],
             ['name' => 'CastIt Construction'],
+        );
+
+        $user->update([
+            'company_id' => $company->id,
+            'company_role' => CompanyRole::Admin,
+        ]);
+
+        // Company members
+        User::firstOrCreate(
+            ['email' => 'engineer@castit.com'],
+            [
+                'name' => 'Engineer',
+                'password' => 'password',
+                'role' => UserRole::User,
+                'company_id' => $company->id,
+                'company_role' => CompanyRole::Engineer,
+                'email_verified_at' => now(),
+            ],
+        );
+
+        User::firstOrCreate(
+            ['email' => 'viewer@castit.com'],
+            [
+                'name' => 'Viewer',
+                'password' => 'password',
+                'role' => UserRole::User,
+                'company_id' => $company->id,
+                'company_role' => CompanyRole::Viewer,
+                'email_verified_at' => now(),
+            ],
         );
 
         // Delete existing projects for this company so it's re-runnable
@@ -170,7 +206,7 @@ class SeedDemoProject
         // ============================================================
         // 4. Sync all forecast periods (prepopulates with zeros)
         // ============================================================
-        (new SyncForecastPeriods)->execute($project);
+        $this->syncForecastPeriods->execute($project);
 
         // ============================================================
         // 5. FORECASTS — simulate partial completion for current period
@@ -261,57 +297,6 @@ class SeedDemoProject
         float $ctdQty,
         ?string $comments = null,
     ): void {
-        $origRate = (float) $item->original_rate;
-        $origQty = (float) $item->original_qty;
-
-        $ctdRate = $origRate;
-        $ctdAmount = $ctdQty * $ctdRate;
-        $ctcQty = max(0, $origQty - $ctdQty);
-        $ctcRate = $origRate;
-        $ctcAmount = $ctcQty * $ctcRate;
-        $fcacAmount = $ctdAmount + $ctcAmount;
-        $totalQty = $ctdQty + $ctcQty;
-        $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
-        $forecast = LineItemForecast::where('line_item_id', $item->id)
-            ->where('forecast_period_id', $period->id)
-            ->first();
-
-        $previousAmount = $forecast?->previous_amount ?? (float) $item->original_amount;
-        $variance = $previousAmount - $fcacAmount;
-
-        if ($forecast) {
-            $forecast->update([
-                'ctd_qty' => $ctdQty,
-                'ctd_rate' => $ctdRate,
-                'ctd_amount' => $ctdAmount,
-                'ctc_qty' => $ctcQty,
-                'ctc_rate' => $ctcRate,
-                'ctc_amount' => $ctcAmount,
-                'fcac_rate' => $fcacRate,
-                'fcac_amount' => $fcacAmount,
-                'previous_amount' => $previousAmount,
-                'variance' => $variance,
-                'comments' => $comments,
-            ]);
-        } else {
-            LineItemForecast::create([
-                'line_item_id' => $item->id,
-                'forecast_period_id' => $period->id,
-                'previous_qty' => $origQty,
-                'previous_rate' => $origRate,
-                'previous_amount' => $previousAmount,
-                'ctd_qty' => $ctdQty,
-                'ctd_rate' => $ctdRate,
-                'ctd_amount' => $ctdAmount,
-                'ctc_qty' => $ctcQty,
-                'ctc_rate' => $ctcRate,
-                'ctc_amount' => $ctcAmount,
-                'fcac_rate' => $fcacRate,
-                'fcac_amount' => $fcacAmount,
-                'variance' => $variance,
-                'comments' => $comments,
-            ]);
-        }
+        $this->updateLineItemForecast->execute($item, $period, $ctdQty, $comments);
     }
 }

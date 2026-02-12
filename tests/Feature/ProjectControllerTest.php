@@ -21,6 +21,7 @@ class ProjectControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'Test Project',
@@ -85,6 +86,8 @@ class ProjectControllerTest extends TestCase
         [, , $project] = $this->createUserWithProject();
 
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->get("/projects/{$project->id}")
@@ -142,11 +145,9 @@ class ProjectControllerTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'previous_amount' => 25000,
-            'ctd_amount' => 15000,
-            'ctc_amount' => 10000,
-            'fcac_amount' => 25000,
-            'variance' => 0,
+            'previous_qty' => 100, 'previous_rate' => 250,
+            'ctd_qty' => 60, 'ctd_rate' => 250,
+            'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
         ]);
 
         $this->actingAs($user)
@@ -190,6 +191,8 @@ class ProjectControllerTest extends TestCase
         [, , $project] = $this->createUserWithProject();
 
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->get("/projects/{$project->id}/executive-summary")
@@ -199,7 +202,8 @@ class ProjectControllerTest extends TestCase
     public function test_dashboard_shows_empty_state_when_no_projects(): void
     {
         $user = User::factory()->create();
-        Company::create(['user_id' => $user->id, 'name' => 'Empty Co']);
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Empty Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
         $this->actingAs($user)
             ->get('/dashboard')
@@ -207,15 +211,14 @@ class ProjectControllerTest extends TestCase
             ->assertSee('No projects yet');
     }
 
-    public function test_user_sees_projects_from_multiple_companies(): void
+    public function test_user_sees_projects_from_their_company(): void
     {
         $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Company A']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
-        $company1 = Company::create(['user_id' => $user->id, 'name' => 'Company A']);
-        Project::create(['company_id' => $company1->id, 'name' => 'Project Alpha', 'original_budget' => 100000]);
-
-        $company2 = Company::create(['user_id' => $user->id, 'name' => 'Company B']);
-        Project::create(['company_id' => $company2->id, 'name' => 'Project Beta', 'original_budget' => 200000]);
+        Project::create(['company_id' => $company->id, 'name' => 'Project Alpha', 'original_budget' => 100000]);
+        Project::create(['company_id' => $company->id, 'name' => 'Project Beta', 'original_budget' => 200000]);
 
         $this->actingAs($user)
             ->get('/dashboard')
@@ -228,6 +231,7 @@ class ProjectControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
         $this->actingAs($user)
             ->post('/projects', [
@@ -250,6 +254,8 @@ class ProjectControllerTest extends TestCase
     {
         [$owner, $company] = $this->createUserWithProject();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->post('/projects', [
@@ -264,6 +270,7 @@ class ProjectControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
         $this->actingAs($user)
             ->post('/projects', [
@@ -277,6 +284,7 @@ class ProjectControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
         $this->actingAs($user)
             ->post('/projects', [
@@ -289,6 +297,8 @@ class ProjectControllerTest extends TestCase
     public function test_create_project_requires_valid_company(): void
     {
         $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
         $this->actingAs($user)
             ->post('/projects', [
@@ -385,17 +395,15 @@ class ProjectControllerTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $previousPeriod->id,
-            'ctd_amount' => 30000,
-            'ctc_amount' => 70000,
-            'fcac_amount' => 100000,
+            'ctd_qty' => 30, 'ctd_rate' => 1000,
+            'ctc_rate' => 1000, 'fcac_qty' => 100, 'fcac_rate' => 1000,
         ]);
 
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $currentPeriod->id,
-            'ctd_amount' => 50000,
-            'ctc_amount' => 60000,
-            'fcac_amount' => 110000,
+            'ctd_qty' => 50, 'ctd_rate' => 1000,
+            'ctc_rate' => 1000, 'fcac_qty' => 110, 'fcac_rate' => 1000,
         ]);
 
         $response = $this->actingAs($user)
@@ -435,6 +443,8 @@ class ProjectControllerTest extends TestCase
         [, , $project] = $this->createUserWithProject();
 
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->get("/projects/{$project->id}/cost-analysis")
@@ -462,7 +472,8 @@ class ProjectControllerTest extends TestCase
     public function test_dashboard_shows_new_project_button(): void
     {
         $user = User::factory()->create();
-        Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
 
         $this->actingAs($user)
             ->get('/dashboard')

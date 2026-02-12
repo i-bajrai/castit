@@ -15,6 +15,19 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if((Auth::user()->isCompanyAdmin() || Auth::user()->isAdmin()) && Auth::user()->company_id && ! Auth::user()->company_removed_at)
+                        <x-nav-link :href="route('company.members.index')" :active="request()->routeIs('company.*')">
+                            {{ __('Team') }}
+                        </x-nav-link>
+                    @endif
+                    @if(Auth::user()->isAdmin())
+                        <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                            {{ __('Users') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.companies.index')" :active="request()->routeIs('admin.companies.*')">
+                            {{ __('Companies') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -70,6 +83,19 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            @if((Auth::user()->isCompanyAdmin() || Auth::user()->isAdmin()) && Auth::user()->company_id && ! Auth::user()->company_removed_at)
+                <x-responsive-nav-link :href="route('company.members.index')" :active="request()->routeIs('company.*')">
+                    {{ __('Team') }}
+                </x-responsive-nav-link>
+            @endif
+            @if(Auth::user()->isAdmin())
+                <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                    {{ __('Users') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.companies.index')" :active="request()->routeIs('admin.companies.*')">
+                    {{ __('Companies') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

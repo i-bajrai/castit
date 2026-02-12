@@ -4,14 +4,16 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Projects') }}
             </h2>
-            <button
-                data-testid="new-project-button"
-                x-data=""
-                x-on:click="$dispatch('open-modal', 'create-project')"
-                class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
-            >
-                New Project
-            </button>
+            @unless(Auth::user()->isCompanyViewer())
+                <button
+                    data-testid="new-project-button"
+                    x-data=""
+                    x-on:click="$dispatch('open-modal', 'create-project')"
+                    class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                >
+                    New Project
+                </button>
+            @endunless
         </div>
     </x-slot>
 
@@ -25,14 +27,16 @@
                         </svg>
                         <h3 class="mt-4 text-lg font-semibold text-gray-900">No projects yet</h3>
                         <p class="mt-2 text-gray-600">Get started by creating your first construction project.</p>
-                        <button
-                            data-testid="empty-state-create-button"
-                            x-data=""
-                            x-on:click="$dispatch('open-modal', 'create-project')"
-                            class="mt-6 inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
-                        >
-                            Create Project
-                        </button>
+                        @unless(Auth::user()->isCompanyViewer())
+                            <button
+                                data-testid="empty-state-create-button"
+                                x-data=""
+                                x-on:click="$dispatch('open-modal', 'create-project')"
+                                class="mt-6 inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                            >
+                                Create Project
+                            </button>
+                        @endunless
                     </div>
                 </div>
             @else
@@ -48,16 +52,18 @@
                 <div data-testid="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($projects as $project)
                         <div data-testid="project-card" class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition relative group">
-                            <button
-                                x-data=""
-                                x-on:click="$dispatch('open-trash-modal', { id: {{ $project->id }}, name: '{{ addslashes($project->name) }}' })"
-                                class="absolute top-4 right-4 z-10 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
-                                title="Delete project"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
+                            @if(Auth::user()->isAdmin() || Auth::user()->isCompanyAdmin())
+                                <button
+                                    x-data=""
+                                    x-on:click="$dispatch('open-trash-modal', { id: {{ $project->id }}, name: @js($project->name) })"
+                                    class="absolute top-4 right-4 z-10 p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                                    title="Delete project"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            @endif
                             <a href="{{ route('projects.show', $project) }}" class="block p-6">
                                 <div class="flex items-start justify-between">
                                     <div>
@@ -104,7 +110,7 @@
                     Are you sure you want to delete <span class="font-semibold" x-text="projectName"></span>? You can restore it later from deleted projects.
                 </p>
 
-                <form :action="'/projects/' + projectId" method="POST" class="mt-6 flex justify-end gap-3">
+                <form :action="'{{ url('projects') }}/' + projectId" method="POST" class="mt-6 flex justify-end gap-3">
                     @csrf
                     @method('DELETE')
                     <x-secondary-button x-on:click="$dispatch('close')">Cancel</x-secondary-button>

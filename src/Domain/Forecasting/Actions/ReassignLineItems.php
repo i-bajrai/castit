@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\DB;
 
 class ReassignLineItems
 {
+    public function __construct(
+        private UpdateLineItemForecast $updateLineItemForecast,
+    ) {}
+
+    /**
+     * @param  array<int, array<string, mixed>>  $operations
+     */
     public function execute(array $operations): ReassignLineItemsResult
     {
         $moved = 0;
@@ -24,6 +31,7 @@ class ReassignLineItems
                 $sourceItem = LineItem::find($lineItemId);
                 if (! $sourceItem) {
                     $errors[] = "Row {$index}: line item not found.";
+
                     continue;
                 }
 
@@ -31,6 +39,7 @@ class ReassignLineItems
                     $targetItem = LineItem::find($mergeIntoId);
                     if (! $targetItem) {
                         $errors[] = "Row {$index}: merge target line item not found.";
+
                         continue;
                     }
 
@@ -41,6 +50,7 @@ class ReassignLineItems
                     $targetPackage = CostPackage::find($targetPackageId);
                     if (! $targetPackage) {
                         $errors[] = "Row {$index}: target package not found.";
+
                         continue;
                     }
 
@@ -66,29 +76,12 @@ class ReassignLineItems
 
             if ($targetForecast) {
                 $ctdQty = (float) $targetForecast->ctd_qty + (float) $sourceForecast->ctd_qty;
-                $ctdRate = (float) $target->original_rate;
-                $ctdAmount = (float) $targetForecast->ctd_amount + (float) $sourceForecast->ctd_amount;
 
-                $ctcQty = max(0, (float) $target->original_qty - $ctdQty);
-                $ctcAmount = $ctcQty * $ctdRate;
-
-                $fcacAmount = $ctdAmount + $ctcAmount;
-                $totalQty = $ctdQty + $ctcQty;
-                $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
-                $variance = (float) $targetForecast->previous_amount - $fcacAmount;
-
-                $targetForecast->update([
-                    'ctd_qty' => $ctdQty,
-                    'ctd_rate' => $ctdRate,
-                    'ctd_amount' => $ctdAmount,
-                    'ctc_qty' => $ctcQty,
-                    'ctc_rate' => $ctdRate,
-                    'ctc_amount' => $ctcAmount,
-                    'fcac_rate' => $fcacRate,
-                    'fcac_amount' => $fcacAmount,
-                    'variance' => $variance,
-                ]);
+                $this->updateLineItemForecast->execute(
+                    $target,
+                    $sourceForecast->forecastPeriod,
+                    $ctdQty,
+                );
             } else {
                 // No matching period on target — reassign the forecast record
                 $sourceForecast->update(['line_item_id' => $target->id]);

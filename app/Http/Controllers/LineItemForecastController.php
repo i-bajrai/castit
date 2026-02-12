@@ -6,6 +6,7 @@ use App\Models\LineItemForecast;
 use App\Models\Project;
 use Domain\Forecasting\Actions\ImportForecastsFromCsv;
 use Domain\Forecasting\Actions\SaveLineItemForecasts;
+use Domain\Forecasting\Actions\UpdateLineItemForecast;
 use Domain\Forecasting\DataTransferObjects\LineItemForecastData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -43,8 +44,12 @@ class LineItemForecastController extends Controller
             ->with('success', 'Line item forecasts saved.');
     }
 
-    public function updateCtdQty(Request $request, Project $project, LineItemForecast $forecast): JsonResponse
-    {
+    public function updateCtdQty(
+        Request $request,
+        Project $project,
+        LineItemForecast $forecast,
+        UpdateLineItemForecast $action,
+    ): JsonResponse {
         Gate::authorize('update', $project);
 
         abort_if(! $forecast->forecastPeriod->isEditable(), 403, 'Period is not editable.');
@@ -53,31 +58,11 @@ class LineItemForecastController extends Controller
             'ctd_qty' => 'required|numeric',
         ]);
 
-        $lineItem = $forecast->lineItem;
-        $ctdQty = (float) $validated['ctd_qty'];
-        $ctdRate = (float) $lineItem->original_rate;
-        $ctdAmount = $ctdQty * $ctdRate;
-
-        $ctcQty = max(0, (float) $lineItem->original_qty - $ctdQty);
-        $ctcAmount = $ctcQty * $ctdRate;
-
-        $fcacAmount = $ctdAmount + $ctcAmount;
-        $totalQty = $ctdQty + $ctcQty;
-        $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
-        $variance = (float) ($forecast->previous_amount ?? 0) - $fcacAmount;
-
-        $forecast->update([
-            'ctd_qty' => $ctdQty,
-            'ctd_rate' => $ctdRate,
-            'ctd_amount' => $ctdAmount,
-            'ctc_qty' => $ctcQty,
-            'ctc_rate' => $ctdRate,
-            'ctc_amount' => $ctcAmount,
-            'fcac_rate' => $fcacRate,
-            'fcac_amount' => $fcacAmount,
-            'variance' => $variance,
-        ]);
+        $action->execute(
+            $forecast->lineItem,
+            $forecast->forecastPeriod,
+            (float) $validated['ctd_qty'],
+        );
 
         return response()->json(['status' => 'ok']);
     }

@@ -60,6 +60,18 @@ class PlaywrightController
                 : $collection->first());
     }
 
+    public function update(Request $request): mixed
+    {
+        $model = $request->input('model');
+        $id = $request->input('id');
+        $attributes = $request->input('attributes', []);
+
+        $instance = $model::findOrFail($id);
+        $instance->update($attributes);
+
+        return tap($instance->fresh(), fn ($model) => $model->setHidden([])->setVisible([]));
+    }
+
     public function csrfToken(): JsonResponse
     {
         return response()->json(csrf_token());

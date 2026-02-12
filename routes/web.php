@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\BudgetAdjustmentController;
 use App\Http\Controllers\ControlAccountController;
 use App\Http\Controllers\CostPackageController;
@@ -14,7 +15,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'has-company'])->group(function () {
     Route::get('/dashboard', [ProjectController::class, 'index'])->name('dashboard');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects-trash', [ProjectController::class, 'trash'])->name('projects.trash');
@@ -65,6 +66,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('/stop-impersonating', [ImpersonationController::class, 'stopImpersonating'])->name('stop-impersonating');
+
+    Route::get('/no-company', function () {
+        if (auth()->user()->isAdmin() || (auth()->user()->company_id && ! auth()->user()->company_removed_at)) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('no-company');
+    })->name('no-company');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

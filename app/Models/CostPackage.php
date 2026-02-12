@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CostPackage extends Model
 {
+    /** @use HasFactory<\Database\Factories\CostPackageFactory> */
     use HasFactory;
 
     protected $fillable = [

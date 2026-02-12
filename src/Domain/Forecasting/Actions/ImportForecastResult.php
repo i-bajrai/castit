@@ -4,6 +4,9 @@ namespace Domain\Forecasting\Actions;
 
 class ImportForecastResult
 {
+    /**
+     * @param  array<int, string>  $errors
+     */
     public function __construct(
         public readonly int $imported,
         public readonly int $skipped,

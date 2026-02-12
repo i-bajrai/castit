@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
  */
 class ForecastPeriod extends Model
 {
+    /** @use HasFactory<\Database\Factories\ForecastPeriodFactory> */
     use HasFactory;
 
     protected $fillable = [
