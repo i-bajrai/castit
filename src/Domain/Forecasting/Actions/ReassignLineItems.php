@@ -12,6 +12,7 @@ class ReassignLineItems
     public function __construct(
         private UpdateLineItemForecast $updateLineItemForecast,
     ) {}
+
     /**
      * @param  array<int, array<string, mixed>>  $operations
      */

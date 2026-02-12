@@ -14,6 +14,7 @@ class ImportForecastsFromCsv
     public function __construct(
         private UpdateLineItemForecast $updateLineItemForecast,
     ) {}
+
     /**
      * @param  array<int, array<string, mixed>>  $rows
      */
