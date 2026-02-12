@@ -359,17 +359,17 @@
                                                                     </x-modal>
                                                                 </td>
                                                                 {{-- CTD Rate (computed) --}}
-                                                                <td x-show="$store.columns.ctd_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdRate.toFixed(2)"></td>
+                                                                <td x-show="$store.columns.ctd_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- CTD Amount (computed) --}}
-                                                                <td x-show="$store.columns.ctd_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdAmount.toFixed(2)"></td>
+                                                                <td x-show="$store.columns.ctd_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- CTC Qty (computed) --}}
                                                                 <td x-show="$store.columns.ctc_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="ctcQty.toFixed(1)"></td>
                                                                 {{-- CTC Amount (computed) --}}
-                                                                <td x-show="$store.columns.ctc_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="'$' + ctcAmount.toFixed(2)"></td>
+                                                                <td x-show="$store.columns.ctc_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="'$' + ctcAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- FCAC (computed) --}}
-                                                                <td x-show="$store.columns.fcac" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50" x-text="'$' + fcac.toFixed(2)"></td>
+                                                                <td x-show="$store.columns.fcac" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50" x-text="'$' + fcac.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- Variance (computed) --}}
-                                                                <td x-show="$store.columns.variance" class="px-3 py-2 text-sm text-right" :class="variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900'" x-text="variance !== 0 ? '$' + variance.toFixed(2) : '-'"></td>
+                                                                <td x-show="$store.columns.variance" class="px-3 py-2 text-sm text-right" :class="variance < 0 ? 'text-red-600 font-medium' : 'text-gray-900'" x-text="variance !== 0 ? '$' + variance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'"></td>
 
                                                                 {{-- Comments (MODAL) --}}
                                                                 <td x-show="$store.columns.comments" class="px-1 py-1"

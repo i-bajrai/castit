@@ -9,6 +9,7 @@ use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
+use App\Models\LineItemForecast;
 use App\Models\Project;
 use App\Models\User;
 
@@ -70,14 +71,14 @@ class SeedDemoProject
         // 2. Project — end date extends to current month so it's always editable
         $endDate = max(
             now()->startOfMonth(),
-            \Carbon\Carbon::parse('2025-12-01'),
+            \Carbon\Carbon::parse('2024-01-01'),
         );
 
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'PRISM Highway Extension',
             'original_budget' => 248117066,
-            'start_date' => '2024-01-01',
+            'start_date' => '2023-02-01',
             'end_date' => $endDate->format('Y-m-d'),
         ]);
 
@@ -248,6 +249,22 @@ class SeedDemoProject
         $unletCtd = [280, 60, 120, 1];
         foreach ($itemsUnlet as $i => $item) {
             $this->updateForecast($item, $period, ctdQty: $unletCtd[$i]);
+        }
+
+        // ============================================================
+        // 6. Set previous FCAC on current period forecasts
+        //    (simulates carry-forward from a prior period where FCAC
+        //    matched original budget, giving ~zero variance)
+        // ============================================================
+        $allLineItems = LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))->get();
+
+        foreach ($allLineItems as $li) {
+            LineItemForecast::where('line_item_id', $li->id)
+                ->where('forecast_period_id', $period->id)
+                ->update([
+                    'previous_qty' => $li->original_qty,
+                    'previous_rate' => $li->original_rate,
+                ]);
         }
 
         return $project;
