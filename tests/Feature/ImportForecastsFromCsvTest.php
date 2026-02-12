@@ -76,10 +76,6 @@ class ImportForecastsFromCsvTest extends TestCase
                 LineItemForecast::create([
                     'line_item_id' => $item->id,
                     'forecast_period_id' => $period->id,
-                    'previous_qty' => 0, 'previous_rate' => 0, 'previous_amount' => 0,
-                    'ctd_qty' => 0, 'ctd_rate' => 0, 'ctd_amount' => 0,
-                    'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
-                    'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
                 ]);
             }
         }
@@ -133,7 +129,7 @@ class ImportForecastsFromCsvTest extends TestCase
         // Set ctd_qty on period1 for item1
         LineItemForecast::where('line_item_id', $item1->id)
             ->where('forecast_period_id', $period1->id)
-            ->update(['ctd_qty' => 50, 'ctd_amount' => 12500]);
+            ->update(['ctd_qty' => 50]);
 
         $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\n");
 
@@ -255,10 +251,6 @@ class ImportForecastsFromCsvTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => \App\Models\LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))->first()->id,
             'forecast_period_id' => ForecastPeriod::where('project_id', $project->id)->where('period_date', $futurePeriod)->first()->id,
-            'previous_qty' => 0, 'previous_rate' => 0, 'previous_amount' => 0,
-            'ctd_qty' => 0, 'ctd_rate' => 0, 'ctd_amount' => 0,
-            'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
-            'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
         ]);
 
         $futureKey = $futurePeriod->format('Y-m');

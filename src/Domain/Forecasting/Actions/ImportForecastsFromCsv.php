@@ -101,28 +101,15 @@ class ImportForecastsFromCsv
             }
 
             $ctdQty = (float) $ctdQty;
-            $ctdRate = (float) $lineItem->original_rate;
-            $ctdAmount = $ctdQty * $ctdRate;
-
-            $ctcQty = max(0, (float) $lineItem->original_qty - $ctdQty);
-            $ctcAmount = $ctcQty * $ctdRate;
-
-            $fcacAmount = $ctdAmount + $ctcAmount;
-            $totalQty = $ctdQty + $ctcQty;
-            $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
-            $variance = (float) ($forecast->previous_amount ?? 0) - $fcacAmount;
+            $origRate = (float) $lineItem->original_rate;
+            $origQty = (float) $lineItem->original_qty;
 
             $forecast->update([
                 'ctd_qty' => $ctdQty,
-                'ctd_rate' => $ctdRate,
-                'ctd_amount' => $ctdAmount,
-                'ctc_qty' => $ctcQty,
-                'ctc_rate' => $ctdRate,
-                'ctc_amount' => $ctcAmount,
-                'fcac_rate' => $fcacRate,
-                'fcac_amount' => $fcacAmount,
-                'variance' => $variance,
+                'ctd_rate' => $origRate,
+                'ctc_rate' => $origRate,
+                'fcac_qty' => $origQty,
+                'fcac_rate' => $origRate,
             ]);
 
             $imported++;

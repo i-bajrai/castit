@@ -88,9 +88,11 @@ class SaveLineItemForecastsTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_amount' => 5000,
-            'ctc_amount' => 5000,
-            'fcac_amount' => 10000,
+            'ctd_qty' => 20,
+            'ctd_rate' => 250,
+            'ctc_rate' => 250,
+            'fcac_qty' => 100,
+            'fcac_rate' => 250,
         ]);
 
         $action = new SaveLineItemForecasts;
@@ -113,14 +115,12 @@ class SaveLineItemForecastsTest extends TestCase
     {
         [$period, $item] = $this->seedData();
 
-        // Create existing forecast with previous_amount
+        // Create existing forecast with previous_amount = 120 * 250 = 30000
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'previous_amount' => 30000,
-            'ctd_amount' => 0,
-            'ctc_amount' => 0,
-            'fcac_amount' => 0,
+            'previous_qty' => 120,
+            'previous_rate' => 250,
         ]);
 
         $action = new SaveLineItemForecasts;
@@ -131,9 +131,9 @@ class SaveLineItemForecastsTest extends TestCase
             ),
         ]);
 
-        // fcac = 12500 + 12500 = 25000, variance = 30000 - 25000 = 5000
+        // fcac = 100 * 250 = 25000, variance = 25000 - 30000 = -5000
         $forecast = LineItemForecast::where('line_item_id', $item->id)->first();
         $this->assertEquals(25000, (float) $forecast->fcac_amount);
-        $this->assertEquals(5000, (float) $forecast->variance);
+        $this->assertEquals(-5000, (float) $forecast->variance);
     }
 }

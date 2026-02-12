@@ -68,17 +68,15 @@ class GetCostAnalysisReportTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $previousPeriod->id,
-            'ctd_amount' => 30000,
-            'ctc_amount' => 70000,
-            'fcac_amount' => 100000,
+            'ctd_qty' => 30, 'ctd_rate' => 1000,
+            'ctc_rate' => 1000, 'fcac_qty' => 100, 'fcac_rate' => 1000,
         ]);
 
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $currentPeriod->id,
-            'ctd_amount' => 50000,
-            'ctc_amount' => 60000,
-            'fcac_amount' => 110000,
+            'ctd_qty' => 50, 'ctd_rate' => 1000,
+            'ctc_rate' => 1000, 'fcac_qty' => 110, 'fcac_rate' => 1000,
             'comments' => 'Scope growth',
         ]);
 

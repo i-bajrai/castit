@@ -101,16 +101,13 @@ class OpenNewForecastPeriodTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $oldPeriod->id,
-            'previous_amount' => 1000,
+            'previous_qty' => 10,
+            'previous_rate' => 100,
             'ctd_qty' => 6,
             'ctd_rate' => 100,
-            'ctd_amount' => 600,
-            'ctc_qty' => 4,
             'ctc_rate' => 100,
-            'ctc_amount' => 400,
+            'fcac_qty' => 10,
             'fcac_rate' => 100,
-            'fcac_amount' => 1000,
-            'variance' => 0,
         ]);
 
         $action = new OpenNewForecastPeriod;

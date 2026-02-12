@@ -72,28 +72,15 @@ class ReassignLineItems
 
             if ($targetForecast) {
                 $ctdQty = (float) $targetForecast->ctd_qty + (float) $sourceForecast->ctd_qty;
-                $ctdRate = (float) $target->original_rate;
-                $ctdAmount = (float) $targetForecast->ctd_amount + (float) $sourceForecast->ctd_amount;
-
-                $ctcQty = max(0, (float) $target->original_qty - $ctdQty);
-                $ctcAmount = $ctcQty * $ctdRate;
-
-                $fcacAmount = $ctdAmount + $ctcAmount;
-                $totalQty = $ctdQty + $ctcQty;
-                $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
-                $variance = (float) $targetForecast->previous_amount - $fcacAmount;
+                $origRate = (float) $target->original_rate;
+                $origQty = (float) $target->original_qty;
 
                 $targetForecast->update([
                     'ctd_qty' => $ctdQty,
-                    'ctd_rate' => $ctdRate,
-                    'ctd_amount' => $ctdAmount,
-                    'ctc_qty' => $ctcQty,
-                    'ctc_rate' => $ctdRate,
-                    'ctc_amount' => $ctcAmount,
-                    'fcac_rate' => $fcacRate,
-                    'fcac_amount' => $fcacAmount,
-                    'variance' => $variance,
+                    'ctd_rate' => $origRate,
+                    'ctc_rate' => $origRate,
+                    'fcac_qty' => $origQty,
+                    'fcac_rate' => $origRate,
                 ]);
             } else {
                 // No matching period on target — reassign the forecast record

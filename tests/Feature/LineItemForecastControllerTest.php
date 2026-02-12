@@ -124,16 +124,9 @@ class LineItemForecastControllerTest extends TestCase
         $forecast = LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_qty' => 50,
-            'ctd_rate' => 250,
-            'ctd_amount' => 12500,
-            'ctc_qty' => 50,
-            'ctc_rate' => 250,
-            'ctc_amount' => 12500,
-            'fcac_rate' => 250,
-            'fcac_amount' => 25000,
-            'previous_amount' => 30000,
-            'variance' => 5000,
+            'previous_qty' => 120, 'previous_rate' => 250,
+            'ctd_qty' => 50, 'ctd_rate' => 250,
+            'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
         ]);
 
         return [$user, $project, $period, $item, $forecast];
@@ -150,7 +143,7 @@ class LineItemForecastControllerTest extends TestCase
             ->assertOk()
             ->assertJson(['status' => 'ok']);
 
-        // ctdAmount = 80 * 250 = 20000, ctcQty = 20, ctcAmount = 5000, fcac = 25000, variance = 30000 - 25000 = 5000
+        // ctdAmount = 80 * 250 = 20000, ctcQty = 20, ctcAmount = 5000, fcac = 25000, variance = 25000 - 30000 = -5000
         $this->assertDatabaseHas('line_item_forecasts', [
             'id' => $forecast->id,
             'ctd_qty' => 80,
@@ -158,7 +151,7 @@ class LineItemForecastControllerTest extends TestCase
             'ctc_qty' => 20,
             'ctc_amount' => 5000,
             'fcac_amount' => 25000,
-            'variance' => 5000,
+            'variance' => -5000,
         ]);
     }
 

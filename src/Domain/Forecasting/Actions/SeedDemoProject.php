@@ -296,54 +296,28 @@ class SeedDemoProject
         $origRate = (float) $item->original_rate;
         $origQty = (float) $item->original_qty;
 
-        $ctdRate = $origRate;
-        $ctdAmount = $ctdQty * $ctdRate;
-        $ctcQty = max(0, $origQty - $ctdQty);
-        $ctcRate = $origRate;
-        $ctcAmount = $ctcQty * $ctcRate;
-        $fcacAmount = $ctdAmount + $ctcAmount;
-        $totalQty = $ctdQty + $ctcQty;
-        $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
         $forecast = LineItemForecast::where('line_item_id', $item->id)
             ->where('forecast_period_id', $period->id)
             ->first();
 
-        $previousAmount = $forecast->previous_amount ?? (float) $item->original_amount;
-        $variance = $previousAmount - $fcacAmount;
+        $data = [
+            'ctd_qty' => $ctdQty,
+            'ctd_rate' => $origRate,
+            'ctc_rate' => $origRate,
+            'fcac_qty' => $origQty,
+            'fcac_rate' => $origRate,
+            'comments' => $comments,
+        ];
 
         if ($forecast) {
-            $forecast->update([
-                'ctd_qty' => $ctdQty,
-                'ctd_rate' => $ctdRate,
-                'ctd_amount' => $ctdAmount,
-                'ctc_qty' => $ctcQty,
-                'ctc_rate' => $ctcRate,
-                'ctc_amount' => $ctcAmount,
-                'fcac_rate' => $fcacRate,
-                'fcac_amount' => $fcacAmount,
-                'previous_amount' => $previousAmount,
-                'variance' => $variance,
-                'comments' => $comments,
-            ]);
+            $forecast->update($data);
         } else {
-            LineItemForecast::create([
+            LineItemForecast::create(array_merge($data, [
                 'line_item_id' => $item->id,
                 'forecast_period_id' => $period->id,
                 'previous_qty' => $origQty,
                 'previous_rate' => $origRate,
-                'previous_amount' => $previousAmount,
-                'ctd_qty' => $ctdQty,
-                'ctd_rate' => $ctdRate,
-                'ctd_amount' => $ctdAmount,
-                'ctc_qty' => $ctcQty,
-                'ctc_rate' => $ctcRate,
-                'ctc_amount' => $ctcAmount,
-                'fcac_rate' => $fcacRate,
-                'fcac_amount' => $fcacAmount,
-                'variance' => $variance,
-                'comments' => $comments,
-            ]);
+            ]));
         }
     }
 }

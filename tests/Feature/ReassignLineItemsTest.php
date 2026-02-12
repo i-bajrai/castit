@@ -62,9 +62,8 @@ class ReassignLineItemsTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $existingItem->id,
                 'forecast_period_id' => $period->id,
-                'ctd_qty' => 10, 'ctd_rate' => 250, 'ctd_amount' => 2500,
-                'ctc_qty' => 90, 'ctc_rate' => 250, 'ctc_amount' => 22500,
-                'fcac_rate' => 250, 'fcac_amount' => 25000, 'variance' => 0,
+                'ctd_qty' => 10, 'ctd_rate' => 250,
+                'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
             ]);
         }
 
@@ -96,9 +95,7 @@ class ReassignLineItemsTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $unassignedItem->id,
                 'forecast_period_id' => $period->id,
-                'ctd_qty' => 5, 'ctd_rate' => 0, 'ctd_amount' => 0,
-                'ctc_qty' => 0, 'ctc_rate' => 0, 'ctc_amount' => 0,
-                'fcac_rate' => 0, 'fcac_amount' => 0, 'variance' => 0,
+                'ctd_qty' => 5,
             ]);
         }
 

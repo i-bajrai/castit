@@ -73,13 +73,9 @@ class StoreBudgetSetup
                         ->update([
                             'previous_qty' => $origQty,
                             'previous_rate' => $origRate,
-                            'previous_amount' => $origAmount,
-                            'ctc_qty' => $origQty,
                             'ctc_rate' => $origRate,
-                            'ctc_amount' => $origAmount,
+                            'fcac_qty' => $origQty,
                             'fcac_rate' => $origRate,
-                            'fcac_amount' => $origAmount,
-                            'variance' => 0,
                         ]);
                 }
             }
