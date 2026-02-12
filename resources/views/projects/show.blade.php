@@ -112,12 +112,17 @@
                                 'orig_qty' => 'Orig Qty',
                                 'orig_rate' => 'Orig Rate',
                                 'orig_amount' => 'Orig Amount',
+                                'prev_qty' => 'Prev Qty',
+                                'prev_rate' => 'Prev Rate',
                                 'prev_fcac' => 'Prev FCAC',
                                 'ctd_qty' => 'CTD Qty',
                                 'ctd_rate' => 'CTD Rate',
                                 'ctd_amount' => 'CTD Amount',
                                 'ctc_qty' => 'CTC Qty',
+                                'ctc_rate' => 'CTC Rate',
                                 'ctc_amount' => 'CTC Amount',
+                                'fcac_qty' => 'FCAC Qty',
+                                'fcac_rate' => 'FCAC Rate',
                                 'fcac' => 'FCAC',
                                 'variance' => 'Variance',
                                 'comments' => 'Comments',
@@ -739,8 +744,11 @@
 document.addEventListener('alpine:init', () => {
     const defaults = {
         orig_qty: false, orig_rate: false, orig_amount: true,
-        prev_fcac: true, ctd_qty: true, ctd_rate: true, ctd_amount: true,
-        ctc_qty: false, ctc_amount: true, fcac: true, variance: true, comments: true,
+        prev_qty: false, prev_rate: false, prev_fcac: true,
+        ctd_qty: true, ctd_rate: true, ctd_amount: true,
+        ctc_qty: false, ctc_rate: false, ctc_amount: true,
+        fcac_qty: false, fcac_rate: false, fcac: true,
+        variance: true, comments: true,
     };
     const saved = JSON.parse(localStorage.getItem('projectColumnFilter') || 'null');
     const keys = Object.keys(defaults);

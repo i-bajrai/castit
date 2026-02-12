@@ -100,8 +100,8 @@ class SeedDemoProject
 
         $pkg006 = $this->createPackage($ca, $project, '006', 'GNANGARA INTERSECTION (DESIGN PACKAGE 02 - E039)', 1);
         $items006 = $this->createLineItems($pkg006, [
-            ['007', 'TL5 BARRIER 295-CB-001, 1070 HIGH BARRIER', 'LM', 98, 342.00, 33516.00],
-            ['008', 'TL5 BARRIER 295-CB-002, 1070 HIGH BARRIER', 'LM', 116, 313.85, 36406.60],
+            ['007', 'TL5 BARRIER 295-CB-001, 1070 HIGH BARRIER', 'LM', 0, 342.00, 0],
+            ['008', 'TL5 BARRIER 295-CB-002, 1070 HIGH BARRIER', 'LM', 0, 313.85, 0],
         ]);
 
         $pkg009 = $this->createPackage($ca, $project, '009', 'WHITEMAN PARK (DESIGN PACKAGE 04 - E050)', 2);
@@ -115,22 +115,22 @@ class SeedDemoProject
 
         $pkg003 = $this->createPackage($ca, $project, '3', 'Dulwich / Cheltenham Street', 3);
         $itemsDulwich = $this->createLineItems($pkg003, [
-            ['VO-003.01', 'TL5 BARRIER AX-CB-001, 1070 HIGH BARRIER', 'LM', 83, 345.25, 28655.75],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-002, 1070 HIGH BARRIER', 'LM', 78, 345.25, 26929.50],
-            ['011', 'TL5 BARRIER AX-CB-003, 1070 HIGH BARRIER', 'LM', 85, 345.25, 29346.25],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-004, 1070 HIGH BARRIER', 'LM', 45, 345.25, 15536.25],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 74, 345.25, 25548.50],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 79, 345.25, 27274.75],
-            ['014', 'W-BEAM TO CONCRETE TRANSITION', 'Each', 4, 6305.00, 25220.00],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-001, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-002, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['011', 'TL5 BARRIER AX-CB-003, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-004, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['014', 'W-BEAM TO CONCRETE TRANSITION', 'Each', 0, 6305.00, 0],
         ]);
 
         $pkg004 = $this->createPackage($ca, $project, '4', 'Beechboro Road North', 4);
         $itemsBeechboro = $this->createLineItems($pkg004, [
-            ['VO-003.03', 'TL5 BARRIER AA-CB-001, 1070 HIGH BARRIER', 'LM', 45, 345.25, 15536.25],
-            ['VO-003.03', 'TL5 BARRIER AA-CB-002, 1070 HIGH BARRIER', 'LM', 46, 345.25, 15881.50],
-            ['VO-003.03', 'TL5 BARRIER AA-CB-003, 1070 HIGH BARRIER', 'LM', 45, 345.25, 15536.25],
-            ['VO-003.03', 'TL5 BARRIER AA-CB-004, 1070 HIGH BARRIER', 'LM', 53, 345.25, 18298.25],
-            [null, 'W-BEAM TO CONCRETE TRANSITION', 'Each', 4, 6305.00, 25220.00],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-001, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-002, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-003, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-004, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            [null, 'W-BEAM TO CONCRETE TRANSITION', 'Each', 0, 6305.00, 0],
         ]);
 
         $pkgBtB = $this->createPackage($ca, $project, 'BtB', 'SA5517B - W-BEAM TO CONCRETE BARRIER, TYPE T5', 5);
@@ -144,16 +144,16 @@ class SeedDemoProject
 
         $pkgPrelim = $this->createPackage($ca, $project, '2', 'PRELIMINARIES', 6);
         $itemsPrelim = $this->createLineItems($pkgPrelim, [
-            ['002', 'MOBILISATION', 'Ea', 6, 6400.00, 38400.00],
-            ['003', 'DEMOBILISATION', 'EA', 6, 6400.00, 38400.00],
+            ['002', 'MOBILISATION', 'Ea', 4, 6400.00, 25600.00],
+            ['003', 'DEMOBILISATION', 'EA', 4, 6400.00, 25600.00],
             [null, 'QUALITY DOCUMENTATION', 'Lump Sum', 1, 0, 0],
         ]);
 
         $pkgOther = $this->createPackage($ca, $project, '3', 'OTHER', 7);
         $itemsOther = $this->createLineItems($pkgOther, [
             ['004', 'INTERNAL MOBILIZATION', 'EA', 4, 2425.00, 9700.00],
-            ['005', 'MEDICALS AND INDUCTIONS PER PERSON', 'EA', 5, 625.00, 3125.00],
-            [null, 'CONCRETE CORRECTOR', 'Cu. M', 267.3, 245.00, 65488.50],
+            ['005', 'MEDICALS AND INDUCTIONS PER PERSON', 'EA', 4, 625.00, 2500.00],
+            [null, 'CONCRETE CORRECTOR', 'Cu. M', 0, 245.00, 0],
         ]);
 
         // ============================================================
@@ -214,7 +214,7 @@ class SeedDemoProject
         // ============================================================
         // 5. Apply monthly CTD data from CSV
         // ============================================================
-        $this->applyCsvForecasts($project, $itemsDulwich, $itemsBeechboro);
+        $this->applyCsvForecasts($project, $items006, $itemsDulwich, $itemsBeechboro, $itemsPrelim, $itemsOther);
 
         return $project;
     }
@@ -267,10 +267,13 @@ class SeedDemoProject
     }
 
     /**
+     * @param  array<int, LineItem>  $items006
      * @param  array<int, LineItem>  $itemsDulwich
      * @param  array<int, LineItem>  $itemsBeechboro
+     * @param  array<int, LineItem>  $itemsPrelim
+     * @param  array<int, LineItem>  $itemsOther
      */
-    private function applyCsvForecasts(Project $project, array $itemsDulwich, array $itemsBeechboro): void
+    private function applyCsvForecasts(Project $project, array $items006, array $itemsDulwich, array $itemsBeechboro, array $itemsPrelim, array $itemsOther): void
     {
         $allItems = LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))->get();
         $periods = $project->forecastPeriods()->orderBy('period_date')->get();
@@ -320,6 +323,41 @@ class SeedDemoProject
                 'ctd_rate' => $item->original_rate,
                 'ctc_rate' => $item->original_rate,
                 'previous_qty' => $item->original_qty,
+                'previous_rate' => $item->original_rate,
+            ]);
+        }
+
+        // FCAC overrides for variation items (original_qty=0 but forecast is non-zero)
+        $fcacOverrides = [
+            // Items 007/008 (Gnangara)
+            [$items006[0], 98],
+            [$items006[1], 116],
+            // Dulwich
+            [$itemsDulwich[0], 83],
+            [$itemsDulwich[1], 78],
+            [$itemsDulwich[2], 85],
+            [$itemsDulwich[3], 45],
+            [$itemsDulwich[4], 74],
+            [$itemsDulwich[5], 79],
+            [$itemsDulwich[6], 4],
+            // Beechboro
+            [$itemsBeechboro[0], 45],
+            [$itemsBeechboro[1], 46],
+            [$itemsBeechboro[2], 45],
+            [$itemsBeechboro[3], 53],
+            [$itemsBeechboro[4], 4],
+            // Prelim / Other with changed FCAC
+            [$itemsPrelim[0], 6],  // MOBILISATION
+            [$itemsPrelim[1], 6],  // DEMOBILISATION
+            [$itemsOther[1], 5],   // MEDICALS
+            [$itemsOther[2], 267.3], // CONCRETE CORRECTOR
+        ];
+
+        foreach ($fcacOverrides as [$item, $fcacQty]) {
+            LineItemForecast::where('line_item_id', $item->id)->update([
+                'fcac_qty' => $fcacQty,
+                'fcac_rate' => $item->original_rate,
+                'previous_qty' => $fcacQty,
                 'previous_rate' => $item->original_rate,
             ]);
         }
