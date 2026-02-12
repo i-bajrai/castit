@@ -11,6 +11,13 @@ use Illuminate\Support\Collection;
 
 class ImportForecastsFromCsv
 {
+    public function __construct(
+        private UpdateLineItemForecast $updateLineItemForecast,
+    ) {}
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     */
     public function execute(Project $project, array $rows): ImportForecastResult
     {
         $imported = 0;
@@ -48,11 +55,13 @@ class ImportForecastsFromCsv
 
             if ($description === '' || $periodKey === '' || $ctdQty === null || $ctdQty === '') {
                 $errors[] = "Row {$rowNum}: missing required field(s).";
+
                 continue;
             }
 
             if (! is_numeric($ctdQty)) {
                 $errors[] = "Row {$rowNum}: ctd_qty must be numeric.";
+
                 continue;
             }
 
@@ -68,11 +77,13 @@ class ImportForecastsFromCsv
             $period = $periodsByKey->get($periodKey);
             if (! $period) {
                 $errors[] = "Row {$rowNum}: period '{$periodKey}' not found.";
+
                 continue;
             }
 
             if ($period->period_date->gte(now()->startOfMonth())) {
                 $errors[] = "Row {$rowNum}: period '{$periodKey}' is not a past period.";
+
                 continue;
             }
 
@@ -89,33 +100,11 @@ class ImportForecastsFromCsv
 
             if ((float) $forecast->ctd_qty !== 0.0) {
                 $skipped++;
+
                 continue;
             }
 
-            $ctdQty = (float) $ctdQty;
-            $ctdRate = (float) $lineItem->original_rate;
-            $ctdAmount = $ctdQty * $ctdRate;
-
-            $ctcQty = max(0, (float) $lineItem->original_qty - $ctdQty);
-            $ctcAmount = $ctcQty * $ctdRate;
-
-            $fcacAmount = $ctdAmount + $ctcAmount;
-            $totalQty = $ctdQty + $ctcQty;
-            $fcacRate = $totalQty > 0 ? $fcacAmount / $totalQty : 0;
-
-            $variance = (float) ($forecast->previous_amount ?? 0) - $fcacAmount;
-
-            $forecast->update([
-                'ctd_qty' => $ctdQty,
-                'ctd_rate' => $ctdRate,
-                'ctd_amount' => $ctdAmount,
-                'ctc_qty' => $ctcQty,
-                'ctc_rate' => $ctdRate,
-                'ctc_amount' => $ctcAmount,
-                'fcac_rate' => $fcacRate,
-                'fcac_amount' => $fcacAmount,
-                'variance' => $variance,
-            ]);
+            $this->updateLineItemForecast->execute($lineItem, $period, (float) $ctdQty);
 
             $imported++;
         }
@@ -145,6 +134,9 @@ class ImportForecastsFromCsv
         return trim($text);
     }
 
+    /**
+     * @param  Collection<int, ForecastPeriod>  $periods
+     */
     private function createLineItem(CostPackage $package, string $description, Collection $periods): LineItem
     {
         $lineItem = LineItem::create([

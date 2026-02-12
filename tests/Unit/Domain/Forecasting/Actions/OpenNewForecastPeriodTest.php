@@ -37,7 +37,7 @@ class OpenNewForecastPeriodTest extends TestCase
             'is_current' => true,
         ]);
 
-        $action = new OpenNewForecastPeriod;
+        $action = app(OpenNewForecastPeriod::class);
         $newPeriod = $action->execute($project, Carbon::parse('2024-02-01'));
 
         $oldPeriod->refresh();
@@ -53,7 +53,7 @@ class OpenNewForecastPeriodTest extends TestCase
     {
         $project = $this->createProject();
 
-        $action = new OpenNewForecastPeriod;
+        $action = app(OpenNewForecastPeriod::class);
         $period = $action->execute($project, Carbon::parse('2024-01-01'));
 
         $this->assertTrue($period->is_current);
@@ -101,19 +101,16 @@ class OpenNewForecastPeriodTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $oldPeriod->id,
-            'previous_amount' => 1000,
+            'previous_qty' => 10,
+            'previous_rate' => 100,
             'ctd_qty' => 6,
             'ctd_rate' => 100,
-            'ctd_amount' => 600,
-            'ctc_qty' => 4,
             'ctc_rate' => 100,
-            'ctc_amount' => 400,
+            'fcac_qty' => 10,
             'fcac_rate' => 100,
-            'fcac_amount' => 1000,
-            'variance' => 0,
         ]);
 
-        $action = new OpenNewForecastPeriod;
+        $action = app(OpenNewForecastPeriod::class);
         $newPeriod = $action->execute($project, Carbon::parse('2024-02-01'));
 
         $newForecast = LineItemForecast::where('forecast_period_id', $newPeriod->id)

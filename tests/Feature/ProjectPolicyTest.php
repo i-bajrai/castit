@@ -17,6 +17,7 @@ class ProjectPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'My Project', 'original_budget' => 100000]);
 
         $this->actingAs($user);
@@ -27,6 +28,7 @@ class ProjectPolicyTest extends TestCase
     {
         $owner = User::factory()->create();
         $company = Company::create(['user_id' => $owner->id, 'name' => 'Owner Co']);
+        $owner->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'Their Project', 'original_budget' => 100000]);
 
         $otherUser = User::factory()->create();
@@ -39,6 +41,7 @@ class ProjectPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'My Project', 'original_budget' => 100000]);
 
         $this->actingAs($user);
@@ -49,6 +52,7 @@ class ProjectPolicyTest extends TestCase
     {
         $owner = User::factory()->create();
         $company = Company::create(['user_id' => $owner->id, 'name' => 'Owner Co']);
+        $owner->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'Their Project', 'original_budget' => 100000]);
 
         $otherUser = User::factory()->create();
@@ -57,20 +61,44 @@ class ProjectPolicyTest extends TestCase
         $this->assertFalse(Gate::allows('update', $project));
     }
 
-    public function test_user_can_delete_project_belonging_to_their_company(): void
+    public function test_company_admin_can_delete_project(): void
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'My Project', 'original_budget' => 100000]);
 
         $this->actingAs($user);
         $this->assertTrue(Gate::allows('delete', $project));
     }
 
+    public function test_engineer_cannot_delete_project(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'engineer']);
+        $project = Project::create(['company_id' => $company->id, 'name' => 'My Project', 'original_budget' => 100000]);
+
+        $this->actingAs($user);
+        $this->assertFalse(Gate::allows('delete', $project));
+    }
+
+    public function test_viewer_cannot_update_project(): void
+    {
+        $user = User::factory()->create();
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'viewer']);
+        $project = Project::create(['company_id' => $company->id, 'name' => 'My Project', 'original_budget' => 100000]);
+
+        $this->actingAs($user);
+        $this->assertFalse(Gate::allows('update', $project));
+    }
+
     public function test_user_cannot_delete_project_belonging_to_another_users_company(): void
     {
         $owner = User::factory()->create();
         $company = Company::create(['user_id' => $owner->id, 'name' => 'Owner Co']);
+        $owner->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'Their Project', 'original_budget' => 100000]);
 
         $otherUser = User::factory()->create();

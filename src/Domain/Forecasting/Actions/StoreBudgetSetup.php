@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\DB;
 
 class StoreBudgetSetup
 {
+    public function __construct(
+        private SyncForecastPeriods $syncForecastPeriods,
+    ) {}
+
+    /**
+     * @param  array<int, array<string, mixed>>  $accounts
+     */
     public function execute(Project $project, array $accounts): void
     {
         DB::transaction(function () use ($project, $accounts) {
@@ -47,7 +54,7 @@ class StoreBudgetSetup
             }
 
             // Create forecast records for new line items across all existing periods
-            (new SyncForecastPeriods)->execute($project);
+            $this->syncForecastPeriods->execute($project);
 
             // Initialize forecasts with original budget as the baseline:
             // previous = original, CTC = original (since CTD is 0), FCAC = original
@@ -70,13 +77,9 @@ class StoreBudgetSetup
                         ->update([
                             'previous_qty' => $origQty,
                             'previous_rate' => $origRate,
-                            'previous_amount' => $origAmount,
-                            'ctc_qty' => $origQty,
                             'ctc_rate' => $origRate,
-                            'ctc_amount' => $origAmount,
+                            'fcac_qty' => $origQty,
                             'fcac_rate' => $origRate,
-                            'fcac_amount' => $origAmount,
-                            'variance' => 0,
                         ]);
                 }
             }

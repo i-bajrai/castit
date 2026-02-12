@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('cost_packages', function (Blueprint $table) {
@@ -17,16 +14,6 @@ return new class extends Migration
                 ->after('project_id')
                 ->constrained()
                 ->nullOnDelete();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('cost_packages', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('control_account_id');
         });
     }
 };

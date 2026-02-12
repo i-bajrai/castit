@@ -21,6 +21,7 @@ class LineItemForecastControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $company = Company::create(['user_id' => $user->id, 'name' => 'Test Co']);
+        $user->update(['company_id' => $company->id, 'company_role' => 'admin']);
         $project = Project::create(['company_id' => $company->id, 'name' => 'Test', 'original_budget' => 100000]);
 
         $period = ForecastPeriod::create([
@@ -123,16 +124,9 @@ class LineItemForecastControllerTest extends TestCase
         $forecast = LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_qty' => 50,
-            'ctd_rate' => 250,
-            'ctd_amount' => 12500,
-            'ctc_qty' => 50,
-            'ctc_rate' => 250,
-            'ctc_amount' => 12500,
-            'fcac_rate' => 250,
-            'fcac_amount' => 25000,
-            'previous_amount' => 30000,
-            'variance' => 5000,
+            'previous_qty' => 120, 'previous_rate' => 250,
+            'ctd_qty' => 50, 'ctd_rate' => 250,
+            'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
         ]);
 
         return [$user, $project, $period, $item, $forecast];
@@ -149,7 +143,7 @@ class LineItemForecastControllerTest extends TestCase
             ->assertOk()
             ->assertJson(['status' => 'ok']);
 
-        // ctdAmount = 80 * 250 = 20000, ctcQty = 20, ctcAmount = 5000, fcac = 25000, variance = 30000 - 25000 = 5000
+        // ctdAmount = 80 * 250 = 20000, ctcQty = 20, ctcAmount = 5000, fcac = 25000, variance = 25000 - 30000 = -5000
         $this->assertDatabaseHas('line_item_forecasts', [
             'id' => $forecast->id,
             'ctd_qty' => 80,
@@ -157,7 +151,7 @@ class LineItemForecastControllerTest extends TestCase
             'ctc_qty' => 20,
             'ctc_amount' => 5000,
             'fcac_amount' => 25000,
-            'variance' => 5000,
+            'variance' => -5000,
         ]);
     }
 
@@ -236,6 +230,8 @@ class LineItemForecastControllerTest extends TestCase
     {
         [, $project, , , $forecast] = $this->seedForecast();
         $otherUser = User::factory()->create();
+        $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
@@ -248,6 +244,8 @@ class LineItemForecastControllerTest extends TestCase
     {
         [, $project, , , $forecast] = $this->seedForecast();
         $otherUser = User::factory()->create();
+        $otherCompany2 = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
+        $otherUser->update(['company_id' => $otherCompany2->id, 'company_role' => 'admin']);
 
         $this->actingAs($otherUser)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/comment", [

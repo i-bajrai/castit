@@ -31,14 +31,22 @@ class CompanyTest extends TestCase
         $this->assertCount(2, $company->projects);
     }
 
-    public function test_user_has_many_companies(): void
+    public function test_company_has_many_members(): void
     {
-        $user = User::factory()->create();
+        $company = Company::create(['user_id' => User::factory()->create()->id, 'name' => 'Test Co']);
 
-        Company::create(['user_id' => $user->id, 'name' => 'Company A']);
-        Company::create(['user_id' => $user->id, 'name' => 'Company B']);
+        User::factory()->create(['company_id' => $company->id, 'company_role' => 'admin']);
+        User::factory()->create(['company_id' => $company->id, 'company_role' => 'engineer']);
 
-        $this->assertCount(2, $user->companies);
+        $this->assertCount(2, $company->members);
+    }
+
+    public function test_user_belongs_to_company(): void
+    {
+        $company = Company::create(['user_id' => User::factory()->create()->id, 'name' => 'Test Co']);
+        $user = User::factory()->create(['company_id' => $company->id, 'company_role' => 'admin']);
+
+        $this->assertTrue($user->company->is($company));
     }
 
     public function test_project_belongs_to_company(): void
@@ -61,13 +69,16 @@ class CompanyTest extends TestCase
         $this->assertDatabaseMissing('projects', ['name' => 'Doomed Project']);
     }
 
-    public function test_deleting_user_cascades_to_companies(): void
+    public function test_force_deleting_user_nullifies_company_ownership(): void
     {
         $user = User::factory()->create();
-        Company::create(['user_id' => $user->id, 'name' => 'Doomed Co']);
+        $company = Company::create(['user_id' => $user->id, 'name' => 'Owned Co']);
 
-        $user->delete();
+        $user->forceDelete();
 
-        $this->assertDatabaseMissing('companies', ['name' => 'Doomed Co']);
+        $this->assertDatabaseHas('companies', [
+            'id' => $company->id,
+            'user_id' => null,
+        ]);
     }
 }

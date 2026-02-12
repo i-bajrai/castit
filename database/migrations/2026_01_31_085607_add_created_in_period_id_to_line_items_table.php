@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('line_items', function (Blueprint $table) {
@@ -17,16 +14,6 @@ return new class extends Migration
                 ->after('sort_order')
                 ->constrained('forecast_periods')
                 ->nullOnDelete();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('line_items', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('created_in_period_id');
         });
     }
 };
