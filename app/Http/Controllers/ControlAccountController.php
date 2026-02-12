@@ -237,7 +237,7 @@ class ControlAccountController extends Controller
                         sortOrder: $liIndex,
                     );
 
-                    $lineItem = $createLineItem->execute($package, $liData, $currentPeriod);
+                    $lineItem = $createLineItem->execute($package, $liData);
 
                     if ($currentPeriod) {
                         LineItemForecast::create([

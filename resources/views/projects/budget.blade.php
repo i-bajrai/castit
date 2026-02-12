@@ -191,6 +191,16 @@
                     >
                         @csrf
 
+                        @if($errors->any())
+                            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <ul class="text-sm text-red-600 list-disc list-inside">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                         <input
                             type="file"
                             accept=".csv"
@@ -234,7 +244,7 @@
                                                 placeholder="0.00"
                                                 required
                                             />
-                                            <input type="hidden" :name="`accounts[${ai}][approved_budget]`" :value="account.baseline_budget" />
+                                            <input type="hidden" :name="`accounts[${ai}][approved_budget]`" x-model="account.approved_budget" />
                                         </div>
                                     </div>
 
@@ -253,23 +263,8 @@
                                         </div>
                                     </template>
 
-                                    <!-- Hidden inputs for packages/line items -->
-                                    <template x-for="(pkg, pi) in account.packages" :key="pi">
-                                        <div>
-                                            <input type="hidden" :name="`accounts[${ai}][packages][${pi}][item_no]`" :value="pkg.item_no">
-                                            <input type="hidden" :name="`accounts[${ai}][packages][${pi}][name]`" :value="pkg.name">
-                                            <template x-for="(li, lii) in pkg.line_items" :key="lii">
-                                                <div>
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][item_no]`" :value="li.item_no">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][description]`" :value="li.description">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][unit_of_measure]`" :value="li.unit_of_measure">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][qty]`" :value="li.qty">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][rate]`" :value="li.rate">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][amount]`" :value="li.amount">
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </template>
+                                    <!-- Packages serialised as JSON to avoid PHP max_input_vars limit -->
+                                    <input type="hidden" :name="`accounts[${ai}][packages_json]`" :value="JSON.stringify(account.packages)">
                                 </div>
                             </template>
                         </div>

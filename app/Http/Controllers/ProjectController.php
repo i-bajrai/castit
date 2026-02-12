@@ -158,17 +158,17 @@ class ProjectController extends Controller
             'accounts.*.control_account_id' => 'required|integer|exists:control_accounts,id',
             'accounts.*.baseline_budget' => 'required|numeric|min:0',
             'accounts.*.approved_budget' => 'required|numeric|min:0',
-            'accounts.*.packages' => 'nullable|array',
-            'accounts.*.packages.*.item_no' => 'nullable|string|max:255',
-            'accounts.*.packages.*.name' => 'required|string|max:255',
-            'accounts.*.packages.*.line_items' => 'required|array|min:1',
-            'accounts.*.packages.*.line_items.*.item_no' => 'nullable|string|max:255',
-            'accounts.*.packages.*.line_items.*.description' => 'required|string|max:255',
-            'accounts.*.packages.*.line_items.*.unit_of_measure' => 'nullable|string|max:255',
-            'accounts.*.packages.*.line_items.*.qty' => 'required|numeric|min:0',
-            'accounts.*.packages.*.line_items.*.rate' => 'required|numeric|min:0',
-            'accounts.*.packages.*.line_items.*.amount' => 'required|numeric',
+            'accounts.*.packages_json' => 'nullable|string',
         ]);
+
+        // Decode packages from JSON to avoid PHP max_input_vars limit
+        foreach ($validated['accounts'] as &$account) {
+            $account['packages'] = ! empty($account['packages_json'])
+                ? json_decode($account['packages_json'], true)
+                : [];
+            unset($account['packages_json']);
+        }
+        unset($account);
 
         $action->execute($project, $validated['accounts']);
 
