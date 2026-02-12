@@ -103,21 +103,20 @@
                                         const p = parseLine(l);
                                         return p[0] && p[0].toLowerCase() !== 'code' && p[0].toLowerCase() !== 'control_account_code';
                                     });
-                                    const isBudgetOnly = firstData && parseLine(firstData).length <= 3;
+                                    const isBudgetOnly = firstData && parseLine(firstData).length <= 2;
 
                                     if (isBudgetOnly) {
-                                        // Budget CSV: CODE,BASELINE_BUDGET,APPROVED_BUDGET
+                                        // Budget CSV: CODE,BUDGET
                                         for (let i = 0; i < lines.length; i++) {
                                             const parts = parseLine(lines[i]);
                                             if (parts[0].toLowerCase() === 'code') continue;
                                             if (!parts[0]) continue;
                                             const code = parts[0];
-                                            const baseline = parseFloat(parts[1]) || 0;
-                                            const approved = parseFloat(parts[2]) || 0;
+                                            const budget = parseFloat(parts[1]) || 0;
                                             for (const account of this.accounts) {
                                                 if (account.code === code) {
-                                                    account.baseline_budget = baseline;
-                                                    account.approved_budget = approved;
+                                                    account.baseline_budget = budget;
+                                                    account.approved_budget = budget;
                                                     break;
                                                 }
                                             }
