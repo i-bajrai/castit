@@ -33,7 +33,7 @@ class SyncForecastPeriodsTest extends TestCase
             'end_date' => '2024-04-20',
         ]);
 
-        (new SyncForecastPeriods)->execute($project);
+        app(SyncForecastPeriods::class)->execute($project);
 
         $periods = ForecastPeriod::where('project_id', $project->id)
             ->orderBy('period_date')
@@ -53,7 +53,7 @@ class SyncForecastPeriodsTest extends TestCase
             'end_date' => null,
         ]);
 
-        (new SyncForecastPeriods)->execute($project);
+        app(SyncForecastPeriods::class)->execute($project);
 
         $this->assertDatabaseCount('forecast_periods', 0);
     }
@@ -66,7 +66,7 @@ class SyncForecastPeriodsTest extends TestCase
         ]);
 
         // Run the action twice to verify idempotency
-        $action = new SyncForecastPeriods;
+        $action = app(SyncForecastPeriods::class);
         $action->execute($project);
         $action->execute($project);
 

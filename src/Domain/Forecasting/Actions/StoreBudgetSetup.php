@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 class StoreBudgetSetup
 {
+    public function __construct(
+        private SyncForecastPeriods $syncForecastPeriods,
+    ) {}
+
     /**
      * @param  array<int, array<string, mixed>>  $accounts
      */
@@ -50,7 +54,7 @@ class StoreBudgetSetup
             }
 
             // Create forecast records for new line items across all existing periods
-            (new SyncForecastPeriods)->execute($project);
+            $this->syncForecastPeriods->execute($project);
 
             // Initialize forecasts with original budget as the baseline:
             // previous = original, CTC = original (since CTD is 0), FCAC = original

@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class ReassignLineItems
 {
+    public function __construct(
+        private UpdateLineItemForecast $updateLineItemForecast,
+    ) {}
     /**
      * @param  array<int, array<string, mixed>>  $operations
      */
@@ -72,16 +75,12 @@ class ReassignLineItems
 
             if ($targetForecast) {
                 $ctdQty = (float) $targetForecast->ctd_qty + (float) $sourceForecast->ctd_qty;
-                $origRate = (float) $target->original_rate;
-                $origQty = (float) $target->original_qty;
 
-                $targetForecast->update([
-                    'ctd_qty' => $ctdQty,
-                    'ctd_rate' => $origRate,
-                    'ctc_rate' => $origRate,
-                    'fcac_qty' => $origQty,
-                    'fcac_rate' => $origRate,
-                ]);
+                $this->updateLineItemForecast->execute(
+                    $target,
+                    $sourceForecast->forecastPeriod,
+                    $ctdQty,
+                );
             } else {
                 // No matching period on target — reassign the forecast record
                 $sourceForecast->update(['line_item_id' => $target->id]);

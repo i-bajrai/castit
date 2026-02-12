@@ -63,7 +63,7 @@ class SaveLineItemForecastsTest extends TestCase
     {
         [$period, $item] = $this->seedData();
 
-        $action = new SaveLineItemForecasts;
+        $action = app(SaveLineItemForecasts::class);
         $action->execute($period, [
             new LineItemForecastData(
                 lineItemId: $item->id,
@@ -95,7 +95,7 @@ class SaveLineItemForecastsTest extends TestCase
             'fcac_rate' => 250,
         ]);
 
-        $action = new SaveLineItemForecasts;
+        $action = app(SaveLineItemForecasts::class);
         $action->execute($period, [
             new LineItemForecastData(
                 lineItemId: $item->id,
@@ -123,7 +123,7 @@ class SaveLineItemForecastsTest extends TestCase
             'previous_rate' => 250,
         ]);
 
-        $action = new SaveLineItemForecasts;
+        $action = app(SaveLineItemForecasts::class);
         $action->execute($period, [
             new LineItemForecastData(
                 lineItemId: $item->id,

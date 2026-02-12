@@ -11,6 +11,9 @@ use Illuminate\Support\Collection;
 
 class ImportForecastsFromCsv
 {
+    public function __construct(
+        private UpdateLineItemForecast $updateLineItemForecast,
+    ) {}
     /**
      * @param  array<int, array<string, mixed>>  $rows
      */
@@ -100,17 +103,7 @@ class ImportForecastsFromCsv
                 continue;
             }
 
-            $ctdQty = (float) $ctdQty;
-            $origRate = (float) $lineItem->original_rate;
-            $origQty = (float) $lineItem->original_qty;
-
-            $forecast->update([
-                'ctd_qty' => $ctdQty,
-                'ctd_rate' => $origRate,
-                'ctc_rate' => $origRate,
-                'fcac_qty' => $origQty,
-                'fcac_rate' => $origRate,
-            ]);
+            $this->updateLineItemForecast->execute($lineItem, $period, (float) $ctdQty);
 
             $imported++;
         }

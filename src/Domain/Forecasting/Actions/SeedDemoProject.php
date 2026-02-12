@@ -9,12 +9,16 @@ use App\Models\ControlAccount;
 use App\Models\CostPackage;
 use App\Models\ForecastPeriod;
 use App\Models\LineItem;
-use App\Models\LineItemForecast;
 use App\Models\Project;
 use App\Models\User;
 
 class SeedDemoProject
 {
+    public function __construct(
+        private SyncForecastPeriods $syncForecastPeriods,
+        private UpdateLineItemForecast $updateLineItemForecast,
+    ) {}
+
     public function execute(): Project
     {
         // 1. User & Company — find or create
@@ -202,7 +206,7 @@ class SeedDemoProject
         // ============================================================
         // 4. Sync all forecast periods (prepopulates with zeros)
         // ============================================================
-        (new SyncForecastPeriods)->execute($project);
+        $this->syncForecastPeriods->execute($project);
 
         // ============================================================
         // 5. FORECASTS — simulate partial completion for current period
@@ -293,31 +297,6 @@ class SeedDemoProject
         float $ctdQty,
         ?string $comments = null,
     ): void {
-        $origRate = (float) $item->original_rate;
-        $origQty = (float) $item->original_qty;
-
-        $forecast = LineItemForecast::where('line_item_id', $item->id)
-            ->where('forecast_period_id', $period->id)
-            ->first();
-
-        $data = [
-            'ctd_qty' => $ctdQty,
-            'ctd_rate' => $origRate,
-            'ctc_rate' => $origRate,
-            'fcac_qty' => $origQty,
-            'fcac_rate' => $origRate,
-            'comments' => $comments,
-        ];
-
-        if ($forecast) {
-            $forecast->update($data);
-        } else {
-            LineItemForecast::create(array_merge($data, [
-                'line_item_id' => $item->id,
-                'forecast_period_id' => $period->id,
-                'previous_qty' => $origQty,
-                'previous_rate' => $origRate,
-            ]));
-        }
+        $this->updateLineItemForecast->execute($item, $period, $ctdQty, $comments);
     }
 }
