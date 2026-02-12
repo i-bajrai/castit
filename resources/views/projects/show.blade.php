@@ -270,12 +270,17 @@
                                                             <th x-show="$store.columns.orig_qty" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Qty</th>
                                                             <th x-show="$store.columns.orig_rate" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Rate</th>
                                                             <th x-show="$store.columns.orig_amount" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24 bg-gray-100">Orig Amount</th>
+                                                            <th x-show="$store.columns.prev_qty" class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-20 bg-blue-50">Prev Qty</th>
+                                                            <th x-show="$store.columns.prev_rate" class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-20 bg-blue-50">Prev Rate</th>
                                                             <th x-show="$store.columns.prev_fcac" class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-24 bg-blue-50">Prev FCAC</th>
                                                             <th x-show="$store.columns.ctd_qty" class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Qty</th>
                                                             <th x-show="$store.columns.ctd_rate" class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-20 bg-green-50">CTD Rate</th>
                                                             <th x-show="$store.columns.ctd_amount" class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Amount</th>
                                                             <th x-show="$store.columns.ctc_qty" class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-20 bg-amber-50">CTC Qty</th>
+                                                            <th x-show="$store.columns.ctc_rate" class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-20 bg-amber-50">CTC Rate</th>
                                                             <th x-show="$store.columns.ctc_amount" class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-24 bg-amber-50">CTC Amount</th>
+                                                            <th x-show="$store.columns.fcac_qty" class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-20 bg-indigo-50">FCAC Qty</th>
+                                                            <th x-show="$store.columns.fcac_rate" class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-20 bg-indigo-50">FCAC Rate</th>
                                                             <th x-show="$store.columns.fcac" class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-24 bg-indigo-50">FCAC</th>
                                                             <th x-show="$store.columns.variance" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Variance</th>
                                                             <th x-show="$store.columns.comments" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-40">Comments</th>
@@ -292,13 +297,18 @@
                                                                     origQty: {{ $item->original_qty }},
                                                                     origRate: {{ $item->original_rate }},
                                                                     origAmount: {{ $item->original_amount }},
+                                                                    prevQty: {{ $forecast->previous_qty ?? 0 }},
+                                                                    prevRate: {{ $forecast->previous_rate ?? 0 }},
                                                                     prevAmount: {{ $forecast->previous_amount ?? 0 }},
+                                                                    fcacQty: {{ $forecast->fcac_qty ?? 0 }},
+                                                                    fcacRate: {{ $forecast->fcac_rate ?? 0 }},
                                                                     get ctdRate() { return this.origRate },
                                                                     get ctdAmount() { return +(this.ctdQty * this.origRate).toFixed(2) },
-                                                                    get ctcQty() { return Math.max(0, this.origQty - this.ctdQty) },
+                                                                    get ctcQty() { return Math.max(0, this.fcacQty - this.ctdQty) },
+                                                                    get ctcRate() { return this.origRate },
                                                                     get ctcAmount() { return +(this.ctcQty * this.origRate).toFixed(2) },
-                                                                    get fcac() { return this.ctdAmount + this.ctcAmount },
-                                                                    get variance() { return +(this.prevAmount - this.fcac).toFixed(2) },
+                                                                    get fcac() { return +(this.fcacQty * this.fcacRate).toFixed(2) },
+                                                                    get variance() { return +(this.fcac - this.prevAmount).toFixed(2) },
                                                                 }">
                                                                 <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
                                                                 <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
@@ -306,6 +316,8 @@
                                                                 <td x-show="$store.columns.orig_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">{{ number_format($item->original_qty, 1) }}</td>
                                                                 <td x-show="$store.columns.orig_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
                                                                 <td x-show="$store.columns.orig_amount" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
+                                                                <td x-show="$store.columns.prev_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">{{ number_format($forecast->previous_qty ?? 0, 1) }}</td>
+                                                                <td x-show="$store.columns.prev_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_rate ?? 0, 2) }}</td>
                                                                 <td x-show="$store.columns.prev_fcac" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount ?? 0, 2) }}</td>
 
                                                                 {{-- CTD Qty (MODAL) --}}
@@ -369,8 +381,14 @@
                                                                 <td x-show="$store.columns.ctd_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/30" x-text="'$' + ctdAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- CTC Qty (computed) --}}
                                                                 <td x-show="$store.columns.ctc_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="ctcQty.toFixed(1)"></td>
+                                                                {{-- CTC Rate (computed) --}}
+                                                                <td x-show="$store.columns.ctc_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="'$' + ctcRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- CTC Amount (computed) --}}
                                                                 <td x-show="$store.columns.ctc_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/30" x-text="'$' + ctcAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
+                                                                {{-- FCAC Qty --}}
+                                                                <td x-show="$store.columns.fcac_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/30" x-text="fcacQty.toFixed(1)"></td>
+                                                                {{-- FCAC Rate --}}
+                                                                <td x-show="$store.columns.fcac_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/30" x-text="'$' + fcacRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- FCAC (computed) --}}
                                                                 <td x-show="$store.columns.fcac" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50" x-text="'$' + fcac.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></td>
                                                                 {{-- Variance (computed) --}}
@@ -469,12 +487,17 @@
                                                         <th x-show="$store.columns.orig_qty" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Qty</th>
                                                         <th x-show="$store.columns.orig_rate" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Rate</th>
                                                         <th x-show="$store.columns.orig_amount" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24 bg-gray-100">Orig Amount</th>
+                                                        <th x-show="$store.columns.prev_qty" class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-20 bg-blue-50">Prev Qty</th>
+                                                        <th x-show="$store.columns.prev_rate" class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-20 bg-blue-50">Prev Rate</th>
                                                         <th x-show="$store.columns.prev_fcac" class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-24 bg-blue-50">Prev FCAC</th>
                                                         <th x-show="$store.columns.ctd_qty" class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Qty</th>
                                                         <th x-show="$store.columns.ctd_rate" class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-20 bg-green-50">CTD Rate</th>
                                                         <th x-show="$store.columns.ctd_amount" class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Amount</th>
                                                         <th x-show="$store.columns.ctc_qty" class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-20 bg-amber-50">CTC Qty</th>
+                                                        <th x-show="$store.columns.ctc_rate" class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-20 bg-amber-50">CTC Rate</th>
                                                         <th x-show="$store.columns.ctc_amount" class="px-3 py-3 text-right text-xs font-medium text-amber-600 uppercase w-24 bg-amber-50">CTC Amount</th>
+                                                        <th x-show="$store.columns.fcac_qty" class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-20 bg-indigo-50">FCAC Qty</th>
+                                                        <th x-show="$store.columns.fcac_rate" class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-20 bg-indigo-50">FCAC Rate</th>
                                                         <th x-show="$store.columns.fcac" class="px-3 py-3 text-right text-xs font-medium text-indigo-600 uppercase w-24 bg-indigo-50">FCAC</th>
                                                         <th x-show="$store.columns.variance" class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-24">Variance</th>
                                                         <th x-show="$store.columns.comments" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>
@@ -520,12 +543,17 @@
                                                             <td x-show="$store.columns.orig_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
                                                             <td x-show="$store.columns.orig_amount" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
                                                             @if($forecast)
+                                                                <td x-show="$store.columns.prev_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">{{ number_format($forecast->previous_qty ?? 0, 1) }}</td>
+                                                                <td x-show="$store.columns.prev_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_rate ?? 0, 2) }}</td>
                                                                 <td x-show="$store.columns.prev_fcac" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount, 2) }}</td>
                                                                 <td x-show="$store.columns.ctd_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">{{ number_format($forecast->ctd_qty ?? 0, 1) }}</td>
                                                                 <td x-show="$store.columns.ctd_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($item->original_rate, 2) }}</td>
                                                                 <td x-show="$store.columns.ctd_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($forecast->ctd_amount, 2) }}</td>
-                                                                <td x-show="$store.columns.ctc_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">{{ number_format(max(0, $item->original_qty - ($forecast->ctd_qty ?? 0)), 1) }}</td>
+                                                                <td x-show="$store.columns.ctc_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">{{ number_format($forecast->ctc_qty ?? 0, 1) }}</td>
+                                                                <td x-show="$store.columns.ctc_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->ctc_rate ?? 0, 2) }}</td>
                                                                 <td x-show="$store.columns.ctc_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->ctc_amount, 2) }}</td>
+                                                                <td x-show="$store.columns.fcac_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/50">{{ number_format($forecast->fcac_qty ?? 0, 1) }}</td>
+                                                                <td x-show="$store.columns.fcac_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->fcac_rate ?? 0, 2) }}</td>
                                                                 <td x-show="$store.columns.fcac" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->fcac_amount, 2) }}</td>
                                                                 <td x-show="$store.columns.variance" class="px-3 py-2 text-sm text-right {{ ($forecast->variance ?? 0) < 0 ? 'text-red-600 font-medium' : 'text-gray-900' }}">
                                                                     @if(($forecast->variance ?? 0) != 0)
@@ -546,12 +574,17 @@
                                                     <tr class="font-semibold">
                                                         <td :colspan="3 + ($store.columns.orig_qty ? 1 : 0) + ($store.columns.orig_rate ? 1 : 0)" class="px-3 py-3 text-sm text-gray-700 text-right">Package Total</td>
                                                         <td x-show="$store.columns.orig_amount" class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgOriginal, 2) }}</td>
+                                                        <td x-show="$store.columns.prev_qty"></td>
+                                                        <td x-show="$store.columns.prev_rate"></td>
                                                         <td x-show="$store.columns.prev_fcac" class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgPrevious, 2) }}</td>
                                                         <td x-show="$store.columns.ctd_qty"></td>
                                                         <td x-show="$store.columns.ctd_rate"></td>
                                                         <td x-show="$store.columns.ctd_amount" class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgCtd, 2) }}</td>
                                                         <td x-show="$store.columns.ctc_qty"></td>
+                                                        <td x-show="$store.columns.ctc_rate"></td>
                                                         <td x-show="$store.columns.ctc_amount" class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgCtc, 2) }}</td>
+                                                        <td x-show="$store.columns.fcac_qty"></td>
+                                                        <td x-show="$store.columns.fcac_rate"></td>
                                                         <td x-show="$store.columns.fcac" class="px-3 py-3 text-sm text-gray-900 text-right">${{ number_format($pkgFcac, 2) }}</td>
                                                         <td x-show="$store.columns.variance" class="px-3 py-3 text-sm text-right {{ $pkgVariance < 0 ? 'text-red-600' : 'text-gray-900' }}">${{ number_format($pkgVariance, 2) }}</td>
                                                         <td x-show="$store.columns.comments"></td>

@@ -66,9 +66,9 @@ test.describe('Column Filter', () => {
         // Dropdown should now be visible
         await expect(page.getByText('Toggle Columns')).toBeVisible();
 
-        // Should show all 12 column checkboxes
-        const checkboxes = page.locator('label').filter({ has: page.locator('input[type="checkbox"]') }).filter({ hasText: /Orig Qty|Orig Rate|Orig Amount|Prev FCAC|CTD Qty|CTD Rate|CTD Amount|CTC Qty|CTC Amount|FCAC|Variance|Comments/ });
-        await expect(checkboxes).toHaveCount(12);
+        // Should show all 17 column checkboxes
+        const checkboxes = page.locator('label').filter({ has: page.locator('input[type="checkbox"]') }).filter({ hasText: /Orig Qty|Orig Rate|Orig Amount|Prev Qty|Prev Rate|Prev FCAC|CTD Qty|CTD Rate|CTD Amount|CTC Qty|CTC Rate|CTC Amount|FCAC Qty|FCAC Rate|FCAC|Variance|Comments/ });
+        await expect(checkboxes).toHaveCount(17);
     });
 
     test('default columns are visible and hidden correctly', async ({ page }) => {
@@ -85,7 +85,7 @@ test.describe('Column Filter', () => {
         }
 
         // Columns that should be hidden by default
-        const hiddenHeaders = ['Orig Qty', 'Orig Rate', 'CTC Qty'];
+        const hiddenHeaders = ['Orig Qty', 'Orig Rate', 'Prev Qty', 'Prev Rate', 'CTC Qty', 'CTC Rate', 'FCAC Qty', 'FCAC Rate'];
         for (const header of hiddenHeaders) {
             await expect(page.locator('th').filter({ hasText: header }).first()).toBeHidden();
         }
