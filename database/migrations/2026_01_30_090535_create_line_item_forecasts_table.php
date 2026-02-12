@@ -39,9 +39,4 @@ return new class extends Migration
             $table->unique(['line_item_id', 'forecast_period_id']);
         });
     }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('line_item_forecasts');
-    }
 };

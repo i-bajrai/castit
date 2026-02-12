@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -10,13 +11,20 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('role', 20)->default('user')->after('email');
-        });
-    }
 
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
+            $table->foreignId('company_id')->nullable()->after('role')->constrained()->nullOnDelete();
+            $table->string('company_role', 20)->nullable()->after('company_id');
+            $table->timestamp('company_removed_at')->nullable()->after('company_role');
+        });
+
+        // Migrate existing company owners: set their company_id and make them company admins
+        DB::table('companies')->get()->each(function ($company) {
+            DB::table('users')
+                ->where('id', $company->user_id)
+                ->update([
+                    'company_id' => $company->id,
+                    'company_role' => 'admin',
+                ]);
         });
     }
 };

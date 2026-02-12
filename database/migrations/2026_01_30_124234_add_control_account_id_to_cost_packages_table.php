@@ -19,14 +19,4 @@ return new class extends Migration
                 ->nullOnDelete();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('cost_packages', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('control_account_id');
-        });
-    }
 };

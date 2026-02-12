@@ -16,11 +16,4 @@ return new class extends Migration
             $table->date('end_date')->nullable()->after('start_date');
         });
     }
-
-    public function down(): void
-    {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->dropColumn(['start_date', 'end_date']);
-        });
-    }
 };

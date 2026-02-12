@@ -16,12 +16,8 @@ return new class extends Migration
             $table->string('project_number')->nullable();
             $table->decimal('original_budget', 15, 2)->default(0);
             $table->string('status')->default('active');
+            $table->softDeletes();
             $table->timestamps();
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('projects');
     }
 };

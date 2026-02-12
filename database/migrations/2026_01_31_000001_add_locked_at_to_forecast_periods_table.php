@@ -12,11 +12,4 @@ return new class extends Migration
             $table->timestamp('locked_at')->nullable()->after('is_current');
         });
     }
-
-    public function down(): void
-    {
-        Schema::table('forecast_periods', function (Blueprint $table) {
-            $table->dropColumn('locked_at');
-        });
-    }
 };

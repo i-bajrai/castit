@@ -18,9 +18,4 @@ return new class extends Migration
             $table->unique(['project_id', 'period_date']);
         });
     }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('forecast_periods');
-    }
 };

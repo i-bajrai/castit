@@ -19,14 +19,4 @@ return new class extends Migration
                 ->nullOnDelete();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('line_items', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('created_in_period_id');
-        });
-    }
 };
