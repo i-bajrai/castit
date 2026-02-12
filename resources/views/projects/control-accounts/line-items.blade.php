@@ -42,6 +42,7 @@
                             </div>
                             @php
                                 $totalOriginal = $costPackages->flatMap->lineItems->sum('original_amount');
+                                $hasLineItems = $costPackages->flatMap->lineItems->isNotEmpty();
                             @endphp
                             <div class="text-right">
                                 <span class="text-gray-500">Line Item Total</span>
@@ -66,14 +67,16 @@
                         <button
                             type="button"
                             x-data
-                            x-on:click="$dispatch('open-modal', 'import-csv')"
-                            class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50"
+                            @if(!$hasLineItems) x-on:click="$dispatch('open-modal', 'import-csv')" @endif
+                            class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium {{ $hasLineItems ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-indigo-600 bg-white hover:bg-indigo-50' }}"
+                            @if($hasLineItems) disabled title="Cannot import when line items already exist" @endif
                         >
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                             </svg>
                             Import CSV
                         </button>
+                        @if(!$hasLineItems)
                         <a
                             href="#"
                             x-data
@@ -96,6 +99,7 @@
                             </svg>
                             Sample CSV
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -292,7 +296,12 @@
 
         {{-- Add Line Item --}}
         <x-modal name="add-line-item-{{ $package->id }}" :show="false" maxWidth="lg">
-            <form method="POST" action="{{ route('projects.line-items.store', [$project, $package]) }}" class="p-6">
+            <form method="POST" action="{{ route('projects.line-items.store', [$project, $package]) }}" class="p-6"
+                x-data="{
+                    qty: 0,
+                    rate: 0,
+                    get amount() { return +(this.qty * this.rate).toFixed(2) },
+                }">
                 @csrf
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Add Line Item to {{ $package->name }}</h2>
                 <div class="grid grid-cols-2 gap-4">
@@ -314,15 +323,16 @@
                     </div>
                     <div>
                         <x-input-label for="create_li_qty_{{ $package->id }}" value="Original Qty" />
-                        <x-text-input id="create_li_qty_{{ $package->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                        <input id="create_li_qty_{{ $package->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" x-model.number="qty" required />
                     </div>
                     <div>
                         <x-input-label for="create_li_rate_{{ $package->id }}" value="Original Rate" />
-                        <x-text-input id="create_li_rate_{{ $package->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                        <input id="create_li_rate_{{ $package->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" x-model.number="rate" required />
                     </div>
                     <div>
                         <x-input-label for="create_li_amount_{{ $package->id }}" value="Original Amount" />
-                        <x-text-input id="create_li_amount_{{ $package->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" value="0" required />
+                        <input name="original_amount" type="hidden" :value="amount" />
+                        <div class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-700" x-text="'$' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></div>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
@@ -336,7 +346,12 @@
         @foreach($package->lineItems as $item)
             {{-- Edit Line Item --}}
             <x-modal name="edit-line-item-{{ $item->id }}" :show="false" maxWidth="lg">
-                <form method="POST" action="{{ route('projects.line-items.update', [$project, $package, $item]) }}" class="p-6">
+                <form method="POST" action="{{ route('projects.line-items.update', [$project, $package, $item]) }}" class="p-6"
+                    x-data="{
+                        qty: {{ $item->original_qty }},
+                        rate: {{ $item->original_rate }},
+                        get amount() { return +(this.qty * this.rate).toFixed(2) },
+                    }">
                     @csrf
                     @method('PUT')
                     <h2 class="text-lg font-medium text-gray-900 mb-4">Edit Line Item</h2>
@@ -359,15 +374,16 @@
                         </div>
                         <div>
                             <x-input-label for="edit_li_qty_{{ $item->id }}" value="Original Qty" />
-                            <x-text-input id="edit_li_qty_{{ $item->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_qty" required />
+                            <input id="edit_li_qty_{{ $item->id }}" name="original_qty" type="number" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" x-model.number="qty" required />
                         </div>
                         <div>
                             <x-input-label for="edit_li_rate_{{ $item->id }}" value="Original Rate" />
-                            <x-text-input id="edit_li_rate_{{ $item->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_rate" required />
+                            <input id="edit_li_rate_{{ $item->id }}" name="original_rate" type="number" step="0.01" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" x-model.number="rate" required />
                         </div>
                         <div>
                             <x-input-label for="edit_li_amount_{{ $item->id }}" value="Original Amount" />
-                            <x-text-input id="edit_li_amount_{{ $item->id }}" name="original_amount" type="number" step="0.01" class="mt-1 block w-full" :value="$item->original_amount" required />
+                            <input name="original_amount" type="hidden" :value="amount" />
+                            <div class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-700" x-text="'$' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></div>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end gap-3">

@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Company;
 use App\Models\ControlAccount;
+use App\Models\CostPackage;
+use App\Models\LineItem;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class ControlAccountControllerTest extends TestCase
@@ -148,5 +151,80 @@ class ControlAccountControllerTest extends TestCase
         $this->actingAs($user)
             ->put("/projects/{$project->id}/control-accounts/{$account->id}", [])
             ->assertSessionHasErrors(['phase', 'code', 'description', 'baseline_budget', 'approved_budget', 'sort_order']);
+    }
+
+    public function test_import_line_items_rejected_when_items_exist(): void
+    {
+        [$user, , $project] = $this->createUserWithProject();
+
+        $account = ControlAccount::create([
+            'project_id' => $project->id,
+            'phase' => '4',
+            'code' => '401AN00',
+            'description' => 'Anti Graffiti',
+            'category' => 'Civil',
+            'baseline_budget' => 100000,
+            'approved_budget' => 100000,
+            'sort_order' => 1,
+        ]);
+
+        $package = CostPackage::create([
+            'project_id' => $project->id,
+            'control_account_id' => $account->id,
+            'name' => 'Package A',
+            'sort_order' => 0,
+        ]);
+
+        LineItem::create([
+            'cost_package_id' => $package->id,
+            'description' => 'Existing Item',
+            'original_qty' => 10,
+            'original_rate' => 100,
+            'original_amount' => 1000,
+            'sort_order' => 0,
+        ]);
+
+        $csv = "control_account,cost_package,item_no,description,uom,qty,rate,amount\n";
+        $csv .= "401AN00,Package B,001,New Item,EA,5,200,1000\n";
+        $file = UploadedFile::fake()->createWithContent('import.csv', $csv);
+
+        $this->actingAs($user)
+            ->post("/projects/{$project->id}/control-accounts/{$account->id}/line-items/import", [
+                'csv_file' => $file,
+            ])
+            ->assertRedirect(route('projects.control-accounts.line-items', [$project, $account]))
+            ->assertSessionHas('error', 'Cannot import CSV when line items already exist. Delete existing items first.');
+
+        // Ensure no new items were created
+        $this->assertDatabaseMissing('line_items', ['description' => 'New Item']);
+    }
+
+    public function test_import_line_items_succeeds_when_no_items_exist(): void
+    {
+        [$user, , $project] = $this->createUserWithProject();
+
+        $account = ControlAccount::create([
+            'project_id' => $project->id,
+            'phase' => '4',
+            'code' => '401AN00',
+            'description' => 'Anti Graffiti',
+            'category' => 'Civil',
+            'baseline_budget' => 100000,
+            'approved_budget' => 100000,
+            'sort_order' => 1,
+        ]);
+
+        $csv = "control_account,cost_package,item_no,description,uom,qty,rate,amount\n";
+        $csv .= "401AN00,Package A,001,Concrete Pour,M3,100,250,25000\n";
+        $file = UploadedFile::fake()->createWithContent('import.csv', $csv);
+
+        $this->actingAs($user)
+            ->post("/projects/{$project->id}/control-accounts/{$account->id}/line-items/import", [
+                'csv_file' => $file,
+            ])
+            ->assertRedirect(route('projects.control-accounts.line-items', [$project, $account]))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('line_items', ['description' => 'Concrete Pour']);
     }
 }

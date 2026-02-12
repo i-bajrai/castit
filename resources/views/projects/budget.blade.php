@@ -221,35 +221,21 @@
                                             <span class="font-semibold text-gray-900" x-text="account.code"></span>
                                             <span class="ml-2 text-sm text-gray-600" x-text="account.description"></span>
                                         </div>
-                                        <div class="flex items-center gap-4 shrink-0">
-                                            <div class="flex items-center gap-1">
-                                                <label class="text-xs text-gray-500">Baseline $</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    x-model="account.baseline_budget"
-                                                    :name="`accounts[${ai}][baseline_budget]`"
-                                                    data-testid="baseline-budget-input"
-                                                    class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
-                                                    placeholder="0.00"
-                                                    required
-                                                />
-                                            </div>
-                                            <div class="flex items-center gap-1">
-                                                <label class="text-xs text-gray-500">Approved $</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    x-model="account.approved_budget"
-                                                    :name="`accounts[${ai}][approved_budget]`"
-                                                    data-testid="approved-budget-input"
-                                                    class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
-                                                    placeholder="0.00"
-                                                    required
-                                                />
-                                            </div>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <label class="text-xs text-gray-500">Budget $</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                x-model="account.baseline_budget"
+                                                x-on:input="account.approved_budget = account.baseline_budget"
+                                                :name="`accounts[${ai}][baseline_budget]`"
+                                                data-testid="baseline-budget-input"
+                                                class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
+                                                placeholder="0.00"
+                                                required
+                                            />
+                                            <input type="hidden" :name="`accounts[${ai}][approved_budget]`" :value="account.baseline_budget" />
                                         </div>
                                     </div>
 
