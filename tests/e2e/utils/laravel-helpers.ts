@@ -33,3 +33,29 @@ export async function create(
     });
     return await response.json();
 }
+
+export async function update(
+    page: Page,
+    model: string,
+    id: number,
+    attributes: Record<string, unknown> = {},
+) {
+    const response = await page.request.patch('/__playwright__/update', {
+        headers: { Accept: 'application/json' },
+        data: { model, id, attributes },
+    });
+    return await response.json();
+}
+
+export async function loginWithCompany(page: Page) {
+    const user = await login(page);
+    const company = await create(page, 'App\\Models\\Company', {
+        user_id: user.id,
+        name: 'Test Company',
+    });
+    await update(page, 'App\\Models\\User', user.id, {
+        company_id: company.id,
+        company_role: 'admin',
+    });
+    return { user, company };
+}

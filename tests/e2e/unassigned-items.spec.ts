@@ -1,16 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { login, create } from './utils/laravel-helpers';
+import { create, loginWithCompany } from './utils/laravel-helpers';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 test.describe('Unassigned Items', () => {
     async function seedProject(page) {
-        const user = await login(page);
-        const company = await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        const { user, company } = await loginWithCompany(page);
 
         const project = await create(page, 'App\\Models\\Project', {
             company_id: company.id,

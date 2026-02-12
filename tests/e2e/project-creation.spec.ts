@@ -1,16 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { login, create } from './utils/laravel-helpers';
+import { create, loginWithCompany } from './utils/laravel-helpers';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 test.describe('Project Creation', () => {
     test('should create a project and set up control accounts', async ({ page }) => {
-        const user = await login(page);
-        await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        await loginWithCompany(page);
 
         await page.goto('/dashboard');
 
@@ -76,11 +72,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should create a project without dates', async ({ page }) => {
-        const user = await login(page);
-        await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        await loginWithCompany(page);
 
         await page.goto('/dashboard');
         await page.getByTestId('new-project-button').click();
@@ -101,11 +93,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should allow skipping control account setup', async ({ page }) => {
-        const user = await login(page);
-        await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        await loginWithCompany(page);
 
         await page.goto('/dashboard');
         await page.getByTestId('new-project-button').click();
@@ -126,11 +114,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should show the empty state when no projects exist', async ({ page }) => {
-        const user = await login(page);
-        await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Empty Company',
-        });
+        await loginWithCompany(page);
 
         await page.goto('/dashboard');
 
@@ -141,11 +125,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should show validation errors when required fields are missing', async ({ page }) => {
-        const user = await login(page);
-        await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        await loginWithCompany(page);
 
         await page.goto('/dashboard');
         await page.getByTestId('new-project-button').click();
@@ -171,11 +151,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should import control accounts from CSV', async ({ page }) => {
-        const user = await login(page);
-        await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        await loginWithCompany(page);
 
         await page.goto('/dashboard');
         await page.getByTestId('new-project-button').click();
@@ -223,11 +199,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should allow skipping budget setup', async ({ page }) => {
-        const user = await login(page);
-        const company = await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        const { company } = await loginWithCompany(page);
 
         const project = await create(page, 'App\\Models\\Project', {
             company_id: company.id,
@@ -254,11 +226,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should import budget line items from CSV', async ({ page }) => {
-        const user = await login(page);
-        const company = await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        const { company } = await loginWithCompany(page);
 
         const project = await create(page, 'App\\Models\\Project', {
             company_id: company.id,
@@ -318,11 +286,7 @@ test.describe('Project Creation', () => {
     });
 
     test('should display existing projects on the dashboard', async ({ page }) => {
-        const user = await login(page);
-        const company = await create(page, 'App\\Models\\Company', {
-            user_id: user.id,
-            name: 'Test Company',
-        });
+        const { company } = await loginWithCompany(page);
 
         await create(page, 'App\\Models\\Project', {
             company_id: company.id,
