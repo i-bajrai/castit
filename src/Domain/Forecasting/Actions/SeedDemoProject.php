@@ -330,8 +330,8 @@ class SeedDemoProject
         // FCAC overrides for variation items (original_qty=0 but forecast is non-zero)
         $fcacOverrides = [
             // Items 007/008 (Gnangara)
-            [$items006[0], 98],
-            [$items006[1], 116],
+            [$items006[0], 103],
+            [$items006[1], 120],
             // Dulwich
             [$itemsDulwich[0], 83],
             [$itemsDulwich[1], 78],
