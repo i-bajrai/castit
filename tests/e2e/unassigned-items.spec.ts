@@ -122,7 +122,7 @@ test.describe('Unassigned Items', () => {
         await targetSelect.selectOption({ value: String(pkg.id) });
 
         // Submit
-        await page.getByRole('button', { name: 'Reassign All Items' }).click();
+        await page.getByTestId('reassign-items-button').click();
 
         // Should redirect to settings since all items are now assigned
         await page.waitForURL(`**/projects/${project.id}/settings`);
@@ -156,7 +156,7 @@ test.describe('Unassigned Items', () => {
         await mergeSelect.selectOption({ value: String(lineItem.id) });
 
         // Submit
-        await page.getByRole('button', { name: 'Reassign All Items' }).click();
+        await page.getByTestId('reassign-items-button').click();
 
         // Should redirect to settings since all items are now assigned
         await page.waitForURL(`**/projects/${project.id}/settings`);
