@@ -17,7 +17,6 @@ class SeedDemoProject
 {
     public function __construct(
         private SyncForecastPeriods $syncForecastPeriods,
-        private UpdateLineItemForecast $updateLineItemForecast,
     ) {}
 
     public function execute(): Project
@@ -255,15 +254,6 @@ class SeedDemoProject
         }
 
         return $items;
-    }
-
-    private function updateForecast(
-        LineItem $item,
-        ForecastPeriod $period,
-        float $ctdQty,
-        ?string $comments = null,
-    ): void {
-        $this->updateLineItemForecast->execute($item, $period, $ctdQty, $comments);
     }
 
     /**

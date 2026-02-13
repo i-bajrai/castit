@@ -81,7 +81,9 @@ test.describe('Project Creation', () => {
         await form.locator('input[name="name"]').fill('No Dates Project');
         await form.locator('input[name="original_budget"]').fill('100000');
 
-        // Leave start_date and end_date empty
+        // Clear the default dates
+        await page.getByTestId('start-date-input').clear();
+        await page.getByTestId('end-date-input').clear();
         await expect(page.getByTestId('start-date-input')).toHaveValue('');
         await expect(page.getByTestId('end-date-input')).toHaveValue('');
 
