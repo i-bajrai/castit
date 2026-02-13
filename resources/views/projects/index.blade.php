@@ -168,12 +168,12 @@
             <div class="mt-4 grid grid-cols-2 gap-4">
                 <div>
                     <x-input-label for="start_date" value="Start Date" />
-                    <x-text-input data-testid="start-date-input" id="start_date" name="start_date" type="date" class="mt-1 block w-full" :value="old('start_date')" />
+                    <x-text-input data-testid="start-date-input" id="start_date" name="start_date" type="date" class="mt-1 block w-full" :value="old('start_date', now()->format('Y-m-d'))" />
                     <x-input-error :messages="$errors->get('start_date')" class="mt-2" />
                 </div>
                 <div>
                     <x-input-label for="end_date" value="End Date" />
-                    <x-text-input data-testid="end-date-input" id="end_date" name="end_date" type="date" class="mt-1 block w-full" :value="old('end_date')" />
+                    <x-text-input data-testid="end-date-input" id="end_date" name="end_date" type="date" class="mt-1 block w-full" :value="old('end_date', now()->addYear()->format('Y-m-d'))" />
                     <x-input-error :messages="$errors->get('end_date')" class="mt-2" />
                 </div>
             </div>

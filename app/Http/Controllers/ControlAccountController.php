@@ -158,6 +158,15 @@ class ControlAccountController extends Controller
             'csv_file' => 'required|file|mimes:csv,txt|max:5120',
         ]);
 
+        $hasLineItems = $controlAccount->costPackages()
+            ->whereHas('lineItems')
+            ->exists();
+
+        if ($hasLineItems) {
+            return redirect()->route('projects.control-accounts.line-items', [$project, $controlAccount])
+                ->with('error', 'Cannot import CSV when line items already exist. Delete existing items first.');
+        }
+
         $currentPeriod = ForecastPeriod::where('project_id', $project->id)
             ->orderByDesc('period_date')
             ->first();
@@ -228,7 +237,7 @@ class ControlAccountController extends Controller
                         sortOrder: $liIndex,
                     );
 
-                    $lineItem = $createLineItem->execute($package, $liData, $currentPeriod);
+                    $lineItem = $createLineItem->execute($package, $liData);
 
                     if ($currentPeriod) {
                         LineItemForecast::create([

@@ -103,21 +103,20 @@
                                         const p = parseLine(l);
                                         return p[0] && p[0].toLowerCase() !== 'code' && p[0].toLowerCase() !== 'control_account_code';
                                     });
-                                    const isBudgetOnly = firstData && parseLine(firstData).length <= 3;
+                                    const isBudgetOnly = firstData && parseLine(firstData).length <= 2;
 
                                     if (isBudgetOnly) {
-                                        // Budget CSV: CODE,BASELINE_BUDGET,APPROVED_BUDGET
+                                        // Budget CSV: CODE,BUDGET
                                         for (let i = 0; i < lines.length; i++) {
                                             const parts = parseLine(lines[i]);
                                             if (parts[0].toLowerCase() === 'code') continue;
                                             if (!parts[0]) continue;
                                             const code = parts[0];
-                                            const baseline = parseFloat(parts[1]) || 0;
-                                            const approved = parseFloat(parts[2]) || 0;
+                                            const budget = parseFloat(parts[1]) || 0;
                                             for (const account of this.accounts) {
                                                 if (account.code === code) {
-                                                    account.baseline_budget = baseline;
-                                                    account.approved_budget = approved;
+                                                    account.baseline_budget = budget;
+                                                    account.approved_budget = budget;
                                                     break;
                                                 }
                                             }
@@ -192,6 +191,16 @@
                     >
                         @csrf
 
+                        @if($errors->any())
+                            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <ul class="text-sm text-red-600 list-disc list-inside">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                         <input
                             type="file"
                             accept=".csv"
@@ -221,35 +230,21 @@
                                             <span class="font-semibold text-gray-900" x-text="account.code"></span>
                                             <span class="ml-2 text-sm text-gray-600" x-text="account.description"></span>
                                         </div>
-                                        <div class="flex items-center gap-4 shrink-0">
-                                            <div class="flex items-center gap-1">
-                                                <label class="text-xs text-gray-500">Baseline $</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    x-model="account.baseline_budget"
-                                                    :name="`accounts[${ai}][baseline_budget]`"
-                                                    data-testid="baseline-budget-input"
-                                                    class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
-                                                    placeholder="0.00"
-                                                    required
-                                                />
-                                            </div>
-                                            <div class="flex items-center gap-1">
-                                                <label class="text-xs text-gray-500">Approved $</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    x-model="account.approved_budget"
-                                                    :name="`accounts[${ai}][approved_budget]`"
-                                                    data-testid="approved-budget-input"
-                                                    class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
-                                                    placeholder="0.00"
-                                                    required
-                                                />
-                                            </div>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <label class="text-xs text-gray-500">Budget $</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                x-model="account.baseline_budget"
+                                                x-on:input="account.approved_budget = account.baseline_budget"
+                                                :name="`accounts[${ai}][baseline_budget]`"
+                                                data-testid="baseline-budget-input"
+                                                class="w-32 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm text-right"
+                                                placeholder="0.00"
+                                                required
+                                            />
+                                            <input type="hidden" :name="`accounts[${ai}][approved_budget]`" x-model="account.approved_budget" />
                                         </div>
                                     </div>
 
@@ -268,23 +263,8 @@
                                         </div>
                                     </template>
 
-                                    <!-- Hidden inputs for packages/line items -->
-                                    <template x-for="(pkg, pi) in account.packages" :key="pi">
-                                        <div>
-                                            <input type="hidden" :name="`accounts[${ai}][packages][${pi}][item_no]`" :value="pkg.item_no">
-                                            <input type="hidden" :name="`accounts[${ai}][packages][${pi}][name]`" :value="pkg.name">
-                                            <template x-for="(li, lii) in pkg.line_items" :key="lii">
-                                                <div>
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][item_no]`" :value="li.item_no">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][description]`" :value="li.description">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][unit_of_measure]`" :value="li.unit_of_measure">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][qty]`" :value="li.qty">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][rate]`" :value="li.rate">
-                                                    <input type="hidden" :name="`accounts[${ai}][packages][${pi}][line_items][${lii}][amount]`" :value="li.amount">
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </template>
+                                    <!-- Packages serialised as JSON to avoid PHP max_input_vars limit -->
+                                    <input type="hidden" :name="`accounts[${ai}][packages_json]`" :value="JSON.stringify(account.packages)">
                                 </div>
                             </template>
                         </div>

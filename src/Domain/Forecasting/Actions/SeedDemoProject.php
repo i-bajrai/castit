@@ -7,8 +7,8 @@ use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\ControlAccount;
 use App\Models\CostPackage;
-use App\Models\ForecastPeriod;
 use App\Models\LineItem;
+use App\Models\LineItemForecast;
 use App\Models\Project;
 use App\Models\User;
 
@@ -16,7 +16,6 @@ class SeedDemoProject
 {
     public function __construct(
         private SyncForecastPeriods $syncForecastPeriods,
-        private UpdateLineItemForecast $updateLineItemForecast,
     ) {}
 
     public function execute(): Project
@@ -70,14 +69,14 @@ class SeedDemoProject
         // 2. Project — end date extends to current month so it's always editable
         $endDate = max(
             now()->startOfMonth(),
-            \Carbon\Carbon::parse('2025-12-01'),
+            \Carbon\Carbon::parse('2024-01-01'),
         );
 
         $project = Project::create([
             'company_id' => $company->id,
             'name' => 'PRISM Highway Extension',
             'original_budget' => 248117066,
-            'start_date' => '2024-01-01',
+            'start_date' => '2023-02-01',
             'end_date' => $endDate->format('Y-m-d'),
         ]);
 
@@ -99,8 +98,8 @@ class SeedDemoProject
 
         $pkg006 = $this->createPackage($ca, $project, '006', 'GNANGARA INTERSECTION (DESIGN PACKAGE 02 - E039)', 1);
         $items006 = $this->createLineItems($pkg006, [
-            ['007', 'TL5 BARRIER 295-CB-001, 1070 HIGH BARRIER', 'LM', 98, 342.00, 33516.00],
-            ['008', 'TL5 BARRIER 295-CB-002, 1070 HIGH BARRIER', 'LM', 116, 313.85, 36406.60],
+            ['007', 'TL5 BARRIER 295-CB-001, 1070 HIGH BARRIER', 'LM', 0, 342.00, 0],
+            ['008', 'TL5 BARRIER 295-CB-002, 1070 HIGH BARRIER', 'LM', 0, 313.85, 0],
         ]);
 
         $pkg009 = $this->createPackage($ca, $project, '009', 'WHITEMAN PARK (DESIGN PACKAGE 04 - E050)', 2);
@@ -113,23 +112,23 @@ class SeedDemoProject
         ]);
 
         $pkg003 = $this->createPackage($ca, $project, '3', 'Dulwich / Cheltenham Street', 3);
-        $this->createLineItems($pkg003, [
-            ['VO-003.01', 'TL5 BARRIER AX-CB-001, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-002, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['011', 'TL5 BARRIER AX-CB-003, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-004, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['014', 'W-BEAM TO CONCRETE TRANSITION', 'Each', 0, 0, 0],
+        $itemsDulwich = $this->createLineItems($pkg003, [
+            ['VO-003.01', 'TL5 BARRIER AX-CB-001, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-002, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['011', 'TL5 BARRIER AX-CB-003, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-004, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.01', 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['014', 'W-BEAM TO CONCRETE TRANSITION', 'Each', 0, 6305.00, 0],
         ]);
 
         $pkg004 = $this->createPackage($ca, $project, '4', 'Beechboro Road North', 4);
-        $this->createLineItems($pkg004, [
-            ['VO-003.03', 'TL5 BARRIER AA-CB-001, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.03', 'TL5 BARRIER AA-CB-002, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.03', 'TL5 BARRIER AA-CB-003, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            ['VO-003.03', 'TL5 BARRIER AA-CB-004, 1070 HIGH BARRIER', 'LM', 0, 0, 0],
-            [null, 'W-BEAM TO CONCRETE TRANSITION', 'Each', 0, 0, 0],
+        $itemsBeechboro = $this->createLineItems($pkg004, [
+            ['VO-003.03', 'TL5 BARRIER AA-CB-001, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-002, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-003, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            ['VO-003.03', 'TL5 BARRIER AA-CB-004, 1070 HIGH BARRIER', 'LM', 0, 345.25, 0],
+            [null, 'W-BEAM TO CONCRETE TRANSITION', 'Each', 0, 6305.00, 0],
         ]);
 
         $pkgBtB = $this->createPackage($ca, $project, 'BtB', 'SA5517B - W-BEAM TO CONCRETE BARRIER, TYPE T5', 5);
@@ -151,7 +150,8 @@ class SeedDemoProject
         $pkgOther = $this->createPackage($ca, $project, '3', 'OTHER', 7);
         $itemsOther = $this->createLineItems($pkgOther, [
             ['004', 'INTERNAL MOBILIZATION', 'EA', 4, 2425.00, 9700.00],
-            ['005', 'MEDICALS AND INDUCTIONS PER PERSON', 'EA', 4, 625.00, 3125.00],
+            ['005', 'MEDICALS AND INDUCTIONS PER PERSON', 'EA', 4, 625.00, 2500.00],
+            [null, 'CONCRETE CORRECTOR', 'Cu. M', 0, 245.00, 0],
         ]);
 
         // ============================================================
@@ -161,6 +161,7 @@ class SeedDemoProject
         $pkgVar = $this->createPackage($ca, $project, '4', 'VARIATION RATES', 8);
         $itemsVar = $this->createLineItems($pkgVar, [
             ['4.1', 'STANDARD SLIPFORM TL5 CONCRETE BARRIER', 'LM', 0, 291.75, 0],
+            [null, 'CONCRETE SUPPLY', 'Each', 0, 245.00, 0],
             ['4.3', 'PLANT OPENING FEE FOR OUTSIDE NORMAL HOURS', 'LM', 0, 2500.00, 0],
             ['4.4', 'NIGHT SHIFT / SUNDAY SURCHARGE', 'LM', 0, 0, 0],
             ['VO-005.02', 'Beechboro Radius curve barrier TL5', 'LM', 1, 27500.00, 27500.00],
@@ -209,46 +210,9 @@ class SeedDemoProject
         $this->syncForecastPeriods->execute($project);
 
         // ============================================================
-        // 5. FORECASTS — simulate partial completion for current period
+        // 5. Apply monthly CTD data from CSV
         // ============================================================
-        $period = $project->forecastPeriods()
-            ->where('period_date', now()->startOfMonth())
-            ->firstOrFail();
-
-        foreach ($items006 as $item) {
-            $this->updateForecast($item, $period, ctdQty: (float) $item->original_qty);
-        }
-
-        $wp009Ctd = [1500, 0, 88, 0, 0];
-        $wp009Comments = [null, 'Done by SVG', null, 'Done by SVG', null];
-        foreach ($items009 as $i => $item) {
-            $this->updateForecast($item, $period, ctdQty: $wp009Ctd[$i], comments: $wp009Comments[$i]);
-        }
-
-        $btbCtd = [3, 2, 2, 2, 0];
-        foreach ($itemsBtB as $i => $item) {
-            $this->updateForecast($item, $period, ctdQty: $btbCtd[$i]);
-        }
-
-        $prelimCtd = [4, 4, 0];
-        foreach ($itemsPrelim as $i => $item) {
-            $this->updateForecast($item, $period, ctdQty: $prelimCtd[$i]);
-        }
-
-        $otherCtd = [3, 4];
-        foreach ($itemsOther as $i => $item) {
-            $this->updateForecast($item, $period, ctdQty: $otherCtd[$i]);
-        }
-
-        $varCtd = [0, 0, 0, 1, 15, 0];
-        foreach ($itemsVar as $i => $item) {
-            $this->updateForecast($item, $period, ctdQty: $varCtd[$i]);
-        }
-
-        $unletCtd = [280, 60, 120, 1];
-        foreach ($itemsUnlet as $i => $item) {
-            $this->updateForecast($item, $period, ctdQty: $unletCtd[$i]);
-        }
+        $this->applyCsvForecasts($project, $items006, $itemsDulwich, $itemsBeechboro, $itemsPrelim, $itemsOther);
 
         return $project;
     }
@@ -291,12 +255,151 @@ class SeedDemoProject
         return $items;
     }
 
-    private function updateForecast(
-        LineItem $item,
-        ForecastPeriod $period,
-        float $ctdQty,
-        ?string $comments = null,
-    ): void {
-        $this->updateLineItemForecast->execute($item, $period, $ctdQty, $comments);
+    /**
+     * @param  array<int, LineItem>  $items006
+     * @param  array<int, LineItem>  $itemsDulwich
+     * @param  array<int, LineItem>  $itemsBeechboro
+     * @param  array<int, LineItem>  $itemsPrelim
+     * @param  array<int, LineItem>  $itemsOther
+     */
+    private function applyCsvForecasts(Project $project, array $items006, array $itemsDulwich, array $itemsBeechboro, array $itemsPrelim, array $itemsOther): void
+    {
+        $allItems = LineItem::whereHas('costPackage', fn ($q) => $q->where('project_id', $project->id))->get();
+        $periods = $project->forecastPeriods()->orderBy('period_date')->get();
+
+        // Build description → item lookup
+        $lookup = [];
+        foreach ($allItems as $item) {
+            if (! isset($lookup[$item->description])) {
+                $lookup[$item->description] = $item;
+            }
+        }
+
+        // Override duplicates with explicit references
+        $lookup['W-BEAM TO CONCRETE TRANSITION'] = $itemsDulwich[6];
+        $lookup['__beechboro_wbeam__'] = $itemsBeechboro[4];
+
+        // Alias map: CSV description → lookup key
+        $aliases = [
+            'BARRIER AV-CB-003 ALONG DRUMPELLIER DR, 1070 HIGH BARRIER' => 'TL5 BARRIER AV-CB-003 ALONG DRUMPELLIER DR, 1070 HIGH BARRIER<0.7mm',
+            'ANTI-GRAFFITI COATING ON THE TL-5 ON THE EGG-FARM DRIVEWAY' => 'ANTI-GRAFFITI COATING ON THE TL-5 ON THE EGG-FARM DRIVEWAY - 401AN00',
+            'W-BEAM TO CONCRETE TRANSITION(3X DUMPLIER)' => 'W-BEAM TO CONCRETE TRANSITION (3X DUMPLIER)',
+            'W-BEAM TO CONCRETE TRANSITION- GNANGARA' => 'W-BEAM TO CONCRETE TRANSITION - GNANGARA',
+            'W-BEAM TO CONCRETE TRANSITION (Beechboro)' => '__beechboro_wbeam__',
+            'SK97/00134 TALCO GROUP PTY LTD- Transition Gnangara - Beechboro' => 'SK97/00134 TALCO GROUP PTY LTD - Transition Gnangara - Beechboro',
+            'Concrete Barrier TL5 1270mm- AS per SIN-181-KER-00008' => 'Concrete Barrier TL5 1270mm - AS per SIN-181-KER-00008',
+            'SA5517B -  W-BEAM TO CONCRETE BARRIER, TYPE T5' => 'SA5517B - W-BEAM TO CONCRETE BARRIER, TYPE T5',
+        ];
+
+        // References for duplicate "AX-CB-005" items (first=qty74, second=qty79)
+        $axCb005First = $itemsDulwich[4];
+        $axCb005Second = $itemsDulwich[5];
+
+        // Parse CSV grouped by period
+        $csvData = [];
+        $handle = fopen(base_path('data/401CB00-ctd-feb2023.csv'), 'r');
+        fgetcsv($handle); // skip header
+        while (($row = fgetcsv($handle)) !== false) {
+            $csvData[$row[1]][] = ['description' => $row[0], 'ctd_qty' => (float) $row[2]];
+        }
+        fclose($handle);
+
+        // Bulk set fcac, rates, and previous values for all forecasts
+        foreach ($allItems as $item) {
+            LineItemForecast::where('line_item_id', $item->id)->update([
+                'fcac_qty' => $item->original_qty,
+                'fcac_rate' => $item->original_rate,
+                'ctd_rate' => $item->original_rate,
+                'ctc_rate' => $item->original_rate,
+                'previous_qty' => $item->original_qty,
+                'previous_rate' => $item->original_rate,
+            ]);
+        }
+
+        // FCAC overrides for variation items (original_qty=0 but forecast is non-zero)
+        $fcacOverrides = [
+            // Items 007/008 (Gnangara)
+            [$items006[0], 103],
+            [$items006[1], 120],
+            // Dulwich
+            [$itemsDulwich[0], 83],
+            [$itemsDulwich[1], 78],
+            [$itemsDulwich[2], 85],
+            [$itemsDulwich[3], 45],
+            [$itemsDulwich[4], 74],
+            [$itemsDulwich[5], 79],
+            [$itemsDulwich[6], 4],
+            // Beechboro
+            [$itemsBeechboro[0], 45],
+            [$itemsBeechboro[1], 46],
+            [$itemsBeechboro[2], 45],
+            [$itemsBeechboro[3], 53],
+            [$itemsBeechboro[4], 4],
+            // Prelim / Other with changed FCAC
+            [$itemsPrelim[0], 6],  // MOBILISATION
+            [$itemsPrelim[1], 6],  // DEMOBILISATION
+            [$itemsOther[1], 5],   // MEDICALS
+            [$itemsOther[2], 267.3], // CONCRETE CORRECTOR
+        ];
+
+        foreach ($fcacOverrides as [$item, $fcacQty]) {
+            LineItemForecast::where('line_item_id', $item->id)->update([
+                'fcac_qty' => $fcacQty,
+                'fcac_rate' => $item->original_rate,
+                'previous_qty' => $fcacQty,
+                'previous_rate' => $item->original_rate,
+            ]);
+        }
+
+        // Apply CTD from CSV per period
+        foreach ($csvData as $periodKey => $rows) {
+            $period = $periods->first(fn ($p) => $p->period_date->format('Y-m') === $periodKey);
+            if (! $period) {
+                continue;
+            }
+
+            $axCb005Count = 0;
+
+            foreach ($rows as $row) {
+                $desc = $row['description'];
+
+                // Handle duplicate AX-CB-005
+                if ($desc === 'TL5 BARRIER AX-CB-005, 1070 HIGH BARRIER') {
+                    $item = $axCb005Count === 0 ? $axCb005First : $axCb005Second;
+                    $axCb005Count++;
+                } else {
+                    $lookupKey = $aliases[$desc] ?? $desc;
+                    $item = $lookup[$lookupKey] ?? null;
+                }
+
+                if (! $item) {
+                    continue;
+                }
+
+                LineItemForecast::where('line_item_id', $item->id)
+                    ->where('forecast_period_id', $period->id)
+                    ->update(['ctd_qty' => $row['ctd_qty']]);
+            }
+        }
+
+        // Apply comments to the last period (Jan 2024) matching the spreadsheet
+        $lastHistorical = $periods->first(fn ($p) => $p->period_date->format('Y-m') === '2024-01');
+        if ($lastHistorical) {
+            $comments = [
+                'MOBILISATION' => 'Additional Mob at Gnangara and whiteman park',
+                'DEMOBILISATION' => 'Additional Mob at Gnangara and whiteman park',
+                'MEDICALS AND INDUCTIONS PER PERSON' => 'Extra concrete charges due to the footing being deeper than 200mm allowed on the contract.',
+                'ANTI-GRAFFITI COATING ON THE TL-5 ON THE EGG-FARM DRIVEWAY - 401AN00' => 'Cost to be transferred onto the Anti-Graffiti Contract',
+            ];
+
+            foreach ($comments as $desc => $comment) {
+                $item = $lookup[$desc] ?? null;
+                if ($item) {
+                    LineItemForecast::where('line_item_id', $item->id)
+                        ->where('forecast_period_id', $lastHistorical->id)
+                        ->update(['comments' => $comment]);
+                }
+            }
+        }
     }
 }
