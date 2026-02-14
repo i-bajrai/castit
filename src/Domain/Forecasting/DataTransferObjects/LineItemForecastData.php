@@ -6,7 +6,8 @@ readonly class LineItemForecastData
 {
     public function __construct(
         public int $lineItemId,
-        public float $ctdQty = 0,
+        public float $periodQty = 0,
+        public ?float $periodRate = null,
         public ?string $comments = null,
     ) {}
 }

@@ -243,8 +243,7 @@ class ControlAccountController extends Controller
                         LineItemForecast::create([
                             'line_item_id' => $lineItem->id,
                             'forecast_period_id' => $currentPeriod->id,
-                            'ctd_rate' => $item['rate'],
-                            'ctc_rate' => $item['rate'],
+                            'period_rate' => $item['rate'],
                             'fcac_qty' => $item['qty'],
                             'fcac_rate' => $item['rate'],
                         ]);

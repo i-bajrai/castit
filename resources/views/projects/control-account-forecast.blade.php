@@ -72,8 +72,9 @@
                                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                                             <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase w-14">UoM</th>
                                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Qty</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-blue-600 uppercase w-20 bg-blue-50">Prev Qty</th>
-                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">CTD Qty</th>
+                                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase w-20 bg-gray-100">Orig Rate</th>
+                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">This Month Qty</th>
+                                            <th class="px-3 py-3 text-right text-xs font-medium text-green-600 uppercase w-24 bg-green-50">Rate</th>
                                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase w-40">Comments</th>
                                         </tr>
                                     </thead>
@@ -81,25 +82,31 @@
                                         @foreach($package->lineItems as $item)
                                             @php
                                                 $forecast = $item->forecasts->first();
+                                                $effectiveRate = ($forecast && (float) $forecast->period_rate > 0)
+                                                    ? (float) $forecast->period_rate
+                                                    : (float) $item->original_rate;
+                                                $rateChanged = $effectiveRate != (float) $item->original_rate;
                                             @endphp
                                             @if($isEditable)
                                                 <tr class="hover:bg-gray-50"
                                                     x-data="{
-                                                        ctdQty: {{ $forecast->ctd_qty ?? 0 }},
+                                                        periodQty: {{ $forecast->period_qty ?? 0 }},
+                                                        periodRate: {{ $effectiveRate }},
                                                     }">
                                                     <td class="px-3 py-2 text-sm text-gray-600">{{ $item->item_no }}</td>
                                                     <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
                                                     <td class="px-3 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
                                                     <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">{{ number_format($item->original_qty, 1) }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">{{ number_format($forecast->previous_qty ?? 0, 1) }}</td>
+                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
 
-                                                    {{-- CTD Qty (EDITABLE) --}}
+                                                    {{-- This Month Qty (EDITABLE) --}}
                                                     <td class="px-1 py-1 bg-green-50/30"
                                                         x-data="{
-                                                            editQty: ctdQty,
+                                                            editQty: periodQty,
+                                                            editRate: periodRate,
                                                             saving: false,
                                                             error: false,
-                                                            async saveCtdQty() {
+                                                            async savePeriodData() {
                                                                 @if($forecast?->id)
                                                                     this.saving = true;
                                                                     this.error = false;
@@ -110,10 +117,11 @@
                                                                                 'Content-Type': 'application/json',
                                                                                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                                                                             },
-                                                                            body: JSON.stringify({ ctd_qty: this.editQty }),
+                                                                            body: JSON.stringify({ period_qty: this.editQty, period_rate: this.editRate }),
                                                                         });
                                                                         if (!res.ok) throw new Error();
-                                                                        ctdQty = this.editQty;
+                                                                        periodQty = this.editQty;
+                                                                        periodRate = this.editRate;
                                                                         this.$dispatch('close');
                                                                     } catch {
                                                                         this.error = true;
@@ -121,32 +129,49 @@
                                                                         this.saving = false;
                                                                     }
                                                                 @else
-                                                                    ctdQty = this.editQty;
+                                                                    periodQty = this.editQty;
+                                                                    periodRate = this.editRate;
                                                                     this.$dispatch('close');
                                                                 @endif
                                                             }
                                                         }"
-                                                        x-on:open-modal.window="if ($event.detail === 'ctd-qty-{{ $item->id }}') editQty = ctdQty">
+                                                        x-on:open-modal.window="if ($event.detail === 'period-qty-{{ $item->id }}') { editQty = periodQty; editRate = periodRate; }">
                                                         <button type="button"
-                                                            x-on:click.prevent="$dispatch('open-modal', 'ctd-qty-{{ $item->id }}')"
+                                                            x-on:click.prevent="$dispatch('open-modal', 'period-qty-{{ $item->id }}')"
                                                             class="w-full text-sm text-right px-2 py-1 rounded border border-gray-300 hover:border-green-400 hover:bg-green-50 transition"
-                                                            x-text="ctdQty">
+                                                            x-text="periodQty">
                                                         </button>
-                                                        <x-modal name="ctd-qty-{{ $item->id }}" :show="false" maxWidth="sm">
+                                                        <x-modal name="period-qty-{{ $item->id }}" :show="false" maxWidth="sm">
                                                             <div class="p-6">
-                                                                <h2 class="text-lg font-medium text-gray-900 mb-1">CTD Qty - {{ $item->description }}</h2>
+                                                                <h2 class="text-lg font-medium text-gray-900 mb-1">This Month - {{ $item->description }}</h2>
                                                                 <p class="text-sm text-gray-500 mb-4">Item {{ $item->item_no }}</p>
-                                                                <input type="number" step="0.01"
-                                                                    x-model.number="editQty"
-                                                                    x-on:keydown.enter.prevent="saveCtdQty()"
-                                                                    class="w-full text-sm border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500">
+                                                                <div class="space-y-3">
+                                                                    <div>
+                                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                                                                        <input type="number" step="0.01"
+                                                                            x-model.number="editQty"
+                                                                            class="w-full text-sm border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500">
+                                                                    </div>
+                                                                    <div>
+                                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
+                                                                        <input type="number" step="0.01"
+                                                                            x-model.number="editRate"
+                                                                            x-on:keydown.enter.prevent="savePeriodData()"
+                                                                            class="w-full text-sm border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500">
+                                                                    </div>
+                                                                </div>
                                                                 <p x-show="error" x-cloak class="mt-2 text-sm text-red-600">Failed to save. Please try again.</p>
                                                                 <div class="mt-4 flex justify-end gap-2">
                                                                     <span x-show="saving" class="text-sm text-gray-400 self-center">Saving...</span>
-                                                                    <x-primary-button type="button" x-on:click="saveCtdQty()" x-bind:disabled="saving">Save</x-primary-button>
+                                                                    <x-primary-button type="button" x-on:click="savePeriodData()" x-bind:disabled="saving">Save</x-primary-button>
                                                                 </div>
                                                             </div>
                                                         </x-modal>
+                                                    </td>
+
+                                                    {{-- Rate (display, highlighted if changed) --}}
+                                                    <td class="px-3 py-2 text-sm text-right {{ $rateChanged ? 'bg-amber-50 text-amber-700 font-medium' : 'bg-green-50/30 text-gray-900' }}"
+                                                        x-text="'$' + periodRate.toFixed(2)">
                                                     </td>
 
                                                     {{-- Comments (EDITABLE) --}}
@@ -211,8 +236,9 @@
                                                     <td class="px-3 py-2 text-sm text-gray-900">{{ $item->description }}</td>
                                                     <td class="px-3 py-2 text-sm text-gray-500 text-center">{{ $item->unit_of_measure }}</td>
                                                     <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">{{ number_format($item->original_qty, 1) }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">{{ number_format($forecast->previous_qty ?? 0, 1) }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">{{ number_format($forecast->ctd_qty ?? 0, 1) }}</td>
+                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
+                                                    <td class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">{{ number_format($forecast->period_qty ?? 0, 1) }}</td>
+                                                    <td class="px-3 py-2 text-sm text-right {{ $rateChanged ? 'bg-amber-50 text-amber-700 font-medium' : 'bg-green-50/50 text-gray-900' }}">${{ number_format($effectiveRate, 2) }}</td>
                                                     <td class="px-3 py-2 text-sm text-gray-500 max-w-xs truncate">{{ $forecast->comments ?? '' }}</td>
                                                 </tr>
                                             @endif

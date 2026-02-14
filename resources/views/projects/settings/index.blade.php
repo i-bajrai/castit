@@ -157,7 +157,7 @@
                         downloadSample() {
                             const items = @js($sampleLineItems->map(fn ($i) => ['item_no' => $i->item_no, 'description' => $i->description]));
                             const periods = @js($samplePeriods);
-                            let csv = 'description,period,ctd_qty\n';
+                            let csv = 'description,period,period_qty\n';
                             items.forEach(item => {
                                 periods.forEach(period => {
                                     csv += '\"' + item.description.replace(/\"/g, '\"\"') + '\",' + period + ',0\n';

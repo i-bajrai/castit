@@ -138,14 +138,19 @@
                             }
                             $caOriginal += $li->original_amount;
                             $caItemCount++;
-                            $f = $li->forecasts->first();
-                            if ($f) {
-                                $caPrevious += $f->previous_amount ?? 0;
-                                $caCtd += $f->ctd_amount ?? 0;
-                                $caCtc += $f->ctc_amount ?? 0;
-                                $caFcac += $f->fcac_amount ?? 0;
-                                $caVariance += $f->variance ?? 0;
+                            $liCtd = $li->forecasts->sum('period_amount');
+                            $liCur = $period ? $li->forecasts->firstWhere('forecast_period_id', $period->id) : null;
+                            $liFcac = $liCur ? (float) $liCur->fcac_amount : 0.0;
+                            $liPrevFcac = 0.0;
+                            if ($previousPeriod ?? null) {
+                                $pf = $li->forecasts->firstWhere('forecast_period_id', $previousPeriod->id);
+                                $liPrevFcac = $pf ? (float) $pf->fcac_amount : 0.0;
                             }
+                            $caCtd += $liCtd;
+                            $caCtc += $liFcac - $liCtd;
+                            $caFcac += $liFcac;
+                            $caPrevious += $liPrevFcac;
+                            $caVariance += $liFcac - $liPrevFcac;
                         }
                     }
                 @endphp
@@ -258,16 +263,45 @@
                                                 @foreach($package->lineItems as $item)
                                                     @php
                                                         $existedInPeriod = !$period || $item->existedInPeriod($period);
-                                                        $forecast = $item->forecasts->first();
+                                                        // Compute cumulative CTD from incremental period data
+                                                        $itemCtdQty = (float) $item->forecasts->sum('period_qty');
+                                                        $itemCtdAmount = (float) $item->forecasts->sum('period_amount');
+                                                        // Current rate = most recent period's rate
+                                                        $currentForecast = $period ? $item->forecasts->firstWhere('forecast_period_id', $period->id) : null;
+                                                        $currentRate = $currentForecast ? (float) $currentForecast->period_rate : (float) $item->original_rate;
+                                                        // FCAC from current period
+                                                        $itemFcacQty = $currentForecast ? (float) $currentForecast->fcac_qty : 0.0;
+                                                        $itemFcacRate = $currentForecast ? (float) $currentForecast->fcac_rate : 0.0;
+                                                        $itemFcacAmount = $currentForecast ? (float) $currentForecast->fcac_amount : 0.0;
+                                                        // CTC
+                                                        $itemCtcQty = $itemFcacQty - $itemCtdQty;
+                                                        $itemCtcRate = $itemFcacRate;
+                                                        $itemCtcAmount = $itemFcacAmount - $itemCtdAmount;
+                                                        // Previous FCAC
+                                                        $itemPrevFcac = 0.0;
+                                                        $itemPrevFcacQty = 0.0;
+                                                        $itemPrevFcacRate = 0.0;
+                                                        if ($previousPeriod ?? null) {
+                                                            $prevF = $item->forecasts->firstWhere('forecast_period_id', $previousPeriod->id);
+                                                            if ($prevF) {
+                                                                $itemPrevFcac = (float) $prevF->fcac_amount;
+                                                                $itemPrevFcacQty = (float) $prevF->fcac_qty;
+                                                                $itemPrevFcacRate = (float) $prevF->fcac_rate;
+                                                            }
+                                                        }
+                                                        $itemVariance = $itemFcacAmount - $itemPrevFcac;
+                                                        // Rate changed? Multiple distinct rates across periods
+                                                        $distinctRates = $item->forecasts->where('period_qty', '>', 0)->pluck('period_rate')->unique();
+                                                        $rateChanged = $distinctRates->count() > 1;
+                                                        // Comments from current period
+                                                        $itemComments = $currentForecast?->comments ?? '';
                                                         if ($existedInPeriod) {
                                                             $pkgOriginal += $item->original_amount;
-                                                            if ($forecast) {
-                                                                $pkgPrevious += $forecast->previous_amount ?? 0;
-                                                                $pkgCtd += $forecast->ctd_amount ?? 0;
-                                                                $pkgCtc += $forecast->ctc_amount ?? 0;
-                                                                $pkgFcac += $forecast->fcac_amount ?? 0;
-                                                                $pkgVariance += $forecast->variance ?? 0;
-                                                            }
+                                                            $pkgPrevious += $itemPrevFcac;
+                                                            $pkgCtd += $itemCtdAmount;
+                                                            $pkgCtc += $itemCtcAmount;
+                                                            $pkgFcac += $itemFcacAmount;
+                                                            $pkgVariance += $itemVariance;
                                                         }
                                                     @endphp
                                                     @if(!$existedInPeriod)
@@ -285,31 +319,90 @@
                                                         <td x-show="$store.columns.orig_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">{{ number_format($item->original_qty, 1) }}</td>
                                                         <td x-show="$store.columns.orig_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-gray-50">${{ number_format($item->original_rate, 2) }}</td>
                                                         <td x-show="$store.columns.orig_amount" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-gray-50">${{ number_format($item->original_amount, 2) }}</td>
-                                                        @if($forecast)
-                                                            <td x-show="$store.columns.prev_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">{{ number_format($forecast->previous_qty ?? 0, 1) }}</td>
-                                                            <td x-show="$store.columns.prev_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_rate ?? 0, 2) }}</td>
-                                                            <td x-show="$store.columns.prev_fcac" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($forecast->previous_amount, 2) }}</td>
-                                                            <td x-show="$store.columns.ctd_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">{{ number_format($forecast->ctd_qty ?? 0, 1) }}</td>
-                                                            <td x-show="$store.columns.ctd_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($item->original_rate, 2) }}</td>
-                                                            <td x-show="$store.columns.ctd_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($forecast->ctd_amount, 2) }}</td>
-                                                            <td x-show="$store.columns.ctc_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">{{ number_format($forecast->ctc_qty ?? 0, 1) }}</td>
-                                                            <td x-show="$store.columns.ctc_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->ctc_rate ?? 0, 2) }}</td>
-                                                            <td x-show="$store.columns.ctc_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($forecast->ctc_amount, 2) }}</td>
-                                                            <td x-show="$store.columns.fcac_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/50">{{ number_format($forecast->fcac_qty ?? 0, 1) }}</td>
-                                                            <td x-show="$store.columns.fcac_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->fcac_rate ?? 0, 2) }}</td>
-                                                            <td x-show="$store.columns.fcac" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50">${{ number_format($forecast->fcac_amount, 2) }}</td>
-                                                            <td x-show="$store.columns.variance" class="px-3 py-2 text-sm text-right {{ ($forecast->variance ?? 0) < 0 ? 'text-red-600 font-medium' : 'text-gray-900' }}">
-                                                                @if(($forecast->variance ?? 0) != 0)
-                                                                    ${{ number_format($forecast->variance, 2) }}
+                                                        @if($currentForecast || $item->forecasts->isNotEmpty())
+                                                            <td x-show="$store.columns.prev_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">{{ number_format($itemPrevFcacQty, 1) }}</td>
+                                                            <td x-show="$store.columns.prev_rate" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($itemPrevFcacRate, 2) }}</td>
+                                                            <td x-show="$store.columns.prev_fcac" class="px-3 py-2 text-sm text-gray-900 text-right bg-blue-50/50">${{ number_format($itemPrevFcac, 2) }}</td>
+                                                            <td x-show="$store.columns.ctd_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">{{ number_format($itemCtdQty, 1) }}</td>
+                                                            <td x-show="$store.columns.ctd_rate" class="px-3 py-2 text-sm text-right bg-green-50/50 {{ $rateChanged ? 'text-amber-700 font-medium' : 'text-gray-900' }}">
+                                                                ${{ number_format($currentRate, 2) }}
+                                                                @if($rateChanged)
+                                                                    <button x-on:click="$dispatch('open-modal', 'rate-history-{{ $item->id }}')"
+                                                                            class="text-amber-500 hover:text-amber-700 ml-0.5"
+                                                                            title="Rate changed during project">*</button>
+                                                                @endif
+                                                            </td>
+                                                            <td x-show="$store.columns.ctd_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-green-50/50">${{ number_format($itemCtdAmount, 2) }}</td>
+                                                            <td x-show="$store.columns.ctc_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">{{ number_format($itemCtcQty, 1) }}</td>
+                                                            <td x-show="$store.columns.ctc_rate" class="px-3 py-2 text-sm text-right bg-amber-50/50 {{ $rateChanged ? 'text-amber-700 font-medium' : 'text-gray-900' }}">
+                                                                ${{ number_format($itemCtcRate, 2) }}
+                                                                @if($rateChanged)
+                                                                    <button x-on:click="$dispatch('open-modal', 'rate-history-{{ $item->id }}')"
+                                                                            class="text-amber-500 hover:text-amber-700 ml-0.5"
+                                                                            title="Rate changed during project">*</button>
+                                                                @endif
+                                                            </td>
+                                                            <td x-show="$store.columns.ctc_amount" class="px-3 py-2 text-sm text-gray-900 text-right bg-amber-50/50">${{ number_format($itemCtcAmount, 2) }}</td>
+                                                            <td x-show="$store.columns.fcac_qty" class="px-3 py-2 text-sm text-gray-900 text-right bg-indigo-50/50">{{ number_format($itemFcacQty, 1) }}</td>
+                                                            <td x-show="$store.columns.fcac_rate" class="px-3 py-2 text-sm text-right bg-indigo-50/50 {{ $rateChanged ? 'text-amber-700 font-medium' : 'text-gray-900' }}">
+                                                                ${{ number_format($itemFcacRate, 2) }}
+                                                                @if($rateChanged)
+                                                                    <button x-on:click="$dispatch('open-modal', 'rate-history-{{ $item->id }}')"
+                                                                            class="text-amber-500 hover:text-amber-700 ml-0.5"
+                                                                            title="Rate changed during project">*</button>
+                                                                @endif
+                                                            </td>
+                                                            <td x-show="$store.columns.fcac" class="px-3 py-2 text-sm font-medium text-gray-900 text-right bg-indigo-50/50">${{ number_format($itemFcacAmount, 2) }}</td>
+                                                            <td x-show="$store.columns.variance" class="px-3 py-2 text-sm text-right {{ $itemVariance < 0 ? 'text-red-600 font-medium' : 'text-gray-900' }}">
+                                                                @if($itemVariance != 0)
+                                                                    ${{ number_format($itemVariance, 2) }}
                                                                 @else
                                                                     -
                                                                 @endif
                                                             </td>
-                                                            <td x-show="$store.columns.comments" class="px-3 py-2 text-sm text-gray-500 max-w-xs truncate">{{ $forecast->comments }}</td>
+                                                            <td x-show="$store.columns.comments" class="px-3 py-2 text-sm text-gray-500 max-w-xs truncate">{{ $itemComments }}</td>
                                                         @else
                                                             <td :colspan="$store.columns.visibleDataCount - ($store.columns.orig_qty ? 1 : 0) - ($store.columns.orig_rate ? 1 : 0) - ($store.columns.orig_amount ? 1 : 0)" class="px-3 py-2 text-sm text-gray-400 text-center">No forecast data</td>
                                                         @endif
                                                     </tr>
+                                                    {{-- Rate History Modal --}}
+                                                    @if($rateChanged)
+                                                        <x-modal name="rate-history-{{ $item->id }}" :show="false" maxWidth="md">
+                                                            <div class="p-6">
+                                                                <h2 class="text-lg font-medium text-gray-900 mb-4">Rate History &mdash; {{ $item->description }}</h2>
+                                                                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th class="text-left py-2 px-2">Period</th>
+                                                                            <th class="text-right py-2 px-2">Qty</th>
+                                                                            <th class="text-right py-2 px-2">Rate</th>
+                                                                            <th class="text-right py-2 px-2">Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody class="divide-y divide-gray-100">
+                                                                        @foreach($item->forecasts->sortBy(fn($f) => $f->forecastPeriod->period_date) as $pf)
+                                                                            @if((float) $pf->period_qty > 0)
+                                                                                <tr @class(['bg-amber-50' => (float) $pf->period_rate != (float) $item->original_rate])>
+                                                                                    <td class="py-2 px-2">{{ $pf->forecastPeriod->period_date->format('M Y') }}</td>
+                                                                                    <td class="text-right py-2 px-2">{{ number_format($pf->period_qty, 1) }}</td>
+                                                                                    <td class="text-right py-2 px-2">${{ number_format($pf->period_rate, 2) }}</td>
+                                                                                    <td class="text-right py-2 px-2">${{ number_format($pf->period_amount, 2) }}</td>
+                                                                                </tr>
+                                                                            @endif
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                    <tfoot class="font-semibold border-t-2">
+                                                                        <tr>
+                                                                            <td class="py-2 px-2">Total (CTD)</td>
+                                                                            <td class="text-right py-2 px-2">{{ number_format($itemCtdQty, 1) }}</td>
+                                                                            <td></td>
+                                                                            <td class="text-right py-2 px-2">${{ number_format($itemCtdAmount, 2) }}</td>
+                                                                        </tr>
+                                                                    </tfoot>
+                                                                </table>
+                                                            </div>
+                                                        </x-modal>
+                                                    @endif
                                                     @endif
                                                 @endforeach
                                             </tbody>

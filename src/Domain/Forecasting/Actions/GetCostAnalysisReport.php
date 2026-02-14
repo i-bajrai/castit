@@ -33,14 +33,21 @@ class GetCostAnalysisReport
                 ->first();
         }
 
+        // Load all forecasts up to the current period for CTD summation
+        $periodIdsUpTo = collect();
+        if ($period) {
+            $periodIdsUpTo = $project->forecastPeriods()
+                ->where('period_date', '<=', $period->period_date)
+                ->pluck('id');
+        }
+
         $accounts = $project->controlAccounts()
-            ->with(['costPackages' => function ($query) use ($period, $previousPeriod): void {
-                $query->with(['lineItems' => function ($q) use ($period, $previousPeriod): void {
+            ->with(['costPackages' => function ($query) use ($periodIdsUpTo): void {
+                $query->with(['lineItems' => function ($q) use ($periodIdsUpTo): void {
                     $q->with('createdInPeriod');
-                    $periodIds = collect([$period?->id, $previousPeriod?->id])->filter()->values();
-                    if ($periodIds->isNotEmpty()) {
-                        $q->with(['forecasts' => function ($fq) use ($periodIds): void {
-                            $fq->whereIn('forecast_period_id', $periodIds);
+                    if ($periodIdsUpTo->isNotEmpty()) {
+                        $q->with(['forecasts' => function ($fq) use ($periodIdsUpTo): void {
+                            $fq->whereIn('forecast_period_id', $periodIdsUpTo);
                         }]);
                     }
                 }]);
@@ -66,8 +73,8 @@ class GetCostAnalysisReport
             $ctd = 0.0;
             $ctc = 0.0;
             $fcac = 0.0;
-            $prevCtd = 0.0;
             $prevFcac = 0.0;
+            $monthlyCostTotal = 0.0;
             $comments = [];
 
             foreach ($account->costPackages as $pkg) {
@@ -76,27 +83,31 @@ class GetCostAnalysisReport
                         continue;
                     }
 
+                    // CTD = sum of all period amounts up to selected
+                    $itemCtd = (float) $item->forecasts->sum('period_amount');
+                    $ctd += $itemCtd;
+
                     $currentForecast = $period
                         ? $item->forecasts->firstWhere('forecast_period_id', $period->id)
                         : null;
 
-                    $previousForecast = $previousPeriod
-                        ? $item->forecasts->firstWhere('forecast_period_id', $previousPeriod->id)
-                        : null;
-
                     if ($currentForecast) {
-                        $ctd += (float) $currentForecast->ctd_amount;
-                        $ctc += (float) $currentForecast->ctc_amount;
-                        $fcac += (float) $currentForecast->fcac_amount;
+                        $itemFcac = (float) $currentForecast->fcac_amount;
+                        $fcac += $itemFcac;
+                        $ctc += $itemFcac - $itemCtd;
+                        // Monthly cost = this period's amount
+                        $monthlyCostTotal += (float) $currentForecast->period_amount;
 
                         if ($currentForecast->comments) {
                             $comments[] = $currentForecast->comments;
                         }
                     }
 
-                    if ($previousForecast) {
-                        $prevCtd += (float) $previousForecast->ctd_amount;
-                        $prevFcac += (float) $previousForecast->fcac_amount;
+                    if ($previousPeriod) {
+                        $previousForecast = $item->forecasts->firstWhere('forecast_period_id', $previousPeriod->id);
+                        if ($previousForecast) {
+                            $prevFcac += (float) $previousForecast->fcac_amount;
+                        }
                     }
                 }
             }
@@ -118,7 +129,7 @@ class GetCostAnalysisReport
             }
 
             $monthBudgetMovement = $approvedBudget - $lastMonthApprovedBudget;
-            $monthlyCost = $ctd - $prevCtd;
+            $monthlyCost = $monthlyCostTotal;
             $lastMonthEfc = $prevFcac;
             $monthlyEfcMovement = $fcac - $prevFcac;
 

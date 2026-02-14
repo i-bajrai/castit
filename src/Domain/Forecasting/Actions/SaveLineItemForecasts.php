@@ -23,8 +23,9 @@ class SaveLineItemForecasts
             $this->updateLineItemForecast->execute(
                 $lineItem,
                 $period,
-                $data->ctdQty,
-                $data->comments,
+                $data->periodQty,
+                $data->periodRate,
+                comments: $data->comments,
             );
         }
     }

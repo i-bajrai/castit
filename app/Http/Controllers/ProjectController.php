@@ -247,6 +247,7 @@ class ProjectController extends Controller
         return view('projects.reports.cost-detail', [
             'project' => $summary['project'],
             'period' => $summary['period'],
+            'previousPeriod' => $summary['previousPeriod'],
             'accounts' => $summary['accounts'],
             'totals' => $summary['totals'],
             'allPeriods' => $allPeriods,
@@ -275,6 +276,7 @@ class ProjectController extends Controller
             'accounts' => $summary['accounts'],
             'totals' => $summary['totals'],
             'period' => $summary['period'],
+            'previousPeriod' => $summary['previousPeriod'],
         ]);
     }
 

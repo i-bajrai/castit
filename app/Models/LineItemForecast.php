@@ -10,13 +10,10 @@ class LineItemForecast extends Model
     protected $fillable = [
         'line_item_id',
         'forecast_period_id',
-        'previous_qty',
-        'previous_rate',
-        'ctd_qty',
-        'ctd_rate',
+        'period_qty',
+        'period_rate',
         'fcac_qty',
         'fcac_rate',
-        'ctc_rate',
         'comments',
     ];
 

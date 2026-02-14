@@ -27,17 +27,28 @@ class GetPeriodMovementReport
                 ->first();
         }
 
-        $periodIds = collect([$period?->id, $previousPeriod?->id])->filter()->values();
+        $periodIdsUpTo = collect();
+        $previousPeriodIdsUpTo = collect();
+        if ($period) {
+            $periodIdsUpTo = $project->forecastPeriods()
+                ->where('period_date', '<=', $period->period_date)
+                ->pluck('id');
+        }
+        if ($previousPeriod) {
+            $previousPeriodIdsUpTo = $project->forecastPeriods()
+                ->where('period_date', '<=', $previousPeriod->period_date)
+                ->pluck('id');
+        }
 
         $accounts = $project->controlAccounts()
-            ->with(['costPackages' => function ($query) use ($periodIds): void {
+            ->with(['costPackages' => function ($query) use ($periodIdsUpTo): void {
                 $query->orderBy('sort_order');
-                $query->with(['lineItems' => function ($q) use ($periodIds): void {
+                $query->with(['lineItems' => function ($q) use ($periodIdsUpTo): void {
                     $q->orderBy('sort_order');
                     $q->with('createdInPeriod');
-                    if ($periodIds->isNotEmpty()) {
-                        $q->with(['forecasts' => function ($fq) use ($periodIds): void {
-                            $fq->whereIn('forecast_period_id', $periodIds);
+                    if ($periodIdsUpTo->isNotEmpty()) {
+                        $q->with(['forecasts' => function ($fq) use ($periodIdsUpTo): void {
+                            $fq->whereIn('forecast_period_id', $periodIdsUpTo);
                         }]);
                     }
                 }]);
@@ -72,13 +83,17 @@ class GetPeriodMovementReport
                         ? $item->forecasts->firstWhere('forecast_period_id', $previousPeriod->id)
                         : null;
 
-                    $prevCtd = $previousForecast ? (float) $previousForecast->ctd_amount : 0.0;
-                    $prevCtc = $previousForecast ? (float) $previousForecast->ctc_amount : 0.0;
-                    $prevFcac = $previousForecast ? (float) $previousForecast->fcac_amount : 0.0;
-
-                    $currCtd = $currentForecast ? (float) $currentForecast->ctd_amount : 0.0;
-                    $currCtc = $currentForecast ? (float) $currentForecast->ctc_amount : 0.0;
+                    // Current cumulative CTD = sum all periods up to current
+                    $currCtd = (float) $item->forecasts->sum('period_amount');
                     $currFcac = $currentForecast ? (float) $currentForecast->fcac_amount : 0.0;
+                    $currCtc = $currFcac - $currCtd;
+
+                    // Previous cumulative CTD = sum all periods up to previous
+                    $prevCtd = (float) $item->forecasts
+                        ->filter(fn ($f) => $previousPeriodIdsUpTo->contains($f->forecast_period_id))
+                        ->sum('period_amount');
+                    $prevFcac = $previousForecast ? (float) $previousForecast->fcac_amount : 0.0;
+                    $prevCtc = $prevFcac - $prevCtd;
 
                     $ctdDelta = $currCtd - $prevCtd;
                     $ctcDelta = $currCtc - $prevCtc;

@@ -58,7 +58,7 @@
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium text-gray-900 truncate">{{ $item->description }}</p>
                                         @php
-                                            $periodsWithData = $item->forecasts->filter(fn($f) => (float) $f->ctd_qty !== 0.0)->count();
+                                            $periodsWithData = $item->forecasts->filter(fn($f) => (float) $f->period_qty !== 0.0)->count();
                                             $totalPeriods = $item->forecasts->count();
                                         @endphp
                                         <p class="text-xs text-gray-500 mt-0.5">
