@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { create, loginWithCompany } from './utils/laravel-helpers';
 
-test.describe('Column Filter', () => {
+test.describe('Column Filter (Cost Detail Report)', () => {
     async function seedProjectWithLineItems(page) {
         const { user, company } = await loginWithCompany(page);
 
@@ -43,19 +43,28 @@ test.describe('Column Filter', () => {
             sort_order: 0,
         });
 
+        await create(page, 'App\\Models\\LineItemForecast', {
+            line_item_id: lineItem.id,
+            forecast_period_id: period.id,
+            period_qty: 10,
+            period_rate: 250,
+            fcac_qty: 100,
+            fcac_rate: 250,
+        });
+
         return { user, project, ca, pkg, period, lineItem };
     }
 
-    /** Navigate to the project page with a clean localStorage */
-    async function gotoProject(page, projectId: number) {
-        await page.goto(`/projects/${projectId}`);
+    /** Navigate to the cost detail report with a clean localStorage */
+    async function gotoCostDetailReport(page, projectId: number) {
+        await page.goto(`/projects/${projectId}/cost-detail-report`);
         await page.evaluate(() => localStorage.removeItem('projectColumnFilter'));
         await page.reload();
     }
 
     test('columns button opens the filter dropdown', async ({ page }) => {
         const { project } = await seedProjectWithLineItems(page);
-        await gotoProject(page, project.id);
+        await gotoCostDetailReport(page, project.id);
 
         // Dropdown should not be visible initially
         await expect(page.getByText('Toggle Columns')).toBeHidden();
@@ -73,7 +82,7 @@ test.describe('Column Filter', () => {
 
     test('default columns are visible and hidden correctly', async ({ page }) => {
         const { project } = await seedProjectWithLineItems(page);
-        await gotoProject(page, project.id);
+        await gotoCostDetailReport(page, project.id);
 
         // Expand the control account accordion to reveal the table
         await page.getByText('401CB00').click();
@@ -93,7 +102,7 @@ test.describe('Column Filter', () => {
 
     test('toggling a column off hides it from the table', async ({ page }) => {
         const { project } = await seedProjectWithLineItems(page);
-        await gotoProject(page, project.id);
+        await gotoCostDetailReport(page, project.id);
 
         // Expand the control account accordion
         await page.getByText('401CB00').click();
@@ -111,7 +120,7 @@ test.describe('Column Filter', () => {
 
     test('toggling a column on makes it visible in the table', async ({ page }) => {
         const { project } = await seedProjectWithLineItems(page);
-        await gotoProject(page, project.id);
+        await gotoCostDetailReport(page, project.id);
 
         // Expand the control account accordion
         await page.getByText('401CB00').click();
@@ -129,7 +138,7 @@ test.describe('Column Filter', () => {
 
     test('column preferences persist after page reload', async ({ page }) => {
         const { project } = await seedProjectWithLineItems(page);
-        await gotoProject(page, project.id);
+        await gotoCostDetailReport(page, project.id);
 
         // Expand the control account accordion
         await page.getByText('401CB00').click();
@@ -156,7 +165,7 @@ test.describe('Column Filter', () => {
 
     test('clicking away from dropdown closes it', async ({ page }) => {
         const { project } = await seedProjectWithLineItems(page);
-        await gotoProject(page, project.id);
+        await gotoCostDetailReport(page, project.id);
 
         // Open dropdown
         await page.getByRole('button', { name: 'Columns' }).click();
