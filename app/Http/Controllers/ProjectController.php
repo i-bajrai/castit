@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\ControlAccount;
 use App\Models\ForecastPeriod;
 use App\Models\Project;
 use Domain\Forecasting\Actions\CreateProject;
@@ -173,6 +174,83 @@ class ProjectController extends Controller
         $action->execute($project, $validated['accounts']);
 
         return redirect()->route('projects.show', $project);
+    }
+
+    public function controlAccountForecast(
+        Request $request,
+        Project $project,
+        ControlAccount $controlAccount,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        if ($period === null) {
+            $period = $project->forecastPeriods()
+                ->where('period_date', now()->startOfMonth())
+                ->first()
+                ?? $project->forecastPeriods()->orderByDesc('period_date')->first();
+        }
+
+        $controlAccount->load(['costPackages' => function ($query) use ($period) {
+            $query->orderBy('sort_order');
+            $query->with(['lineItems' => function ($q) use ($period) {
+                $q->orderBy('sort_order');
+                if ($period) {
+                    $q->with(['forecasts' => function ($fq) use ($period) {
+                        $fq->where('forecast_period_id', $period->id);
+                    }]);
+                }
+            }]);
+        }]);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        $isEditable = $period ? $period->isEditable() : false;
+
+        return view('projects.control-account-forecast', [
+            'project' => $project,
+            'account' => $controlAccount,
+            'period' => $period,
+            'allPeriods' => $allPeriods,
+            'isEditable' => $isEditable,
+        ]);
+    }
+
+    public function costDetailReport(
+        Request $request,
+        Project $project,
+        GetProjectForecastSummary $forecastSummary,
+    ): View {
+        Gate::authorize('view', $project);
+
+        $period = null;
+        if ($request->has('period')) {
+            $period = ForecastPeriod::where('id', $request->query('period'))
+                ->where('project_id', $project->id)
+                ->first();
+        }
+
+        $summary = $forecastSummary->execute($project, $period);
+
+        $allPeriods = $project->forecastPeriods()
+            ->orderByDesc('period_date')
+            ->get();
+
+        return view('projects.reports.cost-detail', [
+            'project' => $summary['project'],
+            'period' => $summary['period'],
+            'accounts' => $summary['accounts'],
+            'totals' => $summary['totals'],
+            'allPeriods' => $allPeriods,
+        ]);
     }
 
     public function reports(Project $project): View

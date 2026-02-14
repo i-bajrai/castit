@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified', 'has-company'])->group(function () {
     Route::get('/projects/{project}/period-movement', [ProjectController::class, 'periodMovement'])->name('projects.period-movement');
     Route::get('/projects/{project}/cash-flow', [ProjectController::class, 'cashFlow'])->name('projects.cash-flow');
     Route::get('/projects/{project}/variance-drill-down', [ProjectController::class, 'varianceDrillDown'])->name('projects.variance-drill-down');
+    Route::get('/projects/{project}/cost-detail-report', [ProjectController::class, 'costDetailReport'])->name('projects.cost-detail-report');
     Route::get('/projects/{project}/earned-value', [ProjectController::class, 'earnedValue'])->name('projects.earned-value');
 
     Route::get('/projects/{project}/setup', [ProjectController::class, 'setup'])->name('projects.setup');
@@ -43,6 +44,7 @@ Route::middleware(['auth', 'verified', 'has-company'])->group(function () {
     Route::post('/projects/{project}/control-accounts', [ControlAccountController::class, 'store'])->name('projects.control-accounts.store');
     Route::put('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'update'])->name('projects.control-accounts.update');
     Route::delete('/projects/{project}/control-accounts/{controlAccount}', [ControlAccountController::class, 'destroy'])->name('projects.control-accounts.destroy');
+    Route::get('/projects/{project}/control-accounts/{controlAccount}/forecast', [ProjectController::class, 'controlAccountForecast'])->name('projects.control-accounts.forecast');
     Route::get('/projects/{project}/control-accounts/{controlAccount}/line-items', [ControlAccountController::class, 'lineItems'])->name('projects.control-accounts.line-items');
     Route::post('/projects/{project}/control-accounts/{controlAccount}/line-items/import', [ControlAccountController::class, 'importLineItems'])->name('projects.control-accounts.line-items.import');
 
