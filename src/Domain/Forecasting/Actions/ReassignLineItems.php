@@ -75,12 +75,12 @@ class ReassignLineItems
                 ->first();
 
             if ($targetForecast) {
-                $ctdQty = (float) $targetForecast->ctd_qty + (float) $sourceForecast->ctd_qty;
+                $periodQty = (float) $targetForecast->period_qty + (float) $sourceForecast->period_qty;
 
                 $this->updateLineItemForecast->execute(
                     $target,
                     $sourceForecast->forecastPeriod,
-                    $ctdQty,
+                    $periodQty,
                 );
             } else {
                 // No matching period on target — reassign the forecast record

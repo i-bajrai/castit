@@ -68,15 +68,15 @@ class GetCostAnalysisReportTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $previousPeriod->id,
-            'ctd_qty' => 30, 'ctd_rate' => 1000,
-            'ctc_rate' => 1000, 'fcac_qty' => 100, 'fcac_rate' => 1000,
+            'period_qty' => 30, 'period_rate' => 1000,
+            'fcac_qty' => 100, 'fcac_rate' => 1000,
         ]);
 
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $currentPeriod->id,
-            'ctd_qty' => 50, 'ctd_rate' => 1000,
-            'ctc_rate' => 1000, 'fcac_qty' => 110, 'fcac_rate' => 1000,
+            'period_qty' => 50, 'period_rate' => 1000,
+            'fcac_qty' => 110, 'fcac_rate' => 1000,
             'comments' => 'Scope growth',
         ]);
 
@@ -119,12 +119,15 @@ class GetCostAnalysisReportTest extends TestCase
 
         $row = $result['rows'][0];
 
-        $this->assertEquals(50000.0, $row['cost_to_date']);
-        $this->assertEquals(60000.0, $row['estimate_to_complete']);
+        // CTD = sum of period_amounts = (30*1000) + (50*1000) = 80000
+        $this->assertEquals(80000.0, $row['cost_to_date']);
+        // CTC = FCAC - CTD = 110000 - 80000 = 30000
+        $this->assertEquals(30000.0, $row['estimate_to_complete']);
+        // FCAC = 110 * 1000 = 110000
         $this->assertEquals(110000.0, $row['estimated_final_cost']);
     }
 
-    public function test_calculates_monthly_cost_from_period_difference(): void
+    public function test_calculates_monthly_cost_from_current_period(): void
     {
         [$project, , $currentPeriod] = $this->seedProject();
 
@@ -133,8 +136,8 @@ class GetCostAnalysisReportTest extends TestCase
 
         $row = $result['rows'][0];
 
-        // monthly_cost = current CTD (50000) - previous CTD (30000) = 20000
-        $this->assertEquals(20000.0, $row['monthly_cost']);
+        // monthly_cost = current period_amount = 50 * 1000 = 50000
+        $this->assertEquals(50000.0, $row['monthly_cost']);
     }
 
     public function test_calculates_last_month_efc_and_movement(): void
@@ -146,7 +149,7 @@ class GetCostAnalysisReportTest extends TestCase
 
         $row = $result['rows'][0];
 
-        // last_month_efc = previous period's fcac_amount = 100000
+        // last_month_efc = previous period's fcac_amount = 100 * 1000 = 100000
         $this->assertEquals(100000.0, $row['last_month_efc']);
 
         // monthly_efc_movement = current fcac (110000) - previous fcac (100000) = 10000
@@ -215,8 +218,10 @@ class GetCostAnalysisReportTest extends TestCase
 
         $this->assertEquals(100000.0, $result['totals']['baseline_budget']);
         $this->assertEquals(120000.0, $result['totals']['approved_budget']);
-        $this->assertEquals(50000.0, $result['totals']['cost_to_date']);
-        $this->assertEquals(60000.0, $result['totals']['estimate_to_complete']);
+        // CTD = 80000 (sum of both periods)
+        $this->assertEquals(80000.0, $result['totals']['cost_to_date']);
+        // CTC = 110000 - 80000 = 30000
+        $this->assertEquals(30000.0, $result['totals']['estimate_to_complete']);
         $this->assertEquals(110000.0, $result['totals']['estimated_final_cost']);
     }
 

@@ -92,32 +92,26 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [$user, $project, $period1, , , $item1, $item2] = $this->seedImportData();
 
-        $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\nSteel,2024-01,30\n");
+        $csv = $this->makeCsv("description,period,period_qty\nConcrete,2024-01,80\nSteel,2024-01,30\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
             ->assertRedirect(route('projects.settings', $project))
             ->assertSessionHas('success');
 
-        // item1: ctd_qty=80, rate=250, ctd_amount=20000, ctc_qty=20, ctc_amount=5000, fcac=25000
+        // item1: period_qty=80, rate=250, period_amount=20000, fcac=100*250=25000
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item1->id,
             'forecast_period_id' => $period1->id,
-            'ctd_qty' => 80,
-            'ctd_amount' => 20000,
-            'ctc_qty' => 20,
-            'ctc_amount' => 5000,
+            'period_qty' => 80,
             'fcac_amount' => 25000,
         ]);
 
-        // item2: ctd_qty=30, rate=500, ctd_amount=15000, ctc_qty=20, ctc_amount=10000, fcac=25000
+        // item2: period_qty=30, rate=500, period_amount=15000, fcac=50*500=25000
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item2->id,
             'forecast_period_id' => $period1->id,
-            'ctd_qty' => 30,
-            'ctd_amount' => 15000,
-            'ctc_qty' => 20,
-            'ctc_amount' => 10000,
+            'period_qty' => 30,
             'fcac_amount' => 25000,
         ]);
     }
@@ -126,12 +120,12 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [$user, $project, $period1, , , $item1] = $this->seedImportData();
 
-        // Set ctd_qty on period1 for item1
+        // Set period_qty on period1 for item1
         LineItemForecast::where('line_item_id', $item1->id)
             ->where('forecast_period_id', $period1->id)
-            ->update(['ctd_qty' => 50]);
+            ->update(['period_qty' => 50]);
 
-        $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\n");
+        $csv = $this->makeCsv("description,period,period_qty\nConcrete,2024-01,80\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
@@ -141,7 +135,7 @@ class ImportForecastsFromCsvTest extends TestCase
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item1->id,
             'forecast_period_id' => $period1->id,
-            'ctd_qty' => 50,
+            'period_qty' => 50,
         ]);
     }
 
@@ -149,7 +143,7 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [$user, $project, $period1] = $this->seedImportData();
 
-        $csv = $this->makeCsv("description,period,ctd_qty\nNonexistent Item,2024-01,80\n");
+        $csv = $this->makeCsv("description,period,period_qty\nNonexistent Item,2024-01,80\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
@@ -172,12 +166,12 @@ class ImportForecastsFromCsvTest extends TestCase
             'name' => 'Unassigned',
         ]);
 
-        // Forecast should have been created with ctd_qty=80
+        // Forecast should have been created with period_qty=80
         $newItem = LineItem::where('description', 'Nonexistent Item')->first();
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $newItem->id,
             'forecast_period_id' => $period1->id,
-            'ctd_qty' => 80,
+            'period_qty' => 80,
         ]);
     }
 
@@ -185,7 +179,7 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [$user, $project] = $this->seedImportData();
 
-        $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2099-01,80\n");
+        $csv = $this->makeCsv("description,period,period_qty\nConcrete,2099-01,80\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
@@ -197,7 +191,7 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [$user, $project, $period1, $period2, , $item1] = $this->seedImportData();
 
-        $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,40\nConcrete,2024-02,60\n");
+        $csv = $this->makeCsv("description,period,period_qty\nConcrete,2024-01,40\nConcrete,2024-02,60\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
@@ -207,13 +201,13 @@ class ImportForecastsFromCsvTest extends TestCase
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item1->id,
             'forecast_period_id' => $period1->id,
-            'ctd_qty' => 40,
+            'period_qty' => 40,
         ]);
 
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item1->id,
             'forecast_period_id' => $period2->id,
-            'ctd_qty' => 60,
+            'period_qty' => 60,
         ]);
     }
 
@@ -224,7 +218,7 @@ class ImportForecastsFromCsvTest extends TestCase
         $otherCompany = Company::create(['user_id' => $otherUser->id, 'name' => 'Other Co']);
         $otherUser->update(['company_id' => $otherCompany->id, 'company_role' => 'admin']);
 
-        $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,2024-01,80\n");
+        $csv = $this->makeCsv("description,period,period_qty\nConcrete,2024-01,80\n");
 
         $this->actingAs($otherUser)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
@@ -254,7 +248,7 @@ class ImportForecastsFromCsvTest extends TestCase
         ]);
 
         $futureKey = $futurePeriod->format('Y-m');
-        $csv = $this->makeCsv("description,period,ctd_qty\nConcrete,{$futureKey},80\n");
+        $csv = $this->makeCsv("description,period,period_qty\nConcrete,{$futureKey},80\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])
@@ -266,7 +260,7 @@ class ImportForecastsFromCsvTest extends TestCase
     {
         [$user, $project] = $this->seedImportData();
 
-        $csv = $this->makeCsv("description,period,ctd_qty\n");
+        $csv = $this->makeCsv("description,period,period_qty\n");
 
         $this->actingAs($user)
             ->post("/projects/{$project->id}/forecasts/import", ['csv_file' => $csv])

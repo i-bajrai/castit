@@ -28,13 +28,15 @@ class LineItemForecastController extends Controller
         $validated = $request->validate([
             'forecasts' => 'required|array',
             'forecasts.*.line_item_id' => 'required|exists:line_items,id',
-            'forecasts.*.ctd_qty' => 'required|numeric',
+            'forecasts.*.period_qty' => 'required|numeric',
+            'forecasts.*.period_rate' => 'nullable|numeric',
             'forecasts.*.comments' => 'nullable|string|max:2000',
         ]);
 
         $dtos = array_map(fn (array $f) => new LineItemForecastData(
             lineItemId: (int) $f['line_item_id'],
-            ctdQty: (float) $f['ctd_qty'],
+            periodQty: (float) $f['period_qty'],
+            periodRate: isset($f['period_rate']) ? (float) $f['period_rate'] : null,
             comments: $f['comments'] ?? null,
         ), $validated['forecasts']);
 
@@ -55,13 +57,15 @@ class LineItemForecastController extends Controller
         abort_if(! $forecast->forecastPeriod->isEditable(), 403, 'Period is not editable.');
 
         $validated = $request->validate([
-            'ctd_qty' => 'required|numeric',
+            'period_qty' => 'required|numeric',
+            'period_rate' => 'nullable|numeric',
         ]);
 
         $action->execute(
             $forecast->lineItem,
             $forecast->forecastPeriod,
-            (float) $validated['ctd_qty'],
+            (float) $validated['period_qty'],
+            isset($validated['period_rate']) ? (float) $validated['period_rate'] : null,
         );
 
         return response()->json(['status' => 'ok']);

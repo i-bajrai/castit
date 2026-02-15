@@ -68,16 +68,12 @@ class StoreBudgetSetup
                 foreach ($lineItems as $item) {
                     $origQty = (float) $item->original_qty;
                     $origRate = (float) $item->original_rate;
-                    $origAmount = (float) $item->original_amount;
 
                     LineItemForecast::where('line_item_id', $item->id)
                         ->whereIn('forecast_period_id', $periods)
-                        ->where('previous_amount', 0)
                         ->where('fcac_amount', 0)
                         ->update([
-                            'previous_qty' => $origQty,
-                            'previous_rate' => $origRate,
-                            'ctc_rate' => $origRate,
+                            'period_rate' => $origRate,
                             'fcac_qty' => $origQty,
                             'fcac_rate' => $origRate,
                         ]);

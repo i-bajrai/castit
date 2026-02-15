@@ -12,6 +12,7 @@ class GetProjectForecastSummary
      * @return array{
      *   project: Project,
      *   period: ForecastPeriod|null,
+     *   previousPeriod: ForecastPeriod|null,
      *   accounts: Collection<int, \App\Models\ControlAccount>,
      *   totals: array{original_budget: float, previous_fcac: float, ctd: float, ctc: float, fcac: float, variance: float}
      * }
@@ -25,15 +26,31 @@ class GetProjectForecastSummary
                 ?? $project->forecastPeriods()->orderByDesc('period_date')->first();
         }
 
+        // Get all period IDs up to the selected period (for summing CTD)
+        $periodIdsUpTo = collect();
+        $previousPeriod = null;
+        if ($period) {
+            $periodsUpTo = $project->forecastPeriods()
+                ->where('period_date', '<=', $period->period_date)
+                ->orderBy('period_date')
+                ->get();
+            $periodIdsUpTo = $periodsUpTo->pluck('id');
+
+            $previousPeriod = $project->forecastPeriods()
+                ->where('period_date', '<', $period->period_date)
+                ->orderByDesc('period_date')
+                ->first();
+        }
+
         $accounts = $project->controlAccounts()
-            ->with(['costPackages' => function ($query) use ($period): void {
+            ->with(['costPackages' => function ($query) use ($periodIdsUpTo): void {
                 $query->orderBy('sort_order');
-                $query->with(['lineItems' => function ($q) use ($period): void {
+                $query->with(['lineItems' => function ($q) use ($periodIdsUpTo): void {
                     $q->orderBy('sort_order');
                     $q->with('createdInPeriod');
-                    if ($period) {
-                        $q->with(['forecasts' => function ($fq) use ($period): void {
-                            $fq->where('forecast_period_id', $period->id);
+                    if ($periodIdsUpTo->isNotEmpty()) {
+                        $q->with(['forecasts' => function ($fq) use ($periodIdsUpTo): void {
+                            $fq->whereIn('forecast_period_id', $periodIdsUpTo);
                         }]);
                     }
                 }]);
@@ -57,14 +74,32 @@ class GetProjectForecastSummary
                         continue;
                     }
                     $totals['original_budget'] += (float) $item->original_amount;
-                    $forecast = $item->forecasts->first();
-                    if ($forecast) {
-                        $totals['previous_fcac'] += (float) $forecast->previous_amount;
-                        $totals['ctd'] += (float) $forecast->ctd_amount;
-                        $totals['ctc'] += (float) $forecast->ctc_amount;
-                        $totals['fcac'] += (float) $forecast->fcac_amount;
-                        $totals['variance'] += (float) $forecast->variance;
+
+                    // CTD = sum of all period amounts up to selected period
+                    $ctdAmount = $item->forecasts->sum('period_amount');
+
+                    // Current period forecast (for FCAC)
+                    $currentForecast = $period
+                        ? $item->forecasts->firstWhere('forecast_period_id', $period->id)
+                        : null;
+
+                    $fcacAmount = $currentForecast ? (float) $currentForecast->fcac_amount : 0.0;
+                    $ctcAmount = $fcacAmount - $ctdAmount;
+
+                    // Previous FCAC from the prior period's forecast
+                    $previousFcac = 0.0;
+                    if ($previousPeriod) {
+                        $prevForecast = $item->forecasts->firstWhere('forecast_period_id', $previousPeriod->id);
+                        $previousFcac = $prevForecast ? (float) $prevForecast->fcac_amount : 0.0;
                     }
+
+                    $variance = $fcacAmount - $previousFcac;
+
+                    $totals['previous_fcac'] += $previousFcac;
+                    $totals['ctd'] += $ctdAmount;
+                    $totals['ctc'] += $ctcAmount;
+                    $totals['fcac'] += $fcacAmount;
+                    $totals['variance'] += $variance;
                 }
             }
         }
@@ -72,6 +107,7 @@ class GetProjectForecastSummary
         return [
             'project' => $project,
             'period' => $period,
+            'previousPeriod' => $previousPeriod,
             'accounts' => $accounts,
             'totals' => $totals,
         ];

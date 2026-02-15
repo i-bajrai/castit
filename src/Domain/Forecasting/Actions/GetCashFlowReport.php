@@ -22,18 +22,18 @@ class GetCashFlowReport
 
         $totalBudget = $lineItems->sum('original_amount');
 
-        // ctd_amount is already cumulative (cost-to-date), so summing it per period
-        // gives the total project CTD at that point. Period spend = current CTD - previous CTD.
+        // With incremental model: period_amount = this month's spend.
+        // Cumulative CTD is a running sum of period_amount across periods.
         $periods = [];
-        $previousCtd = 0.0;
+        $cumulativeCtd = 0.0;
         $periodCount = $allPeriods->count();
 
         foreach ($allPeriods as $index => $period) {
-            $cumulativeCtd = (float) $period->lineItemForecasts()->sum('ctd_amount');
-            $periodSpend = $cumulativeCtd - $previousCtd;
+            $periodSpend = (float) $period->lineItemForecasts()->sum('period_amount');
+            $cumulativeCtd += $periodSpend;
 
-            $periodCtc = (float) $period->lineItemForecasts()->sum('ctc_amount');
             $periodFcac = (float) $period->lineItemForecasts()->sum('fcac_amount');
+            $periodCtc = $periodFcac - $cumulativeCtd;
 
             // Planned spend: budget distributed evenly across periods (for S-curve baseline)
             $plannedCumulative = $periodCount > 0
@@ -49,8 +49,6 @@ class GetCashFlowReport
                 'period_fcac' => $periodFcac,
                 'planned_cumulative' => $plannedCumulative,
             ];
-
-            $previousCtd = $cumulativeCtd;
         }
 
         return [

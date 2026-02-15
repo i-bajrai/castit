@@ -101,11 +101,8 @@ class OpenNewForecastPeriodTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $oldPeriod->id,
-            'previous_qty' => 10,
-            'previous_rate' => 100,
-            'ctd_qty' => 6,
-            'ctd_rate' => 100,
-            'ctc_rate' => 100,
+            'period_qty' => 6,
+            'period_rate' => 100,
             'fcac_qty' => 10,
             'fcac_rate' => 100,
         ]);
@@ -118,11 +115,12 @@ class OpenNewForecastPeriodTest extends TestCase
             ->first();
 
         $this->assertNotNull($newForecast);
-        $this->assertEquals(10, $newForecast->previous_qty); // ctd_qty + ctc_qty
-        $this->assertEquals(100, (float) $newForecast->previous_rate); // fcac_rate
-        $this->assertEquals(1000, (float) $newForecast->previous_amount); // fcac_amount
-        $this->assertEquals(0, (float) $newForecast->ctd_amount);
-        $this->assertEquals(0, (float) $newForecast->ctc_amount);
-        $this->assertEquals(0, (float) $newForecast->fcac_amount);
+        // New period starts with period_qty = 0, carries forward rate and FCAC
+        $this->assertEquals(0, (float) $newForecast->period_qty);
+        $this->assertEquals(100, (float) $newForecast->period_rate);
+        $this->assertEquals(0, (float) $newForecast->period_amount);
+        $this->assertEquals(10, (float) $newForecast->fcac_qty);
+        $this->assertEquals(100, (float) $newForecast->fcac_rate);
+        $this->assertEquals(1000, (float) $newForecast->fcac_amount);
     }
 }

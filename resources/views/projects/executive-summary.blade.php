@@ -34,17 +34,25 @@
                                     $caVariance = 0;
                                     foreach ($account->costPackages as $pkg) {
                                         foreach ($pkg->lineItems as $item) {
+                                            if ($period && ! $item->existedInPeriod($period)) {
+                                                continue;
+                                            }
                                             $caOriginal += (float) $item->original_amount;
-                                            $f = $item->forecasts->first();
-                                            if ($f) {
-                                                $caPrevFcac += (float) $f->previous_amount;
-                                                $caCtd += (float) $f->ctd_amount;
-                                                $caCtc += (float) $f->ctc_amount;
-                                                $caFcac += (float) $f->fcac_amount;
-                                                $caVariance += (float) $f->variance;
+                                            $itemCtd = (float) $item->forecasts->sum('period_amount');
+                                            $caCtd += $itemCtd;
+                                            $currentForecast = $period
+                                                ? $item->forecasts->firstWhere('forecast_period_id', $period->id)
+                                                : null;
+                                            $itemFcac = $currentForecast ? (float) $currentForecast->fcac_amount : 0.0;
+                                            $caFcac += $itemFcac;
+                                            $caCtc += $itemFcac - $itemCtd;
+                                            if (isset($previousPeriod) && $previousPeriod) {
+                                                $prevF = $item->forecasts->firstWhere('forecast_period_id', $previousPeriod->id);
+                                                $caPrevFcac += $prevF ? (float) $prevF->fcac_amount : 0.0;
                                             }
                                         }
                                     }
+                                    $caVariance = $caFcac - $caPrevFcac;
                                 @endphp
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $account->phase }}</td>

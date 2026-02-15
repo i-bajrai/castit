@@ -304,15 +304,12 @@ class SeedDemoProject
         }
         fclose($handle);
 
-        // Bulk set fcac, rates, and previous values for all forecasts
+        // Bulk set fcac and rate for all forecasts
         foreach ($allItems as $item) {
             LineItemForecast::where('line_item_id', $item->id)->update([
                 'fcac_qty' => $item->original_qty,
                 'fcac_rate' => $item->original_rate,
-                'ctd_rate' => $item->original_rate,
-                'ctc_rate' => $item->original_rate,
-                'previous_qty' => $item->original_qty,
-                'previous_rate' => $item->original_rate,
+                'period_rate' => $item->original_rate,
             ]);
         }
 
@@ -346,8 +343,6 @@ class SeedDemoProject
             LineItemForecast::where('line_item_id', $item->id)->update([
                 'fcac_qty' => $fcacQty,
                 'fcac_rate' => $item->original_rate,
-                'previous_qty' => $fcacQty,
-                'previous_rate' => $item->original_rate,
             ]);
         }
 
@@ -378,7 +373,7 @@ class SeedDemoProject
 
                 LineItemForecast::where('line_item_id', $item->id)
                     ->where('forecast_period_id', $period->id)
-                    ->update(['ctd_qty' => $row['ctd_qty']]);
+                    ->update(['period_qty' => $row['ctd_qty']]);
             }
         }
 

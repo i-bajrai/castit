@@ -58,7 +58,7 @@ test.describe('Unassigned Items', () => {
 
         // Create CSV with one known + one unknown item
         const csvContent = [
-            'description,period,ctd_qty',
+            'description,period,period_qty',
             'Concrete,2024-01,80',
             'Unknown Barrier Item,2024-01,50',
         ].join('\n');
@@ -85,7 +85,7 @@ test.describe('Unassigned Items', () => {
         await page.goto(`/projects/${project.id}/settings`);
 
         // CSV with only known items
-        const csvContent = 'description,period,ctd_qty\nConcrete,2024-01,80\n';
+        const csvContent = 'description,period,period_qty\nConcrete,2024-01,80\n';
         const csvPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'test-clean-import.csv');
         fs.writeFileSync(csvPath, csvContent);
 
@@ -105,7 +105,7 @@ test.describe('Unassigned Items', () => {
 
         // First import to create unassigned items
         await page.goto(`/projects/${project.id}/settings`);
-        const csvContent = 'description,period,ctd_qty\nNew Barrier Type,2024-01,30\n';
+        const csvContent = 'description,period,period_qty\nNew Barrier Type,2024-01,30\n';
         const csvPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'test-move-import.csv');
         fs.writeFileSync(csvPath, csvContent);
 
@@ -136,7 +136,7 @@ test.describe('Unassigned Items', () => {
 
         // Import to create unassigned items
         await page.goto(`/projects/${project.id}/settings`);
-        const csvContent = 'description,period,ctd_qty\nConcrete Duplicate,2024-01,20\n';
+        const csvContent = 'description,period,period_qty\nConcrete Duplicate,2024-01,20\n';
         const csvPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'test-merge-import.csv');
         fs.writeFileSync(csvPath, csvContent);
 
@@ -170,7 +170,7 @@ test.describe('Unassigned Items', () => {
 
         // Import unknown items first
         await page.goto(`/projects/${project.id}/settings`);
-        const csvContent = 'description,period,ctd_qty\nSome Unknown Item,2024-01,10\n';
+        const csvContent = 'description,period,period_qty\nSome Unknown Item,2024-01,10\n';
         const csvPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'test-banner-import.csv');
         fs.writeFileSync(csvPath, csvContent);
 

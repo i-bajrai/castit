@@ -33,15 +33,22 @@ class GetEarnedValueReport
             }
         }
 
+        $periodIdsUpTo = collect();
+        if ($period) {
+            $periodIdsUpTo = $project->forecastPeriods()
+                ->where('period_date', '<=', $period->period_date)
+                ->pluck('id');
+        }
+
         $accounts = $project->controlAccounts()
-            ->with(['costPackages' => function ($query) use ($period): void {
+            ->with(['costPackages' => function ($query) use ($periodIdsUpTo): void {
                 $query->orderBy('sort_order');
-                $query->with(['lineItems' => function ($q) use ($period): void {
+                $query->with(['lineItems' => function ($q) use ($periodIdsUpTo): void {
                     $q->orderBy('sort_order');
                     $q->with('createdInPeriod');
-                    if ($period) {
-                        $q->with(['forecasts' => function ($fq) use ($period): void {
-                            $fq->where('forecast_period_id', $period->id);
+                    if ($periodIdsUpTo->isNotEmpty()) {
+                        $q->with(['forecasts' => function ($fq) use ($periodIdsUpTo): void {
+                            $fq->whereIn('forecast_period_id', $periodIdsUpTo);
                         }]);
                     }
                 }]);
@@ -76,11 +83,8 @@ class GetEarnedValueReport
                     $bac += (float) $item->original_amount;
                     $totalOriginalQty += (float) $item->original_qty;
 
-                    $forecast = $item->forecasts->first();
-                    if ($forecast) {
-                        $ac += (float) $forecast->ctd_amount;
-                        $totalCtdQty += (float) $forecast->ctd_qty;
-                    }
+                    $ac += (float) $item->forecasts->sum('period_amount');
+                    $totalCtdQty += (float) $item->forecasts->sum('period_qty');
                 }
             }
 

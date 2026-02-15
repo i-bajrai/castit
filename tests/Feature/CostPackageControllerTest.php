@@ -125,21 +125,14 @@ class CostPackageControllerTest extends TestCase
             ->assertSessionHasErrors(['name', 'sort_order', 'control_account_id']);
     }
 
-    public function test_show_page_shows_cost_packages(): void
+    public function test_show_page_shows_control_accounts(): void
     {
         [$user, , $project, $controlAccount] = $this->createUserWithProject();
-
-        CostPackage::create([
-            'project_id' => $project->id,
-            'control_account_id' => $controlAccount->id,
-            'item_no' => '001',
-            'name' => 'Foundation Works',
-            'sort_order' => 1,
-        ]);
 
         $this->actingAs($user)
             ->get("/projects/{$project->id}")
             ->assertOk()
-            ->assertSee('Foundation Works');
+            ->assertSee('Test Account')
+            ->assertSee('Enter data');
     }
 }

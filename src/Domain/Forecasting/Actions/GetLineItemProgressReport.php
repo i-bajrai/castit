@@ -19,15 +19,22 @@ class GetLineItemProgressReport
                 ?? $project->forecastPeriods()->orderByDesc('period_date')->first();
         }
 
+        $periodIdsUpTo = collect();
+        if ($period) {
+            $periodIdsUpTo = $project->forecastPeriods()
+                ->where('period_date', '<=', $period->period_date)
+                ->pluck('id');
+        }
+
         $accounts = $project->controlAccounts()
-            ->with(['costPackages' => function ($query) use ($period): void {
+            ->with(['costPackages' => function ($query) use ($periodIdsUpTo): void {
                 $query->orderBy('sort_order');
-                $query->with(['lineItems' => function ($q) use ($period): void {
+                $query->with(['lineItems' => function ($q) use ($periodIdsUpTo): void {
                     $q->orderBy('sort_order');
                     $q->with('createdInPeriod');
-                    if ($period) {
-                        $q->with(['forecasts' => function ($fq) use ($period): void {
-                            $fq->where('forecast_period_id', $period->id);
+                    if ($periodIdsUpTo->isNotEmpty()) {
+                        $q->with(['forecasts' => function ($fq) use ($periodIdsUpTo): void {
+                            $fq->whereIn('forecast_period_id', $periodIdsUpTo);
                         }]);
                     }
                 }]);
@@ -58,16 +65,19 @@ class GetLineItemProgressReport
                         continue;
                     }
 
-                    $forecast = $item->forecasts->first();
+                    $currentForecast = $period
+                        ? $item->forecasts->firstWhere('forecast_period_id', $period->id)
+                        : null;
 
                     $originalQty = (float) $item->original_qty;
                     $originalAmount = (float) $item->original_amount;
-                    $ctdQty = $forecast ? (float) $forecast->ctd_qty : 0.0;
-                    $ctdAmount = $forecast ? (float) $forecast->ctd_amount : 0.0;
-                    $ctcQty = $forecast ? (float) $forecast->ctc_qty : 0.0;
-                    $ctcAmount = $forecast ? (float) $forecast->ctc_amount : 0.0;
-                    $fcacAmount = $forecast ? (float) $forecast->fcac_amount : 0.0;
-                    $variance = $forecast ? (float) $forecast->variance : 0.0;
+                    $ctdQty = (float) $item->forecasts->sum('period_qty');
+                    $ctdAmount = (float) $item->forecasts->sum('period_amount');
+                    $fcacAmount = $currentForecast ? (float) $currentForecast->fcac_amount : 0.0;
+                    $fcacQty = $currentForecast ? (float) $currentForecast->fcac_qty : 0.0;
+                    $ctcQty = $fcacQty - $ctdQty;
+                    $ctcAmount = $fcacAmount - $ctdAmount;
+                    $variance = $fcacAmount - $originalAmount;
                     $pctComplete = $originalQty > 0 ? ($ctdQty / $originalQty) * 100 : 0.0;
 
                     $items[] = [

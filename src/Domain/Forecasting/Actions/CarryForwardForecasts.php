@@ -15,8 +15,9 @@ class CarryForwardForecasts
             LineItemForecast::create([
                 'line_item_id' => $oldForecast->line_item_id,
                 'forecast_period_id' => $newPeriod->id,
-                'previous_qty' => $oldForecast->fcac_qty,
-                'previous_rate' => $oldForecast->fcac_rate,
+                'period_rate' => $oldForecast->period_rate,
+                'fcac_qty' => $oldForecast->fcac_qty,
+                'fcac_rate' => $oldForecast->fcac_rate,
             ]);
         }
     }

@@ -51,16 +51,16 @@ class ImportForecastsFromCsv
 
             $description = trim($row['description'] ?? '');
             $periodKey = trim($row['period'] ?? '');
-            $ctdQty = $row['ctd_qty'] ?? null;
+            $periodQty = $row['period_qty'] ?? $row['ctd_qty'] ?? null;
 
-            if ($description === '' || $periodKey === '' || $ctdQty === null || $ctdQty === '') {
+            if ($description === '' || $periodKey === '' || $periodQty === null || $periodQty === '') {
                 $errors[] = "Row {$rowNum}: missing required field(s).";
 
                 continue;
             }
 
-            if (! is_numeric($ctdQty)) {
-                $errors[] = "Row {$rowNum}: ctd_qty must be numeric.";
+            if (! is_numeric($periodQty)) {
+                $errors[] = "Row {$rowNum}: period_qty must be numeric.";
 
                 continue;
             }
@@ -98,13 +98,13 @@ class ImportForecastsFromCsv
                 ]);
             }
 
-            if ((float) $forecast->ctd_qty !== 0.0) {
+            if ((float) $forecast->period_qty !== 0.0) {
                 $skipped++;
 
                 continue;
             }
 
-            $this->updateLineItemForecast->execute($lineItem, $period, (float) $ctdQty);
+            $this->updateLineItemForecast->execute($lineItem, $period, (float) $periodQty);
 
             $imported++;
         }
