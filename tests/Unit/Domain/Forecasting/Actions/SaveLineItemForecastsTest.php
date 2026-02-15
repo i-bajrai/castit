@@ -67,17 +67,18 @@ class SaveLineItemForecastsTest extends TestCase
         $action->execute($period, [
             new LineItemForecastData(
                 lineItemId: $item->id,
-                ctdQty: 50,
+                periodQty: 50,
                 comments: 'Test',
             ),
         ]);
 
-        // ctdAmount = 50 * 250 = 12500, ctcQty = 100 - 50 = 50, ctcAmount = 50 * 250 = 12500
+        // period_amount = 50 * 250 = 12500, fcac = 100 * 250 = 25000
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_amount' => 12500,
-            'ctc_amount' => 12500,
+            'period_qty' => 50,
+            'period_rate' => 250,
+            'fcac_amount' => 25000,
         ]);
     }
 
@@ -88,9 +89,8 @@ class SaveLineItemForecastsTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_qty' => 20,
-            'ctd_rate' => 250,
-            'ctc_rate' => 250,
+            'period_qty' => 20,
+            'period_rate' => 250,
             'fcac_qty' => 100,
             'fcac_rate' => 250,
         ]);
@@ -99,41 +99,34 @@ class SaveLineItemForecastsTest extends TestCase
         $action->execute($period, [
             new LineItemForecastData(
                 lineItemId: $item->id,
-                ctdQty: 50,
+                periodQty: 50,
             ),
         ]);
 
         $this->assertEquals(1, LineItemForecast::where('line_item_id', $item->id)->count());
 
-        // ctdAmount = 50 * 250 = 12500, ctcAmount = 50 * 250 = 12500
+        // period_amount = 50 * 250 = 12500, fcac = 100 * 250 = 25000
         $forecast = LineItemForecast::where('line_item_id', $item->id)->first();
-        $this->assertEquals(12500, (float) $forecast->ctd_amount);
-        $this->assertEquals(12500, (float) $forecast->ctc_amount);
+        $this->assertEquals(12500, (float) $forecast->period_amount);
+        $this->assertEquals(25000, (float) $forecast->fcac_amount);
     }
 
-    public function test_calculates_fcac_and_variance(): void
+    public function test_calculates_fcac(): void
     {
         [$period, $item] = $this->seedData();
-
-        // Create existing forecast with previous_amount = 120 * 250 = 30000
-        LineItemForecast::create([
-            'line_item_id' => $item->id,
-            'forecast_period_id' => $period->id,
-            'previous_qty' => 120,
-            'previous_rate' => 250,
-        ]);
 
         $action = app(SaveLineItemForecasts::class);
         $action->execute($period, [
             new LineItemForecastData(
                 lineItemId: $item->id,
-                ctdQty: 50,
+                periodQty: 50,
             ),
         ]);
 
-        // fcac = 100 * 250 = 25000, variance = 25000 - 30000 = -5000
+        // fcac = orig_qty * rate = 100 * 250 = 25000
         $forecast = LineItemForecast::where('line_item_id', $item->id)->first();
         $this->assertEquals(25000, (float) $forecast->fcac_amount);
-        $this->assertEquals(-5000, (float) $forecast->variance);
+        $this->assertEquals(100, (float) $forecast->fcac_qty);
+        $this->assertEquals(250, (float) $forecast->fcac_rate);
     }
 }

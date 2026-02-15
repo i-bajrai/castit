@@ -62,8 +62,8 @@ class ReassignLineItemsTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $existingItem->id,
                 'forecast_period_id' => $period->id,
-                'ctd_qty' => 10, 'ctd_rate' => 250,
-                'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
+                'period_qty' => 10, 'period_rate' => 250,
+                'fcac_qty' => 100, 'fcac_rate' => 250,
             ]);
         }
 
@@ -95,7 +95,7 @@ class ReassignLineItemsTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $unassignedItem->id,
                 'forecast_period_id' => $period->id,
-                'ctd_qty' => 5,
+                'period_qty' => 5,
             ]);
         }
 
@@ -176,11 +176,11 @@ class ReassignLineItemsTest extends TestCase
         // Unassigned item should be deleted
         $this->assertDatabaseMissing('line_items', ['id' => $unassignedItem->id]);
 
-        // Existing item should have merged ctd_qty (10 + 5 = 15)
+        // Existing item should have merged period_qty (10 + 5 = 15)
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $existingItem->id,
             'forecast_period_id' => $period1->id,
-            'ctd_qty' => 15,
+            'period_qty' => 15,
         ]);
 
         // Unassigned CA should be cleaned up
@@ -226,7 +226,7 @@ class ReassignLineItemsTest extends TestCase
 
         $csv = \Illuminate\Http\UploadedFile::fake()->createWithContent(
             'import.csv',
-            "description,period,ctd_qty\nBrand New Item,2024-01,50\n"
+            "description,period,period_qty\nBrand New Item,2024-01,50\n"
         );
 
         $this->actingAs($user)
@@ -241,7 +241,7 @@ class ReassignLineItemsTest extends TestCase
         // Import an item that already exists ("Concrete" from seedData)
         $csv = \Illuminate\Http\UploadedFile::fake()->createWithContent(
             'import.csv',
-            "description,period,ctd_qty\nConcrete,2024-01,80\n"
+            "description,period,period_qty\nConcrete,2024-01,80\n"
         );
 
         $this->actingAs($user)

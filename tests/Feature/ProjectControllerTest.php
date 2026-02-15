@@ -102,7 +102,7 @@ class ProjectControllerTest extends TestCase
             ->assertRedirect('/login');
     }
 
-    public function test_project_show_displays_cost_packages(): void
+    public function test_project_show_displays_control_accounts(): void
     {
         [$user, $company, $project] = $this->createUserWithProject();
 
@@ -123,38 +123,11 @@ class ProjectControllerTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        $package = CostPackage::create([
-            'project_id' => $project->id,
-            'control_account_id' => $account->id,
-            'item_no' => '001',
-            'name' => 'Foundation Works',
-            'sort_order' => 1,
-        ]);
-
-        $item = LineItem::create([
-            'cost_package_id' => $package->id,
-            'item_no' => '001',
-            'description' => 'Concrete Pour',
-            'unit_of_measure' => 'M3',
-            'original_qty' => 100,
-            'original_rate' => 250.00,
-            'original_amount' => 25000.00,
-            'sort_order' => 1,
-        ]);
-
-        LineItemForecast::create([
-            'line_item_id' => $item->id,
-            'forecast_period_id' => $period->id,
-            'previous_qty' => 100, 'previous_rate' => 250,
-            'ctd_qty' => 60, 'ctd_rate' => 250,
-            'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
-        ]);
-
         $this->actingAs($user)
             ->get("/projects/{$project->id}")
             ->assertOk()
-            ->assertSee('Foundation Works')
-            ->assertSee('Concrete Pour');
+            ->assertSee('Test Account')
+            ->assertSee('Enter data');
     }
 
     public function test_user_can_view_executive_summary(): void
@@ -395,15 +368,15 @@ class ProjectControllerTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $previousPeriod->id,
-            'ctd_qty' => 30, 'ctd_rate' => 1000,
-            'ctc_rate' => 1000, 'fcac_qty' => 100, 'fcac_rate' => 1000,
+            'period_qty' => 30, 'period_rate' => 1000,
+            'fcac_qty' => 100, 'fcac_rate' => 1000,
         ]);
 
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $currentPeriod->id,
-            'ctd_qty' => 50, 'ctd_rate' => 1000,
-            'ctc_rate' => 1000, 'fcac_qty' => 110, 'fcac_rate' => 1000,
+            'period_qty' => 50, 'period_rate' => 1000,
+            'fcac_qty' => 110, 'fcac_rate' => 1000,
         ]);
 
         $response = $this->actingAs($user)

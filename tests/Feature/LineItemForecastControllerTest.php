@@ -66,19 +66,18 @@ class LineItemForecastControllerTest extends TestCase
                 'forecasts' => [
                     [
                         'line_item_id' => $item->id,
-                        'ctd_qty' => 50,
+                        'period_qty' => 50,
                         'comments' => 'On track',
                     ],
                 ],
             ])
             ->assertRedirect(route('projects.show', $project));
 
-        // ctdAmount = 50 * 250 = 12500, ctcAmount = 50 * 250 = 12500, fcac = 25000
+        // period_amount = 50 * 250 = 12500, fcac = 100 * 250 = 25000
         $this->assertDatabaseHas('line_item_forecasts', [
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'ctd_amount' => 12500,
-            'ctc_amount' => 12500,
+            'period_qty' => 50,
             'fcac_amount' => 25000,
         ]);
     }
@@ -101,7 +100,7 @@ class LineItemForecastControllerTest extends TestCase
                 'forecasts' => [
                     [
                         'line_item_id' => $item->id,
-                        'ctd_qty' => 50,
+                        'period_qty' => 50,
                     ],
                 ],
             ])
@@ -124,9 +123,8 @@ class LineItemForecastControllerTest extends TestCase
         $forecast = LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'previous_qty' => 120, 'previous_rate' => 250,
-            'ctd_qty' => 50, 'ctd_rate' => 250,
-            'ctc_rate' => 250, 'fcac_qty' => 100, 'fcac_rate' => 250,
+            'period_qty' => 50, 'period_rate' => 250,
+            'fcac_qty' => 100, 'fcac_rate' => 250,
         ]);
 
         return [$user, $project, $period, $item, $forecast];
@@ -138,20 +136,16 @@ class LineItemForecastControllerTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
-                'ctd_qty' => 80,
+                'period_qty' => 80,
             ])
             ->assertOk()
             ->assertJson(['status' => 'ok']);
 
-        // ctdAmount = 80 * 250 = 20000, ctcQty = 20, ctcAmount = 5000, fcac = 25000, variance = 25000 - 30000 = -5000
+        // period_amount = 80 * 250 = 20000, fcac = 100 * 250 = 25000
         $this->assertDatabaseHas('line_item_forecasts', [
             'id' => $forecast->id,
-            'ctd_qty' => 80,
-            'ctd_amount' => 20000,
-            'ctc_qty' => 20,
-            'ctc_amount' => 5000,
+            'period_qty' => 80,
             'fcac_amount' => 25000,
-            'variance' => -5000,
         ]);
     }
 
@@ -163,19 +157,19 @@ class LineItemForecastControllerTest extends TestCase
 
         $this->actingAs($user)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
-                'ctd_qty' => 80,
+                'period_qty' => 80,
             ])
             ->assertForbidden();
     }
 
-    public function test_ctd_qty_requires_numeric_value(): void
+    public function test_period_qty_requires_numeric_value(): void
     {
         [$user, $project, , , $forecast] = $this->seedForecast();
 
         $this->actingAs($user)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('ctd_qty');
+            ->assertJsonValidationErrors('period_qty');
     }
 
     public function test_owner_can_update_comment(): void
@@ -235,7 +229,7 @@ class LineItemForecastControllerTest extends TestCase
 
         $this->actingAs($otherUser)
             ->patchJson("/projects/{$project->id}/forecasts/{$forecast->id}/ctd-qty", [
-                'ctd_qty' => 80,
+                'period_qty' => 80,
             ])
             ->assertForbidden();
     }

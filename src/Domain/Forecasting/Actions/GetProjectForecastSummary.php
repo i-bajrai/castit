@@ -12,6 +12,7 @@ class GetProjectForecastSummary
      * @return array{
      *   project: Project,
      *   period: ForecastPeriod|null,
+     *   previousPeriod: ForecastPeriod|null,
      *   accounts: Collection<int, \App\Models\ControlAccount>,
      *   totals: array{original_budget: float, previous_fcac: float, ctd: float, ctc: float, fcac: float, variance: float}
      * }

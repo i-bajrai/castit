@@ -63,11 +63,8 @@ class GetProjectForecastSummaryTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $period->id,
-            'previous_qty' => 10,
-            'previous_rate' => 100,
-            'ctd_qty' => 6,
-            'ctd_rate' => 100,
-            'ctc_rate' => 100,
+            'period_qty' => 6,
+            'period_rate' => 100,
             'fcac_qty' => 10,
             'fcac_rate' => 100,
         ]);
@@ -86,11 +83,16 @@ class GetProjectForecastSummaryTest extends TestCase
         $this->assertNotNull($result['period']);
         $this->assertCount(1, $result['accounts']);
         $this->assertEquals(1000.0, $result['totals']['original_budget']);
-        $this->assertEquals(1000.0, $result['totals']['previous_fcac']);
+        // No previous period, so previous_fcac = 0
+        $this->assertEquals(0.0, $result['totals']['previous_fcac']);
+        // CTD = sum of period_amount = 6 * 100 = 600
         $this->assertEquals(600.0, $result['totals']['ctd']);
+        // CTC = FCAC - CTD = 1000 - 600 = 400
         $this->assertEquals(400.0, $result['totals']['ctc']);
+        // FCAC = 10 * 100 = 1000
         $this->assertEquals(1000.0, $result['totals']['fcac']);
-        $this->assertEquals(0.0, $result['totals']['variance']);
+        // Variance = FCAC - previous_fcac = 1000 - 0 = 1000
+        $this->assertEquals(1000.0, $result['totals']['variance']);
     }
 
     public function test_returns_specific_period_when_provided(): void
@@ -106,11 +108,8 @@ class GetProjectForecastSummaryTest extends TestCase
         LineItemForecast::create([
             'line_item_id' => $item->id,
             'forecast_period_id' => $oldPeriod->id,
-            'previous_qty' => 10,
-            'previous_rate' => 100,
-            'ctd_qty' => 3,
-            'ctd_rate' => 100,
-            'ctc_rate' => 100,
+            'period_qty' => 3,
+            'period_rate' => 100,
             'fcac_qty' => 6,
             'fcac_rate' => 100,
         ]);
@@ -119,8 +118,10 @@ class GetProjectForecastSummaryTest extends TestCase
         $result = $action->execute($project, $oldPeriod);
 
         $this->assertSame($oldPeriod->id, $result['period']->id);
-        $this->assertEquals(1000.0, $result['totals']['previous_fcac']);
-        $this->assertEquals(-400.0, $result['totals']['variance']);
+        // No previous period before Dec, so previous_fcac = 0
+        $this->assertEquals(0.0, $result['totals']['previous_fcac']);
+        // FCAC = 6 * 100 = 600, variance = 600 - 0 = 600
+        $this->assertEquals(600.0, $result['totals']['variance']);
     }
 
     public function test_handles_project_with_no_forecast_periods(): void
@@ -183,11 +184,8 @@ class GetProjectForecastSummaryTest extends TestCase
             LineItemForecast::create([
                 'line_item_id' => $item->id,
                 'forecast_period_id' => $period->id,
-                'previous_qty' => 10,
-                'previous_rate' => 100,
-                'ctd_qty' => 5,
-                'ctd_rate' => 100,
-                'ctc_rate' => 100,
+                'period_qty' => 5,
+                'period_rate' => 100,
                 'fcac_qty' => 10,
                 'fcac_rate' => 100,
             ]);
